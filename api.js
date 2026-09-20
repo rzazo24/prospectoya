@@ -41,7 +41,10 @@ async function obtenerMedicamento(params) {
  * Doc: GET /docSegmentado/secciones/{tipoDoc}?nregistro=X
  * @param {number} tipoDoc - 1 = ficha técnica, 2 = prospecto
  * @param {string} nregistro
- * @returns {Promise<Array>} lista de secciones (cada una con su id/título)
+ * @returns {Promise<Array<{seccion: string, titulo: string, orden: number}>>}
+ *   lista de secciones (VERIFICADO contra la API real: la clave del id es
+ *   `seccion` y el título viene en `titulo`; el array ya llega en el orden
+ *   del documento, que NO coincide con `orden` en la ficha técnica)
  */
 async function listarSecciones(tipoDoc, nregistro) {
   const res = await fetch(
@@ -59,6 +62,12 @@ async function listarSecciones(tipoDoc, nregistro) {
  * @param {string} seccion - id de sección devuelto por listarSecciones()
  * @returns {Promise<string>} HTML de la sección, listo para insertar (ver
  *   nota de sanitización más abajo antes de usar innerHTML)
+ *
+ * VERIFICADO CONTRA LA API REAL (20/09/2026, nregistro=77758 y otros):
+ * este endpoint NO devuelve el HTML en texto plano, sino un array JSON del
+ * tipo [{ seccion, titulo, contenido, orden }], donde `contenido` es el HTML.
+ * Normalmente hay un solo elemento, pero puede haber varios (subsecciones),
+ * por eso se concatenan todos los fragmentos.
  */
 async function obtenerContenidoSeccion(tipoDoc, nregistro, seccion) {
   const params = new URLSearchParams({ nregistro, seccion });
@@ -66,8 +75,22 @@ async function obtenerContenidoSeccion(tipoDoc, nregistro, seccion) {
     `${CIMA_BASE_URL}/docSegmentado/contenido/${tipoDoc}?${params}`
   );
   if (!res.ok) throw new Error(`Error obteniendo contenido: ${res.status}`);
-  // CIMA devuelve el HTML como texto plano en el cuerpo de la respuesta
-  return res.text();
+
+  const cuerpo = await res.text();
+
+  try {
+    const data = JSON.parse(cuerpo);
+    const fragmentos = Array.isArray(data) ? data : [data];
+    return fragmentos
+      .map((fragmento) =>
+        typeof fragmento === "string" ? fragmento : fragmento && fragmento.contenido
+      )
+      .filter(Boolean)
+      .join("\n");
+  } catch (err) {
+    // Salvaguarda: si algún registro devolviese HTML plano, se usa tal cual.
+    return cuerpo;
+  }
 }
 
 /**
