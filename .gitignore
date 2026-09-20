@@ -1,0 +1,15 @@
+# El proyecto es estático y no tiene build, así que aquí solo se ignoran
+# ficheros del sistema operativo, del editor y de un entorno local puntual.
+
+# Sistema operativo / editor
+.DS_Store
+Thumbs.db
+*.log
+
+# Entorno local (no se usan en este proyecto, pero por si acaso)
+node_modules/
+.env
+.venv/
+
+# Configuración del servidor de desarrollo
+.vercel/
