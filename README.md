@@ -134,6 +134,9 @@ favicon.svg        → icono maestro (cápsula de marca); de aquí salen los dem
 favicon-32.png     → respaldo del icono para navegadores sin soporte de SVG
 favicon.ico        → respaldo multi-tamaño (16/32/48) para navegadores antiguos
 apple-touch-icon.png → icono para iOS/iPadOS (180×180, opaco)
+social-preview.png → imagen 1280×640 para el "Social preview" del repositorio
+LICENSE            → licencia MIT
+CHANGELOG.md       → historial de cambios
 README.md          → este documento
 ```
 
@@ -164,6 +167,22 @@ Dos avisos si editas el SVG: el color va literal (no puede usar las variables de
 comentario XML **no** puede aparecer un doble guion seguido, o el navegador
 pintará una página de error en lugar del icono.
 
+### Social preview
+
+`social-preview.png` (1280×640) es la imagen que aparece al compartir el
+repositorio en X, WhatsApp, Slack, etc. Se genera renderizando una maqueta con la
+identidad de la web (marca, titular, buscador y chips) y la tipografía **Inter**
+incrustada, para que no dependa de las fuentes instaladas:
+
+```bash
+# Maqueta -> PNG 1280x640
+google-chrome --headless --window-size=1280,640 --hide-scrollbars \
+  --screenshot=social-preview.png file:///ruta/a/la/maqueta.html
+```
+
+GitHub no permite fijarla por API ni con `gh`: hay que subirla a mano en
+*Settings → General → Social preview*.
+
 ## Cómo probarlo en local
 
 No hay build ni dependencias; basta con servir la carpeta como sitio estático
@@ -185,3 +204,23 @@ python3 -m http.server 8765
   `<strong>` y `<ul>`; se puede inyectar con cuidado (ver comentarios en
   `api.js` sobre sanitización básica antes de usar `innerHTML`). Ese HTML va
   **dentro del JSON** de la respuesta, no en el cuerpo como texto plano.
+- Mantener el [CHANGELOG](CHANGELOG.md) al día: cada cambio con cierta entidad
+  añade una entrada (y, si aún no está en una versión etiquetada, va bajo
+  `## Sin publicar`).
+- **Al cerrar una fase**: subir la versión en el CHANGELOG (`## [0.x.0] - fecha`),
+  crear la etiqueta anotada (`git tag -a v0.x.0 -m "…" && git push origin v0.x.0`)
+  y, si se quiere, publicar la release con esas notas
+  (`gh release create v0.x.0 --notes-from-tag`).
+
+## Licencia
+
+El **código** de este proyecto se publica bajo la licencia [MIT](LICENSE): puedes
+usarlo, modificarlo y redistribuirlo citando la autoría.
+
+Los **datos** (prospectos, fichas técnicas, presentaciones y códigos nacionales)
+los sirve la [AEMPS](https://cima.aemps.es) a través de su API pública de CIMA y
+son suyos; aquí solo se muestran tal cual, sin modificarlos.
+
+Esta web es un visor y **no sustituye el consejo de un profesional sanitario**:
+para cualquier duda sobre un tratamiento, consulta a tu médico o farmacéutico.
+

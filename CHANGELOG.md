@@ -1,0 +1,88 @@
+# Changelog
+
+Todos los cambios relevantes de **ProspectoYa**. El formato sigue
+[Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las fechas van en
+`AAAA-MM-DD`.
+
+El proyecto no publica versiones numeradas **hasta ahora**: a partir de aquí cada
+versión va etiquetada siguiendo [versionado semántico](https://semver.org/lang/es/)
+(`0.x` = desarrollo inicial, con la Fase 2 todavía abierta). La web se despliega
+de forma continua desde `main` (Vercel), así que los cambios que aún no forman
+parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
+
+Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
+y `Eliminado` (solo los que apliquen).
+
+## [0.1.0] - 2026-09-20
+
+Primera versión: la Fase 1 del MVP, con buscador, visor de prospectos y ficha
+técnica, y resumen rápido. Sin backend, sin build y sin frameworks: HTML/CSS/JS
+vanilla contra la API pública de CIMA (AEMPS).
+
+### Añadido
+
+- **Buscador de medicamentos** con autocompletado en tiempo real (`GET /medicamentos`,
+  debounce de 300 ms, máximo 8 sugerencias) y búsqueda completa con Enter o con
+  el botón, con la lista de resultados recortada en cliente (`MAX_RESULTADOS`).
+- **Búsqueda por código en el mismo campo**: 6 dígitos se interpretan como
+  Código Nacional (`GET /presentaciones?cn=`) y, si no hay coincidencia, como
+  nº de registro; de 5 dígitos en adelante, como nº de registro (incluye los
+  registros largos tipo EMA). Un código incompleto avisa sin consultar la API.
+- **Código Nacional (CN) visible**: en cada resultado —llega en diferido, cuando
+  la tarjeta entra en pantalla, con `IntersectionObserver` y caché por
+  `nregistro`— y en la ficha del medicamento, que lista los CN de todos sus
+  envases.
+- **Visor del prospecto y de la ficha técnica** por secciones, con pestañas y
+  acordeón (`/docSegmentado/secciones` + `/docSegmentado/contenido`).
+- **Resumen rápido** en la cabecera de la ficha: dosis, contraindicaciones y
+  alertas clave (embarazo, conducción, alcohol), sacadas del prospecto y, como
+  respaldo, de la ficha técnica. Se configura añadiendo objetos a `CAMPOS_RESUMEN`.
+- **Interfaz tipo asistente**: buscador con forma de *composer* (lupa, botón
+  circular con flecha, apagado mientras no hay texto, y chips de ejemplo), tema
+  claro/oscuro con persistencia en `localStorage` y sin destello al cargar, y
+  hero de presentación.
+- **Accesibilidad**: `role="combobox"` con lista `listbox`/`option` y
+  `aria-activedescendant`, navegación con ↑/↓, Enter para abrir la sugerencia
+  marcada, Escape y clic fuera para cerrar; acordeón con `role="button"` y
+  `aria-expanded`.
+- **Iconos y marca**: `favicon.svg` (fichero maestro), `favicon-32.png`,
+  `favicon.ico` (16/32/48) y `apple-touch-icon.png` para iOS.
+- **Imagen de social preview** (`social-preview.png`, 1280×640) para compartir
+  el repositorio.
+- **Licencia MIT** (`LICENSE`).
+
+### Corregido
+
+- `docSegmentado/contenido` devuelve un **array JSON** y no HTML plano: `api.js`
+  une los fragmentos antes de pintarlos.
+- El autocompletado ya no queda por debajo de las tarjetas de resultados ni de
+  la ficha: la animación de entrada creaba un *stacking context* en
+  `.search-section` que dejaba encerrado su `z-index`.
+- Rutas de los assets: los ficheros viven en la **raíz** del proyecto (no hay
+  `css/` ni `js/`), así que `index.html` los referencia con rutas planas.
+
+### Documentación
+
+- README con la referencia de la API de CIMA y una tabla de **formas de respuesta
+  reales**: filtro `cn` de coincidencia exacta, `?nregistro` sin soporte de lotes,
+  tope de 200 filas por respuesta, filtros con valor vacío que devuelven el
+  catálogo entero (25.464 filas) y nº de registro de 8-10 dígitos.
+- README con el detalle de cómo funcionan el buscador (búsqueda por código, CN en
+  los resultados) y el resumen rápido.
+- `.gitignore` para ficheros del sistema operativo, del editor y del entorno local.
+
+**Commits de esta versión:**
+[`e067228`](https://github.com/rzazo24/prospectoya/commit/e067228) ·
+[`d3a43fa`](https://github.com/rzazo24/prospectoya/commit/d3a43fa) ·
+[`2d3d401`](https://github.com/rzazo24/prospectoya/commit/2d3d401) ·
+[`1619cc4`](https://github.com/rzazo24/prospectoya/commit/1619cc4) ·
+[`3182ccc`](https://github.com/rzazo24/prospectoya/commit/3182ccc) ·
+[`383b762`](https://github.com/rzazo24/prospectoya/commit/383b762) ·
+[`4fba8a5`](https://github.com/rzazo24/prospectoya/commit/4fba8a5) ·
+[`67c213d`](https://github.com/rzazo24/prospectoya/commit/67c213d) ·
+[`4bd06e2`](https://github.com/rzazo24/prospectoya/commit/4bd06e2) ·
+[`3396182`](https://github.com/rzazo24/prospectoya/commit/3396182) ·
+[`7495276`](https://github.com/rzazo24/prospectoya/commit/7495276)
+
+[Sin publicar]: https://github.com/rzazo24/prospectoya/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/rzazo24/prospectoya/releases/tag/v0.1.0
