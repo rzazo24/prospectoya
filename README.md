@@ -79,9 +79,9 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
 - Semántica ARIA: `#search-input` es `role="combobox"` y la lista es
   `role="listbox"` con cada `li` como `role="option"`, así que el autocompletado
   funciona con lectores de pantalla sin sacar el foco del input.
-- Toda la interacción está cubierta por un test de humo en jsdom (fuera del
-  repo) que carga `index.html` + `tema.js` + `api.js` + `app.js` con `fetch`
-  simulado.
+- Toda la interacción está cubierta por un test de humo en jsdom que carga
+  `index.html` + `tema.js` + `api.js` + `app.js` con `fetch` simulado; vive en
+  [`tests/`](tests/README.md) (ver [Tests](#tests)).
 
 
 
@@ -171,11 +171,14 @@ captura-inicio.png → captura del buscador que se muestra al principio del READ
 LICENSE            → licencia MIT
 CHANGELOG.md       → historial de cambios
 README.md          → este documento
+tests/             → suites de test (jsdom y Chrome real); no forman parte del sitio
 ```
 
-> Los ficheros están **en la raíz** del proyecto (no hay `css/` ni `js/`), y
-> `index.html` los referencia con rutas planas. Mantener ambos sincronizados:
-> si se mueven a subcarpetas, hay que actualizar las rutas.
+> Los ficheros del **sitio** están **en la raíz** del proyecto (no hay `css/` ni
+> `js/`), y `index.html` los referencia con rutas planas. Mantener ambos
+> sincronizados: si se mueven a subcarpetas, hay que actualizar las rutas.
+> `tests/` es la única subcarpeta y es la excepción: no la carga la web, así que
+> no está enlazada desde ninguna página.
 
 ### Iconos
 
@@ -230,12 +233,35 @@ python3 -m http.server 8765
 # http://127.0.0.1:8765/ayuda.html
 ```
 
+## Tests
+
+Las suites viven en [`tests/`](tests/README.md) y **no forman parte del sitio**:
+nada de la web las carga. Necesitan Node, y las que usan navegador real un
+Chrome/Chromium (Node las demás no necesitan nada instalado):
+
+```bash
+cd tests
+npm install          # jsdom (única dependencia, sólo de desarrollo)
+npm test             # 115 comprobaciones: estructura, buscador, páginas, iconos y z-index
+npm run test:api-real   # contra la API real de CIMA (necesita red)
+```
+
+Resumen: `test-html.js` (estructura de las dos páginas y metaetiquetas),
+`test-busqueda.js` (buscador completo en jsdom con `fetch` simulado),
+`test-paginas.js` (las dos páginas en Chrome real, servidas por HTTP),
+`test-iconos.js` (los favicons cargan y miden lo que deben), `test-solape.js`
+(regresión del z-index del desplegable) y `test-api-real.js` (la API de verdad).
+En [`tests/README.md`](tests/README.md) está el detalle de cada una.
+
 ## Notas para quien continúe el desarrollo
 
 - No añadir ninguna llamada a APIs de IA (OpenAI, Anthropic, etc.) — está
   descartado a propósito para esta fase.
 - No añadir dependencias de build (webpack, vite...) ni frameworks. El
   proyecto se sirve tal cual desde Vercel como sitio estático.
+- **El sitio no lleva ninguna dependencia.** La única de desarrollo (`jsdom`,
+  para los tests) está en `tests/package.json` y nunca se instala al desplegar:
+  no añadir un `package.json` en la raíz ni dependencias de ejecución.
 - El HTML de `docSegmentado/contenido` viene formateado con tags como `<p>`,
   `<strong>` y `<ul>`; se puede inyectar con cuidado (ver comentarios en
   `api.js` sobre sanitización básica antes de usar `innerHTML`). Ese HTML va

@@ -1,0 +1,18 @@
+{
+  "name": "prospectoya-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Suites de test de ProspectoYa. No forman parte del sitio: nada de la web carga estos ficheros.",
+  "scripts": {
+    "test": "node test-html.js && node test-busqueda.js && node test-paginas.js && node test-iconos.js && node test-solape.js",
+    "test:html": "node test-html.js",
+    "test:busqueda": "node test-busqueda.js",
+    "test:paginas": "node test-paginas.js",
+    "test:iconos": "node test-iconos.js",
+    "test:solape": "node test-solape.js",
+    "test:api-real": "node test-api-real.js"
+  },
+  "devDependencies": {
+    "jsdom": "^30.1.0"
+  }
+}

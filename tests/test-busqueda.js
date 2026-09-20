@@ -1,0 +1,344 @@
+/**
+ * Test de humo del buscador (composer tipo ChatGPT/DeepSeek) de ProspectoYa.
+ * Carga index.html + tema.js + api.js + app.js reales en jsdom, con fetch
+ * simulado. Sólo lee los ficheros del proyecto: no escribe nada en el repo.
+ *
+ *   cd tests && node test-busqueda.js
+ */
+const fs = require("fs");
+const path = require("path");
+const { JSDOM, VirtualConsole } = require("jsdom");
+
+/** Raíz del proyecto (una carpeta por encima de tests/). */
+const RAIZ = path.resolve(__dirname, "..");
+const api = fs.readFileSync(path.join(RAIZ, "api.js"), "utf8");
+const app = fs.readFileSync(path.join(RAIZ, "app.js"), "utf8");
+const tema = fs.readFileSync(path.join(RAIZ, "tema.js"), "utf8");
+
+let html = fs.readFileSync(path.join(RAIZ, "index.html"), "utf8");
+html = html.replace(
+  '<script src="tema.js"></script>\n  <script src="api.js"></script>\n  <script src="app.js"></script>',
+  `<script>${tema}</script>\n  <script>${api}</script>\n  <script>${app}</script>`
+);
+
+// Respuestas simuladas de la API de CIMA
+const MEDICAMENTOS = [
+  { nregistro: "77758", nombre: "PARACETAMOL CINFA 1 g COMPRIMIDOS", labtitular: "CINFA", receta: false, generico: true, comerc: true },
+  { nregistro: "70001", nombre: "PARACETAMOL KERN PHARMA 500 mg", labtitular: "KERN PHARMA", receta: false, generico: true, comerc: true },
+];
+
+// Presentaciones simuladas: /medicamentos NO trae el CN, /presentaciones sí
+const PRESENTACIONES = [
+  { nregistro: "77758", cn: "662025", nombre: "PARACETAMOL CINFA 1 g COMPRIMIDOS EFG , 20 comprimidos", labtitular: "CINFA", receta: false, generico: true, comerc: true },
+  { nregistro: "77758", cn: "662026", nombre: "PARACETAMOL CINFA 1 g COMPRIMIDOS EFG , 40 comprimidos", labtitular: "CINFA", receta: false, generico: true, comerc: true },
+  { nregistro: "70001", cn: "700123", nombre: "PARACETAMOL KERN PHARMA 500 mg , 20 comprimidos", labtitular: "KERN PHARMA", receta: false, generico: true, comerc: true },
+  { nregistro: "123456", cn: "999888", nombre: "MEDICAMENTO ANTIGUO 100 mg , 30 comprimidos", labtitular: "LAB", comerc: true },
+];
+
+// Medicamento "antiguo" con nº de registro de 6 dígitos: sólo aparece al
+// consultar por código (no está en la lista de resultados por nombre)
+const POR_NREGISTRO = { nregistro: "123456", nombre: "MEDICAMENTO ANTIGUO 100 mg", labtitular: "LAB", comerc: true };
+
+// URLs de las peticiones simuladas, para comprobar qué se consulta y cuándo
+const peticiones = [];
+
+const erroresJsdom = [];
+const vc = new VirtualConsole();
+vc.on("jsdomError", (e) => erroresJsdom.push(e.message));
+
+const dom = new JSDOM(html, {
+  runScripts: "dangerously",
+  url: "https://prospectoya.test/",
+  virtualConsole: vc,
+  beforeParse(window) {
+    // jsdom no implementa matchMedia, scrollIntoView ni IntersectionObserver
+    window.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
+    window.Element.prototype.scrollIntoView = function () {};
+    // Observador simulado: al observar un elemento se considera visible al momento
+    window.IntersectionObserver = class {
+      constructor(callback) {
+        this.callback = callback;
+      }
+      observe(el) {
+        this.callback([{ target: el, isIntersecting: true }], this);
+      }
+      unobserve() {}
+      disconnect() {}
+    };
+    window.fetch = async (url) => {
+      const u = String(url);
+      peticiones.push(u);
+      const params = new URLSearchParams(u.split("?")[1] || "");
+      let data = {};
+
+      if (u.includes("/presentaciones?")) {
+        const cn = params.get("cn");
+        const nregistro = params.get("nregistro");
+        const filas = cn
+          ? PRESENTACIONES.filter((p) => p.cn === cn)
+          : PRESENTACIONES.filter((p) => p.nregistro === nregistro);
+        data = { totalFilas: filas.length, pagina: 1, tamanioPagina: 200, resultados: filas };
+      } else if (u.includes("/medicamentos?")) {
+        const nregistro = params.get("nregistro");
+        const filas = nregistro
+          ? MEDICAMENTOS.concat(POR_NREGISTRO).filter((m) => m.nregistro === nregistro)
+          : MEDICAMENTOS;
+        data = { totalFilas: filas.length, pagina: 1, tamanioPagina: 200, resultados: filas };
+      } else if (u.includes("/docSegmentado/secciones/")) {
+        data = [];
+      } else if (u.includes("/docSegmentado/contenido/")) {
+        data = [{ seccion: "1", titulo: "Sección", contenido: "<p>Texto</p>", orden: 1 }];
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        json: async () => data,
+        text: async () => JSON.stringify(data),
+      };
+    };
+  },
+});
+
+const { window } = dom;
+const { document } = window;
+
+let fallos = 0;
+function comprobar(descripcion, condicion, extra = "") {
+  if (!condicion) fallos++;
+  console.log(`${condicion ? "OK   " : "FALLA"} ${descripcion}${extra ? "  (" + extra + ")" : ""}`);
+}
+
+const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+const input = document.getElementById("search-input");
+const lista = document.getElementById("search-suggestions");
+const boton = document.getElementById("search-submit");
+const detalle = document.getElementById("detail-section");
+
+const pulsar = (key) =>
+  input.dispatchEvent(new window.KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }));
+const escribir = (valor) => {
+  input.value = valor;
+  input.dispatchEvent(new window.Event("input", { bubbles: true }));
+};
+
+(async () => {
+  // --- 1. Estado inicial -------------------------------------------------
+  comprobar("el botón de envío arranca desactivado (input vacío)", boton.disabled === true);
+  comprobar("el desplegable arranca cerrado", lista.hidden === true);
+  comprobar("el <ul> declara role=listbox", lista.getAttribute("role") === "listbox");
+  comprobar("el input declara role=combobox", input.getAttribute("role") === "combobox");
+
+  // --- 2. Autocompletado al escribir ------------------------------------
+  escribir("parac");
+  comprobar("el botón de envío se activa al escribir", boton.disabled === false);
+  await esperar(500);
+
+  const opciones = lista.querySelectorAll("li");
+  comprobar("se pintan 2 sugerencias", opciones.length === 2, `li=${opciones.length}`);
+  comprobar("el desplegable queda abierto", lista.hidden === false);
+  comprobar("aria-expanded=true en el input", input.getAttribute("aria-expanded") === "true");
+  comprobar(
+    "cada opción es role=option con id sugerencia-N",
+    opciones.length === 2 &&
+      opciones[0].getAttribute("role") === "option" &&
+      opciones[0].id === "sugerencia-0" &&
+      opciones[1].id === "sugerencia-1"
+  );
+
+  // --- 3. Navegación con ↑ / ↓ ------------------------------------------
+  pulsar("ArrowDown");
+  comprobar("↓ marca la primera sugerencia", opciones[0].classList.contains("is-active"));
+  comprobar("aria-selected=true en la marcada", opciones[0].getAttribute("aria-selected") === "true");
+  comprobar(
+    "aria-activedescendant apunta a la marcada",
+    input.getAttribute("aria-activedescendant") === "sugerencia-0"
+  );
+
+  pulsar("ArrowDown");
+  comprobar(
+    "otro ↓ baja a la segunda",
+    opciones[1].classList.contains("is-active") && !opciones[0].classList.contains("is-active")
+  );
+
+  pulsar("ArrowUp");
+  comprobar("↑ vuelve a la primera", opciones[0].classList.contains("is-active"));
+
+  pulsar("ArrowUp");
+  comprobar("↑ en la primera da la vuelta a la última", opciones[1].classList.contains("is-active"));
+
+  // --- 4. Enter abre la sugerencia marcada ------------------------------
+  pulsar("Enter");
+  await esperar(80);
+  comprobar("Enter elige la sugerencia marcada", input.value === MEDICAMENTOS[1].nombre, input.value);
+  comprobar("el desplegable se cierra al elegir", lista.hidden === true);
+  comprobar("aria-activedescendant se limpia", input.hasAttribute("aria-activedescendant") === false);
+  comprobar("se muestra la ficha del medicamento", detalle.hidden === false);
+  comprobar(
+    "el detalle lleva el nombre de la sugerencia",
+    document.getElementById("detail-name").textContent === MEDICAMENTOS[1].nombre
+  );
+
+
+
+  // --- 5. Escape y clic fuera -------------------------------------------
+  escribir("ibupro");
+  await esperar(500);
+  comprobar("el desplegable se reabre al escribir", lista.hidden === false);
+
+  pulsar("Escape");
+  comprobar("Escape cierra el desplegable", lista.hidden === true);
+
+  escribir("omepra");
+  await esperar(500);
+  document.body.dispatchEvent(new window.Event("pointerdown", { bubbles: true }));
+  comprobar("un clic fuera cierra el desplegable", lista.hidden === true);
+
+  // --- 6. Texto demasiado corto -----------------------------------------
+  escribir("pa");
+  await esperar(400);
+  comprobar("con menos de 3 letras no hay sugerencias", lista.hidden === true);
+
+  // --- 7. Enter sin sugerencia marcada = búsqueda completa --------------
+  escribir("parac");
+  pulsar("Enter");
+  await esperar(200);
+  const resultados = document.querySelectorAll("#results-list li");
+  comprobar("Enter lanza la búsqueda completa", resultados.length === 2, `resultados=${resultados.length}`);
+  comprobar(
+    "el estado de resultados se actualiza",
+    document.getElementById("results-status").textContent.includes("resultado"),
+    document.getElementById("results-status").textContent
+  );
+  // El CN de cada resultado se pide cuando entra en pantalla (observador simulado)
+  comprobar(
+    "se pide el CN de cada resultado visible",
+    peticiones.some((u) => u.includes("/presentaciones?nregistro=77758")),
+    peticiones.join(" | ")
+  );
+  comprobar(
+    "el CN se pinta en el resultado",
+    document.querySelector("#results-list li .result-cn").textContent.includes("CN 662025"),
+    document.querySelector("#results-list li .result-cn").textContent
+  );
+
+  // --- 8. Búsqueda por código nacional (CN) ------------------------------
+  peticiones.length = 0;
+  escribir("662025");
+  pulsar("Enter");
+  await esperar(150);
+
+  const itemsCN = document.querySelectorAll("#results-list li");
+  comprobar(
+    "la búsqueda por CN usa /presentaciones?cn=",
+    peticiones.some((u) => u.includes("/presentaciones?cn=662025")),
+    peticiones.join(" | ")
+  );
+  comprobar("el CN exacto devuelve 1 resultado", itemsCN.length === 1, `li=${itemsCN.length}`);
+  comprobar(
+    "el resultado muestra el CN",
+    itemsCN[0] && itemsCN[0].querySelector(".result-cn").textContent === "CN 662025",
+    itemsCN[0] ? itemsCN[0].querySelector(".result-cn").textContent : "sin resultado"
+  );
+  comprobar(
+    "no se pide el CN aparte (ya venía en la respuesta)",
+    peticiones.filter((u) => u.includes("/presentaciones?nregistro=")).length === 0,
+    peticiones.join(" | ")
+  );
+  comprobar(
+    "el estado habla del código nacional",
+    document.getElementById("results-status").textContent.includes("código nacional"),
+    document.getElementById("results-status").textContent
+  );
+
+  // --- 9. Nº de registro que no es CN: respaldo automático --------------
+  peticiones.length = 0;
+  escribir("123456");
+  pulsar("Enter");
+  await esperar(200);
+  comprobar(
+    "primero prueba como CN y luego como nº de registro",
+    peticiones.some((u) => u.includes("/presentaciones?cn=123456")) &&
+      peticiones.some((u) => u.includes("/medicamentos?nregistro=123456")),
+    peticiones.join(" | ")
+  );
+  comprobar(
+    "muestra el medicamento encontrado por nº de registro",
+    document.querySelectorAll("#results-list li").length === 1 &&
+      document.getElementById("detail-name") !== null,
+    `li=${document.querySelectorAll("#results-list li").length}`
+  );
+  comprobar(
+    "su CN se resuelve en diferido",
+    peticiones.some((u) => u.includes("/presentaciones?nregistro=123456")) &&
+      document.querySelector("#results-list li .result-cn").textContent === "CN 999888",
+    document.querySelector("#results-list li .result-cn").textContent
+  );
+
+  // --- 10. Código incompleto: aviso sin consultar -----------------------
+  peticiones.length = 0;
+  escribir("702");
+  await esperar(60);
+  pulsar("Enter");
+  await esperar(80);
+  comprobar("un código incompleto no consulta la API", peticiones.length === 0, peticiones.join(" | "));
+  comprobar(
+    "avisa de que el código no es válido",
+    document.getElementById("results-status").textContent.includes("no es un código válido"),
+    document.getElementById("results-status").textContent
+  );
+
+  // --- 11. Búsqueda por nombre: el CN llega en diferido -----------------
+  peticiones.length = 0;
+  escribir("parac");
+  pulsar("Enter");
+  await esperar(200);
+
+  const primero = document.querySelector("#results-list li");
+  comprobar("el resultado reserva hueco para el CN", Boolean(primero.querySelector(".result-cn")));
+  comprobar(
+    "el CN ya cacheado no se vuelve a pedir",
+    peticiones.filter((u) => u.includes("/presentaciones?nregistro=")).length === 0,
+    peticiones.join(" | ")
+  );
+  comprobar(
+    "el CN aparece en el resultado",
+    primero.querySelector(".result-cn").textContent.includes("CN 662025"),
+    primero.querySelector(".result-cn").textContent
+  );
+  comprobar(
+    "los dos envases se listan (sin resumir)",
+    primero.querySelector(".result-cn").textContent === "CN 662025 · CN 662026",
+    primero.querySelector(".result-cn").textContent
+  );
+  comprobar(
+    "el title del CN enumera los envases",
+    primero.querySelector(".result-cn").title.includes("662026"),
+    primero.querySelector(".result-cn").title
+  );
+
+  // --- 11. Ficha del medicamento: todos los CN de sus envases -----------
+  peticiones.length = 0;
+  primero.click();
+  await esperar(150);
+
+  const detalleCN = document.getElementById("detail-cn");
+  comprobar(
+    "la ficha lista los CN de los envases",
+    detalleCN.hidden === false &&
+      detalleCN.textContent.includes("662025") &&
+      detalleCN.textContent.includes("662026"),
+    detalleCN.textContent
+  );
+  comprobar(
+    "abrir la ficha no repite la petición de CN (caché)",
+    peticiones.filter((u) => u.includes("/presentaciones?nregistro=77758")).length === 0,
+    peticiones.join(" | ")
+  );
+
+  // --- 12. Sin errores de runtime ---------------------------------------
+  comprobar("sin errores de jsdom durante la ejecución", erroresJsdom.length === 0, erroresJsdom.join(" | "));
+
+  console.log(fallos === 0 ? "\nTODO OK" : `\n${fallos} comprobación(es) fallida(s)`);
+  process.exitCode = fallos === 0 ? 0 : 1;
+})();

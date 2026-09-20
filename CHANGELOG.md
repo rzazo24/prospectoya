@@ -17,6 +17,13 @@ y `Eliminado` (solo los que apliquen).
 
 ### Añadido
 
+- **Carpeta `tests/`** con las suites del proyecto, antes repartidas fuera del
+  repo: estructura HTML, buscador completo en jsdom, las dos páginas en Chrome
+  real servidas por HTTP (incluido que el tema se mantiene al pasar de una a
+  otra), los favicons, la regresión del `z-index` del autocompletado y la
+  comprobación de `api.js` contra la API real de CIMA (115 comprobaciones).
+  Llevan un `README.md` propio y un `package.json` con `jsdom` como única
+  dependencia de desarrollo (`npm test`).
 - **Página de ayuda** (`ayuda.html`): explica de dónde salen los datos (AEMPS ·
   CIMA), cómo se busca por nombre, código nacional y nº de registro, cómo se lee
   el resumen rápido, atajos de teclado, privacidad, preguntas frecuentes, qué
