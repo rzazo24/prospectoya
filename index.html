@@ -25,7 +25,7 @@
         placeholder="Busca por nombre, principio activo o laboratorio..."
         autocomplete="off"
       >
-      <!-- TODO: autocompletado en tiempo real aquí (lista tipo <ul>) -->
+      <!-- Autocompletado en tiempo real (se rellena desde app.js) -->
       <ul id="search-suggestions" class="suggestions-list" hidden></ul>
     </section>
 
@@ -54,9 +54,7 @@
 
       <!-- Resumen rápido: dosis, contraindicaciones, alertas clave -->
       <!-- Se rellena desde app.js (renderQuickSummary) y queda oculto si no hay datos -->
-      <div id="quick-summary" class="quick-summary" hidden>
-        <!-- TODO: extraer y mostrar aquí lo esencial antes del detalle completo -->
-      </div>
+      <div id="quick-summary" class="quick-summary" hidden></div>
 
       <!-- Tabs: Prospecto / Ficha técnica -->
       <div class="doc-tabs">

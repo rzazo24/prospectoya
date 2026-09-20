@@ -108,7 +108,6 @@ python3 -m http.server 8765
 # http://127.0.0.1:8765/index.html
 ```
 
-
 ## Notas para quien continúe el desarrollo
 
 - No añadir ninguna llamada a APIs de IA (OpenAI, Anthropic, etc.) — está

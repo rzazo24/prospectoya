@@ -443,8 +443,14 @@ async function renderQuickSummary(nregistro) {
 
   const nota = document.createElement("p");
   nota.className = "quick-summary-note";
+  const origen = {
+    "Prospecto": "del prospecto",
+    "Ficha técnica": "de la ficha técnica",
+  };
+  const documentos = [...new Set(conDatos.map((campo) => datos.resumen[campo.id].documento))];
   nota.textContent =
-    "Resumen extraído automáticamente del prospecto. No sustituye el consejo de un profesional sanitario.";
+    `Resumen extraído automáticamente ${documentos.map((d) => origen[d] || d).join(" y ")}. ` +
+    "No sustituye el consejo de un profesional sanitario.";
   quickSummary.appendChild(nota);
 }
 
