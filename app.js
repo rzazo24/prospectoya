@@ -8,6 +8,11 @@
 
 const searchInput = document.getElementById("search-input");
 const suggestionsList = document.getElementById("search-suggestions");
+const searchForm = document.getElementById("search-form");
+const searchSubmit = document.getElementById("search-submit");
+const composerWrap = document.querySelector(".composer-wrap");
+const searchExamples = document.getElementById("search-examples");
+const themeToggle = document.getElementById("theme-toggle");
 const resultsList = document.getElementById("results-list");
 const resultsStatus = document.getElementById("results-status");
 const detailSection = document.getElementById("detail-section");
@@ -23,18 +28,71 @@ const docTabs = document.querySelectorAll(".doc-tab");
 const MAX_SUGERENCIAS = 8;
 const MAX_RESULTADOS = 60;
 
+const CLAVE_TEMA = "prospectoya-tema";
+
 let currentNRegistro = null;
 let currentTipoDoc = 2; // 2 = prospecto por defecto, 1 = ficha técnica
 let debounceTimer = null;
+let indiceSugerenciaActiva = -1; // -1 = ninguna sugerencia marcada con el teclado
+
+// --- Tema claro / oscuro ---
+
+/** Tema activo según el atributo del <html> (lo fija el script del <head>). */
+function temaActual() {
+  return document.documentElement.dataset.tema === "oscuro" ? "oscuro" : "claro";
+}
+
+/**
+ * Aplica el tema y, opcionalmente, lo recuerda en localStorage.
+ * @param {"claro"|"oscuro"} tema
+ * @param {boolean} guardar
+ */
+function aplicarTema(tema, guardar) {
+  document.documentElement.dataset.tema = tema;
+  themeToggle.setAttribute("aria-pressed", String(tema === "oscuro"));
+  themeToggle.title = tema === "oscuro" ? "Cambiar a tema claro" : "Cambiar a tema oscuro";
+
+  if (guardar) {
+    try {
+      localStorage.setItem(CLAVE_TEMA, tema);
+    } catch (err) {
+      // localStorage bloqueado (modo privado): el tema sigue funcionando en la sesión
+    }
+  }
+}
+
+themeToggle.addEventListener("click", () => {
+  aplicarTema(temaActual() === "oscuro" ? "claro" : "oscuro", true);
+});
+
+// Estado inicial del botón (el tema ya viene puesto desde el <head>)
+aplicarTema(temaActual(), false);
 
 // --- Búsqueda con autocompletado ---
+
+function ocultarSugerencias() {
+  suggestionsList.hidden = true;
+  searchInput.setAttribute("aria-expanded", "false");
+  marcarSugerenciaActiva(-1);
+}
+
+function mostrarSugerencias() {
+  suggestionsList.hidden = false;
+  searchInput.setAttribute("aria-expanded", "true");
+}
+
+/** El botón de la flecha sólo se activa cuando hay algo escrito, como en ChatGPT. */
+function actualizarBotonEnvio() {
+  searchSubmit.disabled = searchInput.value.trim().length === 0;
+}
 
 searchInput.addEventListener("input", (e) => {
   const term = e.target.value.trim();
   clearTimeout(debounceTimer);
+  actualizarBotonEnvio();
 
   if (term.length < 3) {
-    suggestionsList.hidden = true;
+    ocultarSugerencias();
     return;
   }
 
@@ -45,7 +103,7 @@ searchInput.addEventListener("input", (e) => {
       renderSuggestions(data.resultados || []);
     } catch (err) {
       console.error(err);
-      suggestionsList.hidden = true;
+      ocultarSugerencias();
       mostrarEstadoResultados(
         "No se ha podido consultar la API de CIMA. Comprueba tu conexión e inténtalo de nuevo.",
         true
@@ -58,13 +116,16 @@ function renderSuggestions(medicamentos) {
   suggestionsList.innerHTML = "";
 
   if (medicamentos.length === 0) {
-    suggestionsList.hidden = true;
+    ocultarSugerencias();
     return;
   }
 
   // Se limita a MAX_SUGERENCIAS y se añade el laboratorio como texto secundario
-  medicamentos.slice(0, MAX_SUGERENCIAS).forEach((med) => {
+  medicamentos.slice(0, MAX_SUGERENCIAS).forEach((med, indice) => {
     const li = document.createElement("li");
+    li.id = `sugerencia-${indice}`;
+    li.setAttribute("role", "option");
+    li.setAttribute("aria-selected", "false");
 
     const nombre = document.createElement("span");
     nombre.className = "suggestion-name";
@@ -78,33 +139,133 @@ function renderSuggestions(medicamentos) {
       li.appendChild(lab);
     }
 
+    // Pasar el ratón también marca la opción, para que teclado y puntero
+    // no apunten a dos sugerencias distintas a la vez.
+    li.addEventListener("mouseenter", () => marcarSugerenciaActiva(indice));
+
     li.addEventListener("click", () => {
-      suggestionsList.hidden = true;
+      ocultarSugerencias();
       searchInput.value = med.nombre;
+      actualizarBotonEnvio();
       selectMedicamento(med);
     });
 
     suggestionsList.appendChild(li);
   });
 
-  suggestionsList.hidden = false;
+  marcarSugerenciaActiva(-1);
+  mostrarSugerencias();
 }
 
-// Al pulsar Enter se lanza la búsqueda completa y se pinta #results-list
-// (el desplegable de sugerencias es solo un atajo de autocompletado).
-searchInput.addEventListener("keydown", (e) => {
-  if (e.key !== "Enter") return;
+/**
+ * Marca la sugerencia que elegiría Enter (realce equivalente al hover).
+ * @param {number} indice - posición dentro del desplegable; -1 = ninguna
+ */
+function marcarSugerenciaActiva(indice) {
+  const items = Array.from(suggestionsList.querySelectorAll("li"));
+  indiceSugerenciaActiva = indice >= 0 && indice < items.length ? indice : -1;
+
+  items.forEach((li, i) => {
+    const activa = i === indiceSugerenciaActiva;
+    li.classList.toggle("is-active", activa);
+    li.setAttribute("aria-selected", String(activa));
+  });
+
+  // aria-activedescendant mantiene el foco en el input mientras se recorre la lista
+  if (indiceSugerenciaActiva === -1) {
+    searchInput.removeAttribute("aria-activedescendant");
+    return;
+  }
+
+  const activo = items[indiceSugerenciaActiva];
+  searchInput.setAttribute("aria-activedescendant", activo.id);
+  // block:"nearest" evita que la página salte al moverse por la lista
+  activo.scrollIntoView({ block: "nearest" });
+}
+
+/** Mueve la sugerencia activa con ↑ / ↓, dando la vuelta en los extremos. */
+function moverSugerenciaActiva(delta) {
+  const total = suggestionsList.querySelectorAll("li").length;
+  if (total === 0) return;
+
+  const siguiente =
+    indiceSugerenciaActiva === -1
+      ? (delta > 0 ? 0 : total - 1)
+      : (indiceSugerenciaActiva + delta + total) % total;
+
+  marcarSugerenciaActiva(siguiente);
+}
+
+/** Sugerencia marcada con el teclado, o null si no hay ninguna. */
+function sugerenciaActiva() {
+  if (indiceSugerenciaActiva < 0) return null;
+  return suggestionsList.querySelectorAll("li")[indiceSugerenciaActiva] || null;
+}
+
+// Estado inicial del botón de envío (el HTML lo trae desactivado y el input vacío)
+actualizarBotonEnvio();
+
+// Al enviar el formulario (botón con la flecha o Enter) se lanza la búsqueda
+// completa y se pinta #results-list. El desplegable es solo un atajo.
+searchForm.addEventListener("submit", (e) => {
   e.preventDefault();
   clearTimeout(debounceTimer);
   buscarYRenderizarResultados(searchInput.value.trim());
 });
+
+searchInput.addEventListener("keydown", (e) => {
+  const desplegableAbierto = !suggestionsList.hidden;
+
+  if (e.key === "Escape") {
+    ocultarSugerencias();
+    return;
+  }
+
+  // ↑ / ↓ recorren las sugerencias sin sacar el foco del input
+  if (desplegableAbierto && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+    e.preventDefault();
+    moverSugerenciaActiva(e.key === "ArrowDown" ? 1 : -1);
+    return;
+  }
+
+  if (e.key !== "Enter") return;
+  e.preventDefault();
+  clearTimeout(debounceTimer);
+
+  // Con una sugerencia marcada, Enter abre su ficha en lugar de buscar el texto
+  const activa = sugerenciaActiva();
+  if (desplegableAbierto && activa) {
+    activa.click();
+    return;
+  }
+
+  buscarYRenderizarResultados(searchInput.value.trim());
+});
+
+// Cualquier clic fuera del buscador cierra el desplegable
+document.addEventListener("pointerdown", (e) => {
+  if (!composerWrap.contains(e.target)) ocultarSugerencias();
+});
+
+// Chips de ejemplo ("Prueba con…"): buscan directamente al pulsarlos
+if (searchExamples) {
+  searchExamples.addEventListener("click", (e) => {
+    const chip = e.target.closest(".js-ejemplo");
+    if (!chip) return;
+    searchInput.value = chip.dataset.ejemplo;
+    actualizarBotonEnvio();
+    clearTimeout(debounceTimer);
+    buscarYRenderizarResultados(chip.dataset.ejemplo);
+    searchInput.focus();
+  });
+}
 
 /**
  * Busca medicamentos y pinta la lista completa de resultados.
  * @param {string} term - texto introducido por el usuario
  */
 async function buscarYRenderizarResultados(term) {
-  suggestionsList.hidden = true;
+  ocultarSugerencias();
 
   if (term.length < 3) {
     resultsList.innerHTML = "";
@@ -234,8 +395,12 @@ async function selectMedicamento(medicamento) {
 
 docTabs.forEach((tab) => {
   tab.addEventListener("click", async () => {
-    docTabs.forEach((t) => t.classList.remove("active"));
+    docTabs.forEach((t) => {
+      t.classList.remove("active");
+      t.setAttribute("aria-selected", "false");
+    });
     tab.classList.add("active");
+    tab.setAttribute("aria-selected", "true");
     currentTipoDoc = Number(tab.dataset.docType);
     if (currentNRegistro) await cargarSecciones(currentTipoDoc);
   });
@@ -245,7 +410,7 @@ docTabs.forEach((tab) => {
 
 async function cargarSecciones(tipoDoc) {
   const nregistro = currentNRegistro;
-  sectionsAccordion.innerHTML = "<p>Cargando…</p>";
+  sectionsAccordion.innerHTML = '<p class="cargando">Cargando el documento…</p>';
 
   try {
     const secciones = await listarSecciones(tipoDoc, nregistro);
@@ -279,52 +444,109 @@ function renderAccordion(secciones) {
 
     const header = document.createElement("div");
     header.className = "accordion-header";
-    header.textContent = seccion.titulo || `Sección ${idSeccion}`;
+    header.setAttribute("role", "button");
+    header.setAttribute("tabindex", "0");
+    header.setAttribute("aria-expanded", "false");
+
+    const titulo = document.createElement("span");
+    titulo.className = "accordion-title";
+    titulo.textContent = seccion.titulo || `Sección ${idSeccion}`;
+    header.appendChild(titulo);
+    header.appendChild(crearChevron());
 
     const body = document.createElement("div");
     body.className = "accordion-body";
     body.dataset.loaded = "false";
 
-    header.addEventListener("click", async () => {
-      const isOpen = body.classList.contains("open");
+    const alternar = async () => {
+      const abierto = body.classList.contains("open");
 
       // Cerrar todas las demás secciones (comportamiento tipo acordeón)
       document.querySelectorAll(".accordion-body.open").forEach((b) => {
         if (b !== body) b.classList.remove("open");
       });
 
-      if (isOpen) {
+      if (abierto) {
         body.classList.remove("open");
+        header.setAttribute("aria-expanded", "false");
         return;
       }
 
-      if (body.dataset.loaded === "false") {
-        const tipoDoc = currentTipoDoc;
-        const nregistro = currentNRegistro;
-        body.innerHTML = "Cargando…";
-
-        try {
-          const html = await obtenerContenidoSeccion(tipoDoc, nregistro, idSeccion);
-          if (tipoDoc !== currentTipoDoc || nregistro !== currentNRegistro) return;
-          // TODO: sanitizar `html` antes de asignarlo si se añaden más
-          // fuentes de datos en el futuro (ver nota en api.js)
-          body.innerHTML = html || "<p>Esta sección no tiene contenido.</p>";
-          body.dataset.loaded = "true";
-        } catch (err) {
-          console.error(err);
-          body.innerHTML = "<p>No se ha podido cargar esta sección.</p>";
-          body.dataset.loaded = "false";
-          body.classList.add("open");
-          return;
-        }
-      }
-
       body.classList.add("open");
+      header.setAttribute("aria-expanded", "true");
+
+      if (body.dataset.loaded !== "false") return;
+
+      const tipoDoc = currentTipoDoc;
+      const nregistro = currentNRegistro;
+      body.innerHTML = '<p class="cargando">Cargando…</p>';
+
+      try {
+        const html = await obtenerContenidoSeccion(tipoDoc, nregistro, idSeccion);
+        if (tipoDoc !== currentTipoDoc || nregistro !== currentNRegistro) return;
+        // TODO: sanitizar `html` antes de asignarlo si se añaden más
+        // fuentes de datos en el futuro (ver nota en api.js)
+        body.innerHTML = html || "<p>Esta sección no tiene contenido.</p>";
+        quitarEstilosInline(body);
+        body.dataset.loaded = "true";
+      } catch (err) {
+        console.error(err);
+        body.innerHTML = "<p>No se ha podido cargar esta sección.</p>";
+        body.dataset.loaded = "false";
+      }
+    };
+
+    header.addEventListener("click", alternar);
+    header.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        alternar();
+      }
     });
 
     item.appendChild(header);
     item.appendChild(body);
     sectionsAccordion.appendChild(item);
+  });
+}
+
+/** Chevron del acordeón (SVG creado sin innerHTML). */
+function crearChevron() {
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-width", "2");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("class", "accordion-chevron");
+
+  const path = document.createElementNS(NS, "path");
+  path.setAttribute("d", "m6 9 6 6 6-6");
+  svg.appendChild(path);
+
+  return svg;
+}
+
+/**
+ * Limpia el HTML que llega de CIMA para que se vea con la tipografía del sitio:
+ * quita los estilos en línea (CIMA manda Times New Roman 11pt con márgenes en
+ * pt) y los párrafos que solo contienen espacios duros.
+ * No modifica el texto: solo presentación.
+ */
+function quitarEstilosInline(contenedor) {
+  contenedor.querySelectorAll("[style]").forEach((nodo) => nodo.removeAttribute("style"));
+
+  // <font face="Times New Roman">…</font> → se deja solo su contenido
+  contenedor.querySelectorAll("font").forEach((nodo) => {
+    nodo.replaceWith(...nodo.childNodes);
+  });
+
+  contenedor.querySelectorAll("p").forEach((p) => {
+    const vacio = !p.textContent.replace(/\u00a0/g, " ").trim();
+    if (vacio && !p.querySelector("img, br, table, a")) p.remove();
   });
 }
 

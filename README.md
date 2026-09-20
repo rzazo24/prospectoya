@@ -42,6 +42,26 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
 3. Resumen rápido arriba de la ficha: dosis, contraindicaciones, alertas
    clave (embarazo, conducción, alcohol) extraídas de las secciones
    correspondientes del prospecto. ✅
+### Cómo funciona el buscador (`app.js`)
+
+- El buscador es un *composer* de una línea inspirado en ChatGPT/DeepSeek: lupa
+  a la izquierda, botón circular con flecha ↑ a la derecha (`#search-submit`) y
+  chips de ejemplo ("Prueba con…") debajo. El botón queda `disabled` mientras el
+  input esté vacío y se activa en cuanto hay texto.
+- Al escribir 3 letras o más se consulta `GET /medicamentos` con un *debounce*
+  de 300 ms y se pinta el desplegable `#search-suggestions` (máx.
+  `MAX_SUGERENCIAS` = 8). Con menos de 3 letras el desplegable se oculta.
+- Teclado: ↑ / ↓ recorren las sugerencias (realce `.is-active`, equivalente al
+  hover, que además actualiza `aria-activedescendant`), Enter abre la sugerencia
+  marcada o lanza la búsqueda completa si no hay ninguna, y Escape cierra el
+  desplegable. Un clic fuera del composer también lo cierra.
+- Semántica ARIA: `#search-input` es `role="combobox"` y la lista es
+  `role="listbox"` con cada `li` como `role="option"`, así que el autocompletado
+  funciona con lectores de pantalla sin sacar el foco del input.
+- Toda la interacción está cubierta por un test de humo en jsdom (fuera del
+  repo) que carga `index.html` + `api.js` + `app.js` con `fetch` simulado.
+
+
 
 ### Cómo funciona el resumen rápido (`app.js`)
 
