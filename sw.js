@@ -22,7 +22,7 @@
  * anteriores.
  */
 
-const VERSION = "v1";
+const VERSION = "v2";
 const CACHE = `prospectoya-${VERSION}`;
 
 /** La cáscara: todo lo que hace falta para abrir la web sin conexión. */
@@ -32,6 +32,7 @@ const APP_SHELL = [
   "ayuda.html",
   "styles.css",
   "tema.js",
+  "arriba.js",
   "api.js",
   "app.js",
   "pwa.js",

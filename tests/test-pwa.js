@@ -48,6 +48,7 @@ const FICHEROS = [
   "ayuda.html",
   "styles.css",
   "tema.js",
+  "arriba.js",
   "api.js",
   "app.js",
   "pwa.js",
@@ -164,7 +165,7 @@ const VERSION_SW = (sw.match(/const VERSION = "([^"]+)";/) || [])[1];
     recursos.join(" ")
   );
   comprobar("todos los ficheros de la cáscara existen en el repo", faltan.length === 0, faltan.join(", "));
-  comprobar("la lista de la cáscara no ha cambiado sin querer", recursos.length === 17, String(recursos.length));
+  comprobar("la lista de la cáscara no ha cambiado sin querer", recursos.length === 18, String(recursos.length));
   comprobar("los iconos del manifest están en la cáscara", ICONOS.every((i) => recursos.includes(i.src)));
   comprobar("nada de otros orígenes (sólo ficheros propios)", !recursos.some((r) => /^https?:/i.test(r)));
   comprobar("no cachea ni intercepta la API de CIMA (los datos van siempre a la red)", !/cima\.aemps\.es/.test(sw));
@@ -624,7 +625,7 @@ const driver = (soltar, esperar) => `
     comprobar("el service worker en marcha dice su versión", uno.sw_version === VERSION_SW, uno.sw_version);
     comprobar("la página no venía controlada: es instalación, no actualización", uno.venia_controlada === "no", uno.venia_controlada);
     comprobar("guarda el caché con la versión en el nombre", (uno.cache_nombres || "").startsWith(`prospectoya-${VERSION_SW}`), uno.cache_nombres);
-    comprobar("la cáscara queda precacheada", Number(uno.cache_entradas) >= 17, uno.cache_entradas);
+    comprobar("la cáscara queda precacheada", Number(uno.cache_entradas) >= 18, uno.cache_entradas);
     comprobar(
       "con las dos páginas y los estilos dentro",
       uno.cache_index === "si" && uno.cache_ayuda === "si" && uno.cache_css === "si",

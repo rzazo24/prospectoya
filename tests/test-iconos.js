@@ -13,7 +13,7 @@ if (!navegador()) {
   process.exit(0);
 }
 
-const FICHEROS = ["index.html", "styles.css", "api.js", "app.js", "tema.js", "pwa.js", "favicon.svg", "favicon-32.png", "favicon.ico", "apple-touch-icon.png"];
+const FICHEROS = ["index.html", "styles.css", "api.js", "app.js", "tema.js", "arriba.js", "pwa.js", "favicon.svg", "favicon-32.png", "favicon.ico", "apple-touch-icon.png"];
 
 const DRIVER = `
   <pre id="diag" style="display:none"></pre>

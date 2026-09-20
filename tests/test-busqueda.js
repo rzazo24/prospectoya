@@ -15,11 +15,12 @@ const api = fs.readFileSync(path.join(RAIZ, "api.js"), "utf8");
 const app = fs.readFileSync(path.join(RAIZ, "app.js"), "utf8");
 const tema = fs.readFileSync(path.join(RAIZ, "tema.js"), "utf8");
 const pwa = fs.readFileSync(path.join(RAIZ, "pwa.js"), "utf8");
+const arriba = fs.readFileSync(path.join(RAIZ, "arriba.js"), "utf8");
 
 // Los <script src> se sustituyen por su código en línea: jsdom no carga
 // ficheros externos, y así se ejecuta exactamente lo que carga la página.
 let html = fs.readFileSync(path.join(RAIZ, "index.html"), "utf8");
-for (const [fichero, codigo] of [["tema.js", tema], ["api.js", api], ["app.js", app], ["pwa.js", pwa]]) {
+for (const [fichero, codigo] of [["tema.js", tema], ["arriba.js", arriba], ["api.js", api], ["app.js", app], ["pwa.js", pwa]]) {
   html = html.replace(`<script src="${fichero}"></script>`, `<script>${codigo}</script>`);
 }
 

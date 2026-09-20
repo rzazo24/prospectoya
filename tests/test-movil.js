@@ -26,7 +26,7 @@ if (!navegador()) {
   process.exit(0);
 }
 
-const FICHEROS = ["index.html", "styles.css", "api.js", "app.js", "tema.js", "pwa.js", "favicon.svg"];
+const FICHEROS = ["index.html", "styles.css", "api.js", "app.js", "tema.js", "arriba.js", "pwa.js", "favicon.svg"];
 
 // Página con el iframe estrecho y el diagnóstico del contenido
 const PAGINA_MOVIL = `<!DOCTYPE html>

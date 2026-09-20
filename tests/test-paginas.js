@@ -26,6 +26,7 @@ const FICHEROS = [
   "api.js",
   "app.js",
   "tema.js",
+  "arriba.js",
   "pwa.js",
   "sw.js",
   "manifest.webmanifest",

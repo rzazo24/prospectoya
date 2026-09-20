@@ -56,6 +56,21 @@ for (const fichero of ["index.html", "ayuda.html"]) {
       aviso ? aviso.outerHTML.slice(0, 60) : "(no está)"
     );
   }
+  // --- Botón de "volver arriba" (lo comparten las dos páginas) ---
+  {
+    const subir = doc.getElementById("btn-subir");
+    comprobar(
+      "botón de volver arriba: es un <button>, arranca oculto y lleva etiqueta",
+      Boolean(subir) &&
+        subir.tagName === "BUTTON" &&
+        subir.getAttribute("type") === "button" &&
+        subir.hasAttribute("hidden") &&
+        Boolean(subir.getAttribute("aria-label")) &&
+        Boolean(subir.querySelector('svg[aria-hidden="true"]')),
+      subir ? subir.outerHTML.slice(0, 70) : "(no está)"
+    );
+    comprobar("carga arriba.js (el botón lo comparten las dos páginas)", Boolean(doc.querySelector('script[src="arriba.js"]')));
+  }
   comprobar("carga styles.css", Boolean(doc.querySelector('link[href="styles.css"]')));
   comprobar("carga tema.js", Boolean(doc.querySelector('script[src="tema.js"]')));
   comprobar("tema aplicado antes de pintar (script en el <head>)", html.includes('localStorage.getItem("prospectoya-tema")'));

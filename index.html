@@ -209,6 +209,16 @@
     </section>
   </main>
 
+  <!-- Botón de "volver arriba": lo enseña arriba.js cuando se baja por la
+       página. Es un botón de verdad (teclado y lectores de pantalla) y no
+       cambia la URL. -->
+  <button id="btn-subir" class="btn-subir" type="button" aria-label="Volver arriba" title="Volver arriba" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 19V5"/>
+      <path d="m5 12 7-7 7 7"/>
+    </svg>
+  </button>
+
   <footer class="site-footer">
     <p>
       Datos oficiales de la
@@ -221,6 +231,8 @@
   </footer>
 
   <script src="tema.js"></script>
+  <!-- Botón de "volver arriba" (lo comparten las dos páginas) -->
+  <script src="arriba.js"></script>
   <script src="api.js"></script>
   <script src="app.js"></script>
   <!-- El último: registra el service worker y el aviso de "sin conexión".

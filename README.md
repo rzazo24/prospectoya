@@ -128,6 +128,25 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
   exige **URL absoluta**, así que apunta a `https://prospectoya.vercel.app/…`: si
   el dominio cambia, hay que actualizarlo ahí.
 
+### Botón de "volver arriba" (`arriba.js`)
+
+Abajo a la derecha de las dos páginas hay un botón redondo que devuelve al
+principio de la web. `arriba.js` es el encargado de enseñarlo y ocultarlo (a
+partir de 400px de bajada) y de dar la orden de subir; el botón, que es un
+`<button>`, vive en el HTML de cada página (`#btn-subir`).
+
+- **Se sube con `window.scrollTo({ top: 0 })`**: no recarga la página ni añade
+  nada a la URL (nada de enlaces `#`), así que no rompe el botón "atrás" ni
+  pierde el estado del buscador.
+- **Con teclado no se queda a medias**: mientras el botón tiene el foco no se
+  oculta (si no, al pulsarlo con Enter desaparecería y el foco se perdería); se
+  oculta cuando el usuario se va de él.
+- **Respeta `prefers-reduced-motion`**: si el sistema pide menos movimiento,
+  sube de golpe en vez de con animación (la animación no es CSS, así que no la
+  cubre la media query de `styles.css`).
+- **No tapa el aviso de versión**: cuando ese aviso está abajo, el botón se
+  aparta (`body:has(.aviso-version:not([hidden]))`).
+
 ### App instalable (`manifest.webmanifest`, `sw.js`, `pwa.js`)
 
 La web se puede **instalar** como app (Chrome/Edge en Android y escritorio:
@@ -197,6 +216,7 @@ styles.css         → estilos (buscador, detalle, ayuda y avisos)
 api.js             → funciones que llaman a la API de CIMA (fetch)
 app.js             → lógica de UI: búsqueda, render de resultados, acordeón, resumen
 tema.js            → tema claro/oscuro (lo comparten index.html y ayuda.html)
+arriba.js          → botón de "volver arriba" (lo comparten las dos páginas)
 pwa.js             → app instalable: registra el service worker y los avisos
 sw.js              → service worker: guarda la "cáscara" para abrir sin conexión
 manifest.webmanifest → ficha de la app (nombre, arranque, colores e iconos)
@@ -304,13 +324,14 @@ Chrome/Chromium (Node las demás no necesitan nada instalado):
 ```bash
 cd tests
 npm install          # jsdom (única dependencia, sólo de desarrollo)
-npm test             # 207 comprobaciones: estructura, buscador, móvil, páginas, PWA, iconos y z-index
+npm test             # 231 comprobaciones: estructura, buscador, móvil, botón de subir, páginas, PWA, iconos y z-index
 npm run test:api-real   # contra la API real de CIMA (necesita red)
 ```
 
 Resumen: `test-html.js` (estructura de las dos páginas, metaetiquetas y avisos),
 `test-busqueda.js` (buscador completo en jsdom con `fetch` simulado),
 `test-movil.js` (el buscador en un viewport de móvil, sin zoom al escribir),
+`test-arriba.js` (el botón de "volver arriba" en las dos páginas),
 `test-paginas.js` (las dos páginas en Chrome real, servidas por HTTP),
 `test-pwa.js` (app instalable: manifest, iconos, service worker, sin conexión y
 aviso de versión nueva), `test-iconos.js` (los favicons cargan y miden lo que

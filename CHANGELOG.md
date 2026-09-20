@@ -13,6 +13,29 @@ parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
 Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
 y `Eliminado` (solo los que apliquen).
 
+## [Sin publicar]
+
+### Añadido
+
+- **Botón de "volver arriba"** (`arriba.js`): aparece abajo a la derecha en
+  cuanto se baja por la página y devuelve al principio de la web. Es un `<button>`
+  (funciona con teclado y lectores de pantalla), no cambia la URL, se aparta
+  cuando está el aviso de versión abajo para no taparlo y, si el sistema pide
+  menos movimiento (`prefers-reduced-motion`), sube de golpe en vez de con
+  animación. Mientras tiene el foco no se oculta, para no dejar tirado a quien
+  navega con el teclado. Lo comparten el buscador y la ayuda.
+- **Suite `tests/test-arriba.js`**: comprueba con Chrome real, en las dos
+  páginas, que el botón aparece al bajar, que al pulsarlo se le pide a la ventana
+  subir al principio (`window.scrollTo` con `top: 0`), que el foco no se pierde,
+  que la URL no cambia, que respeta `prefers-reduced-motion` y que no se solapa
+  con el aviso de versión.
+
+### Cambiado
+
+- **La cáscara de la PWA sube a `v2`** en `sw.js` (por `arriba.js`): quien tenga
+  la web abierta verá el aviso de "versión nueva" y el caché anterior se borra
+  al activarse.
+
 ## [0.3.0] - 2026-09-20
 
 Tercera entrega: la web se puede **instalar como app** y se abre **sin conexión**,
