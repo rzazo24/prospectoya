@@ -130,12 +130,39 @@ index.html         → estructura de la página (buscador, resultados, detalle)
 styles.css         → estilos
 api.js             → funciones que llaman a la API de CIMA (fetch)
 app.js             → lógica de UI: búsqueda, render de resultados, acordeón, resumen
+favicon.svg        → icono maestro (cápsula de marca); de aquí salen los demás
+favicon-32.png     → respaldo del icono para navegadores sin soporte de SVG
+favicon.ico        → respaldo multi-tamaño (16/32/48) para navegadores antiguos
+apple-touch-icon.png → icono para iOS/iPadOS (180×180, opaco)
 README.md          → este documento
 ```
 
 > Los ficheros están **en la raíz** del proyecto (no hay `css/` ni `js/`), y
 > `index.html` los referencia con rutas planas. Mantener ambos sincronizados:
 > si se mueven a subcarpetas, hay que actualizar las rutas.
+
+### Iconos
+
+`favicon.svg` es el **fichero maestro**: la cápsula del logo en blanco sobre el
+azul de marca, en un cuadrado redondeado. Los PNG y el ICO se generan
+rasterizándolo, no se editan a mano:
+
+```bash
+# 1) Renderizar el SVG a 512 px con fondo transparente
+sed 's/width="64" height="64"/width="512" height="512"/' favicon.svg > /tmp/icono-512.svg
+google-chrome --headless --window-size=512,512 \
+  --default-background-color=00000000 --screenshot=/tmp/icono-512.png \
+  file:///tmp/icono-512.svg
+```
+
+Después se reduce a 32×32 (`favicon-32.png`) y a 180×180 (`apple-touch-icon.png`,
+esta vez **sin** esquinas redondeadas y opaco, porque iOS aplica su propia
+máscara), y se empaquetan los tamaños 16/32/48 en `favicon.ico`.
+
+Dos avisos si editas el SVG: el color va literal (no puede usar las variables de
+`styles.css`, porque el favicono se carga como documento suelto) y en un
+comentario XML **no** puede aparecer un doble guion seguido, o el navegador
+pintará una página de error en lugar del icono.
 
 ## Cómo probarlo en local
 

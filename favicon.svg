@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Favicon de ProspectoYa: la capsula del logo (blanca) sobre el azul de marca,
+  en un cuadrado redondeado. Es el fichero maestro: los PNG (favicon-32.png,
+  apple-touch-icon.png) y el favicon.ico se generan a partir de este SVG.
+
+  Dos avisos para quien lo edite:
+  1. El azul va escrito a mano y no con las variables de styles.css, porque el
+     favicono SVG se carga como documento suelto, sin acceso a esas variables.
+  2. En un comentario XML no puede ir un doble guion seguido: rompe el fichero
+     y el navegador pinta una pagina de error en vez del icono.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="ProspectoYa">
+  <rect width="64" height="64" rx="15" fill="#4d6bfe"/>
+  <g transform="rotate(-45 32 32)">
+    <!-- Capsula: rectangulo con los extremos redondeados -->
+    <rect x="14" y="22" width="36" height="20" rx="10" fill="#ffffff"/>
+    <!-- Linea divisoria de las dos mitades, como en el logo de la cabecera -->
+    <rect x="30.75" y="22" width="2.5" height="20" fill="#4d6bfe"/>
+  </g>
+</svg>
+
