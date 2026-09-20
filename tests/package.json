@@ -4,9 +4,10 @@
   "private": true,
   "description": "Suites de test de ProspectoYa. No forman parte del sitio: nada de la web carga estos ficheros.",
   "scripts": {
-    "test": "node test-html.js && node test-busqueda.js && node test-paginas.js && node test-iconos.js && node test-solape.js",
+    "test": "node test-html.js && node test-busqueda.js && node test-movil.js && node test-paginas.js && node test-iconos.js && node test-solape.js",
     "test:html": "node test-html.js",
     "test:busqueda": "node test-busqueda.js",
+    "test:movil": "node test-movil.js",
     "test:paginas": "node test-paginas.js",
     "test:iconos": "node test-iconos.js",
     "test:solape": "node test-solape.js",

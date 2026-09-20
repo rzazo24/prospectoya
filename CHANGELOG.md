@@ -13,6 +13,24 @@ parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
 Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
 y `Eliminado` (solo los que apliquen).
 
+## [Sin publicar]
+
+### Añadido
+
+- **Suite `tests/test-movil.js`** (`npm run test:movil`): comprueba el buscador
+  en un viewport de móvil (390×844). El proyecto pasa a 122 comprobaciones.
+
+### Corregido
+
+- **Al enfocar el buscador en el móvil, la página ya no se amplía sola**: los
+  navegadores móviles (Safari en iOS, entre otros) amplían la página al enfocar
+  un campo cuya letra mide menos de 16px, y al escribir resultaba muy molesto.
+  El campo pasa a `max(16px, 1rem)` —nunca por debajo del mínimo, y sigue la
+  proporción si algún día se sube el tamaño base— y en pantallas de hasta 640px
+  se queda en 17px. En el compositor, `touch-action: manipulation` quita además
+  el zoom por doble toque al pulsarlo o al tocar un chip; el pellizco para
+  ampliar y el zoom del navegador siguen funcionando igual.
+
 ## [0.2.0] - 2026-09-20
 
 Segunda entrega: la web se puede **compartir con tarjeta**, tiene **página de

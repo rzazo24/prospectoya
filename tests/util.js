@@ -88,7 +88,7 @@ function navegador() {
  * lugar de dejar la suite parada.
  *
  * @param {string} url
- * @param {{alto?:number, perfil?:string, presupuesto?:number, tiempoMaximo?:number}} [opciones]
+ * @param {{alto?:number, ancho?:number, escala?:number, perfil?:string, presupuesto?:number, tiempoMaximo?:number}} [opciones]
  * @returns {Promise<string>} HTML final de la página
  */
 function domConChrome(url, opciones = {}) {
@@ -98,7 +98,13 @@ function domConChrome(url, opciones = {}) {
   }
 
   const args = ["--headless", "--disable-gpu", "--no-sandbox"];
-  if (opciones.alto) args.push(`--window-size=1100,${opciones.alto}`);
+  // OJO: Chrome en Linux no baja de ~500px de ancho de ventana, así que para
+  // simular un móvil se pide una ventana grande con escala alta (p. ej. 1170x2532
+  // con escala 3 = 390x844 de viewport CSS).
+  if (opciones.escala) args.push(`--force-device-scale-factor=${opciones.escala}`);
+  if (opciones.alto || opciones.ancho) {
+    args.push(`--window-size=${opciones.ancho || 1100},${opciones.alto || 800}`);
+  }
   if (opciones.perfil) args.push(`--user-data-dir=${opciones.perfil}`);
   args.push(`--virtual-time-budget=${opciones.presupuesto || 6000}`, "--dump-dom", url);
 

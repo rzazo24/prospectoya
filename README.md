@@ -242,12 +242,13 @@ Chrome/Chromium (Node las demás no necesitan nada instalado):
 ```bash
 cd tests
 npm install          # jsdom (única dependencia, sólo de desarrollo)
-npm test             # 115 comprobaciones: estructura, buscador, páginas, iconos y z-index
+npm test             # 122 comprobaciones: estructura, buscador, móvil, páginas, iconos y z-index
 npm run test:api-real   # contra la API real de CIMA (necesita red)
 ```
 
 Resumen: `test-html.js` (estructura de las dos páginas y metaetiquetas),
 `test-busqueda.js` (buscador completo en jsdom con `fetch` simulado),
+`test-movil.js` (el buscador en un viewport de móvil, sin zoom al escribir),
 `test-paginas.js` (las dos páginas en Chrome real, servidas por HTTP),
 `test-iconos.js` (los favicons cargan y miden lo que deben), `test-solape.js`
 (regresión del z-index del desplegable) y `test-api-real.js` (la API de verdad).

@@ -286,6 +286,9 @@ a { color: var(--brand-strong); }
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow);
   transition: border-color 0.16s ease, box-shadow 0.16s ease;
+  /* Sin el zoom por doble toque al pulsar el buscador o sus chips (no afecta al
+     pellizco, que sigue funcionando para ampliar) */
+  touch-action: manipulation;
 }
 .composer:hover { border-color: var(--brand); }
 .composer:focus-within {
@@ -306,6 +309,13 @@ a { color: var(--brand-strong); }
   min-width: 0;
   padding: 0.7rem 0;
   font: inherit;
+  /* Los navegadores móviles (Safari en iOS, entre otros) amplían la página al
+     enfocar un campo si su tamaño de letra es menor de 16px, y eso al escribir
+     resulta muy molesto. Se fija en px —y no heredado— para que no dependa de
+     ningún contenedor: max(16px, 1rem) mantiene la proporción si algún día se
+     sube el tamaño base, pero nunca baja del mínimo. En móvil se deja un poco
+     por encima (ver media query). */
+  font-size: max(16px, 1rem);
   color: inherit;
   background: transparent;
   border: 0;
@@ -953,6 +963,9 @@ a { color: var(--brand-strong); }
   .hero { padding: 1.75rem 0 1.25rem; }
   .hero h1 { font-size: 1.65rem; }
   .composer { padding-left: 0.85rem; border-radius: var(--radius-lg); }
+  /* Un poco por encima de 16px: evita el zoom al enfocar el campo en los
+     navegadores móviles que aplican el límite de forma estricta */
+  #search-input { font-size: max(17px, 1rem); }
   .composer-submit { width: 38px; height: 38px; padding: 9px; }
   .quick-summary-grid { grid-template-columns: 1fr; }
   .doc-tabs { width: 100%; }
