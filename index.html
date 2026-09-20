@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProspectoYa — Busca medicamentos y lee prospectos fácilmente</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <h1>ProspectoYa</h1>
+    <p class="tagline">Busca medicamentos y lee prospectos y fichas técnicas sin liarte.</p>
+  </header>
+
+  <main>
+    <!-- Buscador -->
+    <section id="search-section">
+      <label for="search-input" class="visually-hidden">Buscar medicamento</label>
+      <input
+        type="text"
+        id="search-input"
+        placeholder="Busca por nombre, principio activo o laboratorio..."
+        autocomplete="off"
+      >
+      <!-- TODO: autocompletado en tiempo real aquí (lista tipo <ul>) -->
+      <ul id="search-suggestions" class="suggestions-list" hidden></ul>
+    </section>
+
+    <!-- TODO Fase 2: filtros combinables (con/sin receta, laboratorio, forma farmacéutica) -->
+    <section id="filters-section" hidden>
+      <!-- placeholder para filtros -->
+    </section>
+
+    <!-- Resultados de búsqueda -->
+    <section id="results-section">
+      <ul id="results-list" class="results-list"></ul>
+    </section>
+
+    <!-- Detalle del medicamento seleccionado -->
+    <section id="detail-section" hidden>
+
+      <div id="detail-header">
+        <h2 id="detail-name"></h2>
+        <p id="detail-lab"></p>
+        <!-- TODO Fase 2: badge de problema de suministro aquí -->
+        <span id="supply-issue-badge" class="badge badge-warning" hidden>
+          Problema de suministro activo
+        </span>
+      </div>
+
+      <!-- Resumen rápido: dosis, contraindicaciones, alertas clave -->
+      <div id="quick-summary" class="quick-summary">
+        <!-- TODO: extraer y mostrar aquí lo esencial antes del detalle completo -->
+      </div>
+
+      <!-- Tabs: Prospecto / Ficha técnica -->
+      <div class="doc-tabs">
+        <button class="doc-tab active" data-doc-type="2">Prospecto</button>
+        <button class="doc-tab" data-doc-type="1">Ficha técnica</button>
+      </div>
+
+      <!-- Acordeón de secciones del documento -->
+      <div id="sections-accordion" class="accordion"></div>
+
+      <!-- TODO Fase 2: botón "copiar para IA" -->
+      <button id="copy-for-ai" class="btn-secondary" hidden>
+        Copiar texto para pegar en una IA
+      </button>
+
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      Datos oficiales de la
+      <a href="https://cima.aemps.es" target="_blank" rel="noopener">
+        Agencia Española de Medicamentos y Productos Sanitarios (AEMPS) — CIMA
+      </a>.
+      Esta web no sustituye el consejo de un profesional sanitario.
+    </p>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
