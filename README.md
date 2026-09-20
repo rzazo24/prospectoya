@@ -1,6 +1,8 @@
 # ProspectoYa — Web mejorada para consultar medicamentos
-<img width="1200" height="798" alt="prospectoya" src="https://github.com/user-attachments/assets/d0b5721b-6573-4bf7-8c37-3e2d35b8b9d9" />
 
+<!-- Captura del sitio real (1200x798). Va en la raíz del repo, con ruta
+     relativa, para que se vea también al clonar o hacer fork. -->
+<img width="1200" height="798" alt="Pantalla de inicio de ProspectoYa: el buscador con el titular «Lee lo importante de cualquier medicamento sin pelearte con el prospecto», los chips de ejemplo (paracetamol, ibuprofeno, omeprazol, amoxicilina, CN 662025) y el pie con la fuente de datos" src="captura-inicio.png">
 
 Web estática (HTML/CSS/JS vanilla, sin frameworks, sin build) que consulta
 la API pública de CIMA (AEMPS) para mejorar la experiencia de buscar y leer
@@ -165,6 +167,7 @@ favicon-32.png     → respaldo del icono para navegadores sin soporte de SVG
 favicon.ico        → respaldo multi-tamaño (16/32/48) para navegadores antiguos
 apple-touch-icon.png → icono para iOS/iPadOS (180×180, opaco)
 social-preview.png → imagen 1280×640: Social preview del repo y `og:image` de la web
+captura-inicio.png → captura del buscador que se muestra al principio del README
 LICENSE            → licencia MIT
 CHANGELOG.md       → historial de cambios
 README.md          → este documento
