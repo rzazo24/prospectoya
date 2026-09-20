@@ -243,6 +243,13 @@ a { color: var(--brand-strong); }
 
 /* --- Buscador (composer) --- */
 .search-section {
+  /* La animación de entrada crea un stacking context en esta sección, así que
+     el z-index del desplegable (#search-suggestions) queda encerrado dentro.
+     Con un z-index propio, toda la sección (y su desplegable) se pinta por
+     encima de las secciones siguientes —resultados y ficha, que también
+     animan— y por debajo de la barra superior (z-index 20). */
+  position: relative;
+  z-index: 3;
   animation: aparecer 0.45s ease 0.05s both;
 }
 
