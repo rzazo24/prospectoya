@@ -11,5 +11,9 @@ node_modules/
 .env
 .venv/
 
+# Documento de contexto local para los asistentes de IA (reglas del proyecto,
+# convenciones y qué está verificado): vive en el disco pero no se publica.
+AGENTS.md
+
 # Configuración del servidor de desarrollo
 .vercel/
