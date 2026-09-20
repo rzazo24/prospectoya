@@ -76,7 +76,8 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
   `role="listbox"` con cada `li` como `role="option"`, así que el autocompletado
   funciona con lectores de pantalla sin sacar el foco del input.
 - Toda la interacción está cubierta por un test de humo en jsdom (fuera del
-  repo) que carga `index.html` + `api.js` + `app.js` con `fetch` simulado.
+  repo) que carga `index.html` + `tema.js` + `api.js` + `app.js` con `fetch`
+  simulado.
 
 
 
@@ -97,6 +98,31 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
   subtítulo cualquier párrafo cuyo contenido vaya entero en negrita/subrayado
   (cubre las dos variantes de CIMA). El texto de las tarjetas se pinta siempre
   con `textContent`, nunca con `innerHTML`.
+
+### Páginas, tema y ayuda (`ayuda.html`, `tema.js`)
+
+- El sitio tiene **dos páginas**: el buscador (`index.html`) y la **ayuda**
+  (`ayuda.html`), que explica de dónde salen los datos, cómo se busca (nombre,
+  CN, nº de registro), cómo se lee el resumen rápido, atajos de teclado, FAQ y
+  aviso sanitario, y termina con el enlace al repositorio. Se llega a ella desde
+  el enlace *Ayuda* de la barra superior y desde el pie de la página del buscador
+  (y vuelve con *← Volver al buscador*).
+- `ayuda.html` **no carga `api.js` ni `app.js`**: son solo texto y estilos. Lo
+  único de comportamiento que necesita es el botón de tema, que vive en
+  `tema.js`.
+- **`tema.js` es el único sitio donde se decide el tema** (clave `prospectoya-tema`
+  en `localStorage` + atributo `data-tema` en `<html>`): lo cargan las dos páginas,
+  así que el tema elegido en una se mantiene al pasar a la otra. El script en línea
+  del `<head>` de cada página (el que evita el destello al cargar) lee esa **misma**
+  clave: si se cambia en un sitio, hay que cambiarla en los tres.
+- Los estilos de la ayuda (`.ayuda`, `.ayuda-tabla`, `.kbd`, `.nota`, `.aviso`) y
+  los enlaces de la barra (`.topbar-nav`, `.topbar-link`) están al final de
+  `styles.css`, reutilizando los mismos tokens de color que el resto.
+- **Metaetiquetas para compartir** (`index.html`): `og:title`, `og:description`,
+  `og:url`, `og:image` —la misma imagen que el *Social preview* del
+  repositorio—, `og:image:width/height` y el bloque `twitter:card`. `og:image`
+  exige **URL absoluta**, así que apunta a `https://prospectoya.vercel.app/…`: si
+  el dominio cambia, hay que actualizarlo ahí.
 
 ## Fase 2 (después del MVP)
 
@@ -127,14 +153,16 @@ sugiere el PDF de documentación** en varios puntos:
 
 ```
 index.html         → estructura de la página (buscador, resultados, detalle)
-styles.css         → estilos
+ayuda.html         → página de ayuda: cómo funciona, FAQ y enlace al repositorio
+styles.css         → estilos (buscador, detalle y ayuda)
 api.js             → funciones que llaman a la API de CIMA (fetch)
 app.js             → lógica de UI: búsqueda, render de resultados, acordeón, resumen
+tema.js            → tema claro/oscuro (lo comparten index.html y ayuda.html)
 favicon.svg        → icono maestro (cápsula de marca); de aquí salen los demás
 favicon-32.png     → respaldo del icono para navegadores sin soporte de SVG
 favicon.ico        → respaldo multi-tamaño (16/32/48) para navegadores antiguos
 apple-touch-icon.png → icono para iOS/iPadOS (180×180, opaco)
-social-preview.png → imagen 1280×640 para el "Social preview" del repositorio
+social-preview.png → imagen 1280×640: Social preview del repo y `og:image` de la web
 LICENSE            → licencia MIT
 CHANGELOG.md       → historial de cambios
 README.md          → este documento
@@ -181,7 +209,9 @@ google-chrome --headless --window-size=1280,640 --hide-scrollbars \
 ```
 
 GitHub no permite fijarla por API ni con `gh`: hay que subirla a mano en
-*Settings → General → Social preview*.
+*Settings → General → Social preview*. La misma imagen es la `og:image` que
+`index.html` declara, así que al compartir **el enlace de la web** también
+aparece esta tarjeta (con `twitter:card: summary_large_image`).
 
 ## Cómo probarlo en local
 
@@ -192,6 +222,7 @@ bloquean peticiones desde ese origen):
 ```bash
 python3 -m http.server 8765
 # http://127.0.0.1:8765/index.html
+# http://127.0.0.1:8765/ayuda.html
 ```
 
 ## Notas para quien continúe el desarrollo

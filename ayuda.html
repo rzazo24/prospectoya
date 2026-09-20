@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cómo funciona ProspectoYa — Ayuda</title>
+  <meta name="description" content="Cómo buscar medicamentos por nombre o código nacional en ProspectoYa, cómo se lee el resumen rápido de dosis y contraindicaciones y de dónde salen los datos (AEMPS · CIMA).">
+  <!-- Iconos: SVG para navegadores modernos y PNG/ICO de respaldo -->
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <!-- Tema antes del primer pintado para evitar el destello claro/oscuro -->
+  <script>
+    (function () {
+      try {
+        var guardado = localStorage.getItem("prospectoya-tema");
+        var oscuro = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        document.documentElement.dataset.tema = guardado || (oscuro ? "oscuro" : "claro");
+      } catch (e) {
+        document.documentElement.dataset.tema = "claro";
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <a class="brand" href="./">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.5 3.5 3.5 10.5a4.95 4.95 0 0 0 7 7l7-7a4.95 4.95 0 0 0-7-7Z"/>
+          <path d="m7 7 7 7"/>
+        </svg>
+      </span>
+      <span class="brand-name">ProspectoYa</span>
+    </a>
+    <nav class="topbar-nav" aria-label="Navegación principal">
+      <a class="topbar-link" href="./">Buscador</a>
+      <button id="theme-toggle" class="icon-button" type="button" aria-label="Cambiar entre tema claro y oscuro" title="Cambiar tema">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/>
+        </svg>
+      </button>
+    </nav>
+  </header>
+
+  <main class="app">
+    <article class="ayuda">
+
+      <p class="ayuda-volver"><a href="./">← Volver al buscador</a></p>
+
+      <h1>Ayuda: cómo funciona ProspectoYa</h1>
+
+      <p class="ayuda-entrada">
+        ProspectoYa es un <strong>visor mejorado</strong> de los prospectos y fichas técnicas
+        de los medicamentos autorizados en España. Buscas un medicamento y, en vez de
+        descargar un PDF de varias páginas, ves primero lo importante —dosis,
+        contraindicaciones y alertas clave— y debajo el documento completo por secciones.
+      </p>
+
+      <h2>1. De dónde salen los datos</h2>
+      <p>
+        Todo viene de la <strong>API pública de CIMA</strong>, el sistema de información de
+        medicamentos de la Agencia Española de Medicamentos y Productos Sanitarios (AEMPS):
+        es la fuente oficial, así que lo que ves aquí es lo que está autorizado y
+        comercializado en España.
+      </p>
+      <ul>
+        <li>Las consultas las hace <strong>tu propio navegador</strong> directamente contra
+          <code>cima.aemps.es</code>. Esta web no tiene servidor propio ni base de datos.</li>
+        <li>No hay registro ni cuentas: lo único que se guarda en tu dispositivo es el
+          <a href="#tema-y-privacidad">tema claro u oscuro</a>.</li>
+        <li>Los textos y PDF originales están en
+          <a href="https://cima.aemps.es" target="_blank" rel="noopener">cima.aemps.es</a>.</li>
+      </ul>
+
+      <h2>2. Cómo buscar</h2>
+      <p>
+        Escribe en el buscador y pulsa <kbd class="kbd">Enter</kbd> (o el botón de la flecha).
+        También puedes tocar cualquiera de los ejemplos de debajo, como <em>paracetamol</em>
+        o <em>CN 662025</em>.
+      </p>
+
+      <h3>Por nombre o principio activo</h3>
+      <p>
+        Con 3 letras o más aparecen sugerencias en un desplegable y, al elegir una, se abre su
+        ficha. La búsqueda va contra el nombre del medicamento; como el principio activo
+        forma parte de casi todos los nombres comerciales (por ejemplo
+        <em>PARACETAMOL CINFA 1 g</em>), buscarlo por principio activo también funciona.
+      </p>
+
+      <h3>Por código nacional (CN)</h3>
+      <p>
+        El <strong>CN</strong> son los 6 dígitos que identifican cada <strong>envase</strong>
+        concreto, no el medicamento en general: un mismo medicamento tiene un CN por formato,
+        así que <em>20 comprimidos</em> y <em>40 comprimidos</em> llevan CN distintos. Escribe
+        los 6 dígitos y se abre ese envase exacto.
+      </p>
+      <p class="nota">
+        El CN se busca por coincidencia exacta: hacen falta los 6 dígitos. Si escribes el
+        código a medias, la web te avisa en lugar de buscar, porque a medias no encontraría
+        nada.
+      </p>
+
+      <h3>Por número de registro</h3>
+      <p>
+        Si lo que tienes es el número de registro del medicamento (el de la documentación de
+        la AEMPS, normalmente 5 dígitos), también sirve: se busca primero como código nacional
+        y, si no hay coincidencia, como número de registro.
+      </p>
+
+      <h2>3. Cómo leer los resultados</h2>
+      <p>Cada resultado de la lista trae:</p>
+      <ul>
+        <li><strong>El nombre</strong> del medicamento y, debajo, el <strong>laboratorio</strong>
+          titular.</li>
+        <li><strong>El código nacional</strong> de sus envases (<code>CN 662025</code>). Si
+          tiene varios, se muestran los dos primeros y un <code>+1</code>: pasa el ratón por
+          encima para verlos todos. Este dato llega un instante después que el resto de la
+          lista, porque se pide aparte.</li>
+        <li><strong>Etiquetas</strong> para decidir de un vistazo:
+          <span class="result-tag result-tag-receta">Con receta</span>,
+          <span class="result-tag result-tag-efg">EFG</span> (especialidad farmacéutica
+          genérica) y
+          <span class="result-tag result-tag-nocomerc">No comercializado</span>.</li>
+      </ul>
+
+      <h2>4. El resumen rápido</h2>
+      <p>
+        Al abrir un medicamento, arriba del todo salen tarjetas con lo que suele interesar:
+        <strong>dosis</strong>, <strong>contraindicaciones</strong> y
+        <strong>alertas clave</strong> (embarazo y lactancia, conducción, alcohol…).
+      </p>
+      <ul>
+        <li>Cada tarjeta indica <strong>de dónde sale el texto</strong>: del prospecto (lo
+          primero, porque está escrito para el paciente) o de la ficha técnica, si el
+          prospecto no lo decía.</li>
+        <li>Es un <strong>extracto literal</strong>, sin reescribir: se localiza la sección o
+          el subtítulo correspondiente y se copia tal cual. Si algo no se encuentra, la
+          tarjeta simplemente no aparece.</li>
+        <li>Por eso puede quedarse corto: <strong>el resumen es un atajo, no el prospecto</strong>.
+          Justo debajo tienes el documento completo.</li>
+      </ul>
+
+      <h2>5. El prospecto y la ficha técnica completos</h2>
+      <ul>
+        <li><strong>Pestañas</strong>: <em>Prospecto</em> (el texto para el paciente) y
+          <em>Ficha técnica</em> (la información para profesionales sanitarios).</li>
+        <li><strong>Acordeón por secciones</strong>: cada apartado se carga al desplegarlo,
+          para no arrastrar todo el documento de golpe.</li>
+        <li>En la cabecera de la ficha aparecen los <strong>códigos nacionales de todos los
+          envases</strong> de ese medicamento.</li>
+      </ul>
+
+      <h2 id="tema-y-privacidad">6. Tema, privacidad y accesibilidad</h2>
+      <ul>
+        <li>El botón con forma de media luna de la barra superior cambia entre
+          <strong>tema claro y oscuro</strong> y lo recuerda en tu navegador. Si no eliges
+          nada, se usa el tema de tu sistema.</li>
+        <li><strong>Sin cuentas, sin cookies de seguimiento y sin analítica.</strong> Tu
+          búsqueda va del navegador a la API de la AEMPS; no pasa por ningún servidor
+          nuestro.</li>
+        <li>Se puede usar <strong>solo con el teclado</strong>: aquí tienes los atajos.</li>
+      </ul>
+
+      <table class="ayuda-tabla">
+        <caption>Atajos de teclado en el buscador</caption>
+        <thead>
+          <tr><th>Tecla</th><th>Qué hace</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><kbd class="kbd">↑</kbd> <kbd class="kbd">↓</kbd></td>
+            <td>Recorren las sugerencias del desplegable</td>
+          </tr>
+          <tr>
+            <td><kbd class="kbd">Enter</kbd></td>
+            <td>Abre la sugerencia marcada o lanza la búsqueda</td>
+          </tr>
+          <tr>
+            <td><kbd class="kbd">Esc</kbd></td>
+            <td>Cierra el desplegable</td>
+          </tr>
+          <tr>
+            <td><kbd class="kbd">Tab</kbd></td>
+            <td>Pasa del buscador al resto de la página</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>7. Preguntas frecuentes</h2>
+
+      <h3>¿Hay que registrarse o instalar algo?</h3>
+      <p>No. Se abre en el navegador y ya está: ni cuenta, ni app que instalar.</p>
+
+      <h3>¿Por qué no hay un chat con IA que me resuma el prospecto?</h3>
+      <p>
+        Fue una decisión de diseño: integrar una IA obligaría a tener un servidor y a pagar por
+        cada consulta. En su lugar, el resumen rápido se arma con el propio texto de la AEMPS,
+        así que es literal, instantáneo y no cuesta nada. Si quieres un resumen a tu manera,
+        selecciona el texto de la sección y pégalo en la IA que prefieras.
+      </p>
+
+      <h3>El resumen dice algo distinto de lo que me ha dicho mi médico</h3>
+      <p>
+        Haz caso a tu médico o farmacéutico, y al prospecto que viene dentro de la caja. Aquí
+        solo se muestra un extracto del documento oficial: puede quedarse corto o no incluir
+        algún matiz, porque se recorta automáticamente.
+      </p>
+
+      <h3>¿Por qué un medicamento tiene varios códigos nacionales?</h3>
+      <p>
+        Porque el CN identifica el <strong>envase</strong>, no el medicamento: cada formato y
+        número de comprimidos tiene el suyo. En la ficha del medicamento verás la lista
+        completa.
+      </p>
+
+      <h3>No encuentro mi medicamento</h3>
+      <p>
+        Prueba con el principio activo (por ejemplo, <em>ibuprofeno</em>) y sin el laboratorio.
+        CIMA recoge los medicamentos autorizados en España: si el tuyo se compró fuera o se
+        retiró del mercado, puede no aparecer. Fíjate también en la etiqueta
+        <span class="result-tag result-tag-nocomerc">No comercializado</span>.
+      </p>
+
+      <h2>8. Si algo no funciona</h2>
+      <ul>
+        <li><strong>No cargan los datos o sale un error de conexión</strong>: las consultas van
+          a un servicio externo (la API de la AEMPS). Si está caído o tu red lo bloquea, no se
+          puede hacer nada desde aquí; espera un rato e inténtalo de nuevo.</li>
+        <li><strong>El código nacional no encuentra nada</strong>: revisa que sean los
+          6 dígitos exactos del envase. Un dígito cambiado ya no coincide.</li>
+        <li><strong>Ves datos raros o una sección vacía</strong>: recarga con
+          <kbd class="kbd">Ctrl</kbd> + <kbd class="kbd">F5</kbd>. Esta web no guarda copias
+          propias, así que siempre se muestra lo último publicado por la AEMPS.</li>
+        <li><strong>No aparece el desplegable</strong>: hacen falta 3 letras, o bien el código
+          completo (6 dígitos de CN o el número de registro).</li>
+      </ul>
+
+      <p class="aviso">
+        <strong>Esta web no da consejo médico.</strong> Es un visor de documentación oficial:
+        no interpreta tu caso, no recomienda tratamientos y no sustituye a un profesional
+        sanitario. Para cualquier duda sobre un medicamento o una dosis, pregunta a tu médico o
+        a tu farmacéutico; y ante una urgencia, llama al 112.
+      </p>
+
+      <h2>9. Sobre este proyecto</h2>
+      <p>
+        ProspectoYa es <strong>software libre con licencia MIT</strong>: puedes usarlo,
+        modificarlo y redistribuirlo citando la autoría. Los datos siguen siendo de la AEMPS.
+      </p>
+      <p class="nota">
+        En el repositorio encontrarás el README (con la referencia de la API de CIMA), el
+        CHANGELOG con lo que ha cambiado en cada versión, y las incidencias y sugerencias:
+      </p>
+      <p class="ayuda-repo">
+        <a href="https://github.com/rzazo24/prospectoya" target="_blank" rel="noopener">
+          github.com/rzazo24/prospectoya →
+        </a>
+      </p>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      Datos oficiales de la
+      <a href="https://cima.aemps.es" target="_blank" rel="noopener">AEMPS — CIMA</a>.
+      Proyecto abierto en
+      <a href="https://github.com/rzazo24/prospectoya" target="_blank" rel="noopener">GitHub</a>.
+    </p>
+  </footer>
+
+  <script src="tema.js"></script>
+</body>
+</html>

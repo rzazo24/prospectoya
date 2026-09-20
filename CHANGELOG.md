@@ -13,6 +13,27 @@ parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
 Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
 y `Eliminado` (solo los que apliquen).
 
+## Sin publicar
+
+### Añadido
+
+- **Página de ayuda** (`ayuda.html`): explica de dónde salen los datos (AEMPS ·
+  CIMA), cómo se busca por nombre, código nacional y nº de registro, cómo se lee
+  el resumen rápido, atajos de teclado, privacidad, preguntas frecuentes, qué
+  hacer si algo falla y un aviso sanitario. Termina con el enlace al repositorio.
+  Se llega a ella desde el enlace *Ayuda* de la barra superior y desde el pie del
+  buscador.
+- **Vista previa al compartir el enlace de la web** (`index.html`): metaetiquetas
+  Open Graph y Twitter Card (`og:title`, `og:description`, `og:url`, `og:image`
+  con `social-preview.png`, `og:image:width/height` y `twitter:card` con
+  `summary_large_image`).
+
+### Cambiado
+
+- El tema claro/oscuro sale de `app.js` a un fichero propio, `tema.js`, para que
+  lo compartan el buscador y la ayuda: la elección se mantiene al pasar de una
+  página a la otra.
+
 ## [0.1.0] - 2026-09-20
 
 Primera versión: la Fase 1 del MVP, con buscador, visor de prospectos y ficha

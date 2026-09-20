@@ -195,6 +195,27 @@ a { color: var(--brand-strong); }
 :root[data-tema="oscuro"] .icon-sun { display: block; }
 :root[data-tema="oscuro"] .icon-moon { display: none; }
 
+/* Enlaces de la barra superior (Buscador / Ayuda) */
+.topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.topbar-link {
+  padding: 0.45rem 0.8rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-soft);
+  text-decoration: none;
+  border-radius: var(--radius-pill);
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.topbar-link:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
 /* --- Contenedor principal --- */
 .app {
   width: 100%;
@@ -788,6 +809,122 @@ a { color: var(--brand-strong); }
   border-top: 1px solid var(--border);
 }
 .site-footer p { margin: 0; }
+
+/* --- Página de ayuda (ayuda.html) --- */
+.ayuda {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 1.25rem 0 2rem;
+  animation: aparecer 0.4s ease both;
+}
+
+.ayuda h1 {
+  margin: 0 0 1.1rem;
+  font-size: clamp(1.65rem, 4.2vw, 2.25rem);
+  line-height: 1.2;
+  font-weight: 680;
+  letter-spacing: -0.025em;
+}
+
+.ayuda h2 {
+  margin: 2.4rem 0 0.75rem;
+  padding-top: 1.4rem;
+  font-size: 1.22rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  border-top: 1px solid var(--border);
+}
+.ayuda h2:first-of-type { margin-top: 1.6rem; border-top: 0; padding-top: 0; }
+
+.ayuda h3 {
+  margin: 1.5rem 0 0.4rem;
+  font-size: 1.02rem;
+  font-weight: 620;
+}
+
+.ayuda p { margin: 0 0 0.9rem; color: var(--text-soft); }
+.ayuda-entrada { font-size: 1.02rem; }
+.ayuda ul { margin: 0 0 1rem; padding-left: 1.25rem; color: var(--text-soft); }
+.ayuda li { margin-bottom: 0.45rem; }
+.ayuda li::marker { color: var(--text-muted); }
+.ayuda strong { color: var(--text); font-weight: 620; }
+.ayuda a { color: var(--brand-strong); }
+
+.ayuda code {
+  padding: 0.1rem 0.35rem;
+  font-size: 0.86em;
+  font-variant-numeric: tabular-nums;
+  background: var(--surface-2);
+  border-radius: 6px;
+}
+
+/* Teclas (↑, Enter, Ctrl+F5…) */
+.ayuda .kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0.1rem 0.4rem;
+  font-family: inherit;
+  font-size: 0.82em;
+  font-weight: 600;
+  color: var(--text);
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+}
+
+/* Aviso destacado (sin cambiar de color el texto de dentro) */
+.ayuda .nota {
+  padding: 0.75rem 0.95rem;
+  font-size: 0.92rem;
+  background: var(--brand-soft);
+  border-radius: var(--radius-sm);
+}
+.ayuda .aviso {
+  margin-top: 1.75rem;
+  padding: 0.95rem 1.1rem;
+  color: var(--warning-text);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius-sm);
+}
+.ayuda .aviso strong { color: inherit; }
+
+.ayuda-tabla {
+  width: 100%;
+  margin: 0 0 1.5rem;
+  border-collapse: collapse;
+  font-size: 0.94rem;
+}
+.ayuda-tabla caption {
+  margin-bottom: 0.6rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: left;
+}
+.ayuda-tabla th,
+.ayuda-tabla td {
+  padding: 0.55rem 0.7rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+.ayuda-tabla th { color: var(--text); font-weight: 620; }
+.ayuda-tabla td { color: var(--text-soft); }
+.ayuda-tabla th:first-child,
+.ayuda-tabla td:first-child { padding-left: 0; }
+
+.ayuda-repo { margin-top: 0.75rem; font-size: 1.02rem; }
+.ayuda-repo a { font-weight: 600; }
+
+/* Enlace de vuelta (va arriba del todo, en la ayuda) */
+.ayuda-volver { margin: 0 0 1.25rem; font-size: 0.92rem; }
+.ayuda-volver a { font-weight: 500; text-decoration: none; }
+.ayuda-volver a:hover { text-decoration: underline; }
 
 /* --- Animaciones --- */
 @keyframes aparecer {

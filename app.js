@@ -1,9 +1,9 @@
-/**
+/*
  * app.js
  * Lógica de interfaz: búsqueda con autocompletado, render de resultados,
  * carga del detalle (prospecto/ficha técnica) y acordeón de secciones.
  *
- * Depende de las funciones definidas en api.js.
+ * Depende de api.js (llamadas a CIMA) y de tema.js (tema claro/oscuro).
  */
 
 const searchInput = document.getElementById("search-input");
@@ -12,7 +12,6 @@ const searchForm = document.getElementById("search-form");
 const searchSubmit = document.getElementById("search-submit");
 const composerWrap = document.querySelector(".composer-wrap");
 const searchExamples = document.getElementById("search-examples");
-const themeToggle = document.getElementById("theme-toggle");
 const resultsList = document.getElementById("results-list");
 const resultsStatus = document.getElementById("results-status");
 const detailSection = document.getElementById("detail-section");
@@ -40,45 +39,10 @@ const MAX_CNS_SIN_OBSERVADOR = 12;
 // Cuántos CN se muestran en un resultado antes de resumir el resto con "+N".
 const MAX_CNS_VISIBLES = 2;
 
-const CLAVE_TEMA = "prospectoya-tema";
-
 let currentNRegistro = null;
 let currentTipoDoc = 2; // 2 = prospecto por defecto, 1 = ficha técnica
 let debounceTimer = null;
 let indiceSugerenciaActiva = -1; // -1 = ninguna sugerencia marcada con el teclado
-
-// --- Tema claro / oscuro ---
-
-/** Tema activo según el atributo del <html> (lo fija el script del <head>). */
-function temaActual() {
-  return document.documentElement.dataset.tema === "oscuro" ? "oscuro" : "claro";
-}
-
-/**
- * Aplica el tema y, opcionalmente, lo recuerda en localStorage.
- * @param {"claro"|"oscuro"} tema
- * @param {boolean} guardar
- */
-function aplicarTema(tema, guardar) {
-  document.documentElement.dataset.tema = tema;
-  themeToggle.setAttribute("aria-pressed", String(tema === "oscuro"));
-  themeToggle.title = tema === "oscuro" ? "Cambiar a tema claro" : "Cambiar a tema oscuro";
-
-  if (guardar) {
-    try {
-      localStorage.setItem(CLAVE_TEMA, tema);
-    } catch (err) {
-      // localStorage bloqueado (modo privado): el tema sigue funcionando en la sesión
-    }
-  }
-}
-
-themeToggle.addEventListener("click", () => {
-  aplicarTema(temaActual() === "oscuro" ? "claro" : "oscuro", true);
-});
-
-// Estado inicial del botón (el tema ya viene puesto desde el <head>)
-aplicarTema(temaActual(), false);
 
 // --- Búsqueda con autocompletado ---
 
