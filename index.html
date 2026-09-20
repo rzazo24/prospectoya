@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ProspectoYa — Busca medicamentos y lee prospectos fácilmente</title>
-  <link rel="stylesheet" href="css/styles.css">
+  <!-- NOTA: los ficheros viven en la raíz del proyecto (no hay css/ ni js/),
+       así que las rutas son planas. Mantener sincronizado con la estructura real. -->
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
@@ -34,6 +36,7 @@
 
     <!-- Resultados de búsqueda -->
     <section id="results-section">
+      <p id="results-status" class="results-status" role="status" aria-live="polite" hidden></p>
       <ul id="results-list" class="results-list"></ul>
     </section>
 
@@ -50,7 +53,8 @@
       </div>
 
       <!-- Resumen rápido: dosis, contraindicaciones, alertas clave -->
-      <div id="quick-summary" class="quick-summary">
+      <!-- Se rellena desde app.js (renderQuickSummary) y queda oculto si no hay datos -->
+      <div id="quick-summary" class="quick-summary" hidden>
         <!-- TODO: extraer y mostrar aquí lo esencial antes del detalle completo -->
       </div>
 
@@ -81,7 +85,7 @@
     </p>
   </footer>
 
-  <script src="js/api.js"></script>
-  <script src="js/app.js"></script>
+  <script src="api.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

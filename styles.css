@@ -152,3 +152,97 @@ body {
   color: var(--color-muted);
   font-size: 0.85rem;
 }
+
+/* --- Estado de la búsqueda --- */
+.results-status {
+  margin: 0 0 0.75rem;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+.results-status.error { color: #b3261e; }
+
+/* --- Resultados de la búsqueda completa --- */
+.results-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.results-list li.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+.result-name { font-weight: 600; }
+.result-lab { color: var(--color-muted); font-size: 0.9rem; }
+.result-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.2rem;
+}
+.result-tag {
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: #f1f1f1;
+}
+.result-tag-receta { background: #eef4ff; color: #1c3d8f; }
+.result-tag-efg { background: var(--color-primary-light); color: var(--color-primary); }
+.result-tag-nocomerc { background: var(--color-warning-bg); color: var(--color-warning-text); }
+
+/* --- Autocompletado: laboratorio como texto secundario --- */
+.suggestion-name { display: block; }
+.suggestion-lab {
+  display: block;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+/* --- Resumen rápido --- */
+.quick-summary-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+}
+.quick-summary-loading {
+  margin: 0;
+  color: var(--color-muted);
+}
+.quick-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+.quick-summary-card {
+  padding: 0.75rem 0.9rem;
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+.quick-summary-card-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+}
+.quick-summary-card p {
+  margin: 0;
+  font-size: 0.92rem;
+}
+.quick-summary-card .quick-summary-source {
+  margin-top: 0.5rem;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+}
+.quick-summary-note {
+  margin: 0.75rem 0 0;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+}
+
+/* --- El HTML que llega de CIMA no debe romper el layout --- */
+.accordion-body {
+  overflow-x: auto;
+  overflow-wrap: anywhere;
+}
+.accordion-body img { max-width: 100%; height: auto; }
+.accordion-body table { border-collapse: collapse; max-width: 100%; }
+.accordion-body h1,
+.accordion-body h2,
+.accordion-body h3 { font-size: 1rem; }
