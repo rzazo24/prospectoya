@@ -13,17 +13,15 @@ parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
 Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
 y `Eliminado` (solo los que apliquen).
 
-## Sin publicar
+## [0.2.0] - 2026-09-20
+
+Segunda entrega: la web se puede **compartir con tarjeta**, tiene **página de
+ayuda** y el proyecto incorpora sus **suites de test** dentro del repo. Todo
+sigue sin backend, sin build ni frameworks, y **sin dependencias en el sitio**
+(la única, `jsdom`, es de desarrollo y vive en `tests/`).
 
 ### Añadido
 
-- **Carpeta `tests/`** con las suites del proyecto, antes repartidas fuera del
-  repo: estructura HTML, buscador completo en jsdom, las dos páginas en Chrome
-  real servidas por HTTP (incluido que el tema se mantiene al pasar de una a
-  otra), los favicons, la regresión del `z-index` del autocompletado y la
-  comprobación de `api.js` contra la API real de CIMA (115 comprobaciones).
-  Llevan un `README.md` propio y un `package.json` con `jsdom` como única
-  dependencia de desarrollo (`npm test`).
 - **Página de ayuda** (`ayuda.html`): explica de dónde salen los datos (AEMPS ·
   CIMA), cómo se busca por nombre, código nacional y nº de registro, cómo se lee
   el resumen rápido, atajos de teclado, privacidad, preguntas frecuentes, qué
@@ -34,12 +32,30 @@ y `Eliminado` (solo los que apliquen).
   Open Graph y Twitter Card (`og:title`, `og:description`, `og:url`, `og:image`
   con `social-preview.png`, `og:image:width/height` y `twitter:card` con
   `summary_large_image`).
+- **Carpeta `tests/`** con las suites del proyecto, antes repartidas fuera del
+  repo: estructura HTML, buscador completo en jsdom, las dos páginas en Chrome
+  real servidas por HTTP (incluido que el tema se mantiene al pasar de una a
+  otra), los favicons, la regresión del `z-index` del autocompletado y la
+  comprobación de `api.js` contra la API real de CIMA (115 comprobaciones).
+  Llevan un `README.md` propio y un `package.json` con `jsdom` como única
+  dependencia de desarrollo (`npm test`).
 
 ### Cambiado
 
-- El tema claro/oscuro sale de `app.js` a un fichero propio, `tema.js`, para que
-  lo compartan el buscador y la ayuda: la elección se mantiene al pasar de una
-  página a la otra.
+- **El tema claro/oscuro** sale de `app.js` a un fichero propio, `tema.js`, para
+  que lo compartan el buscador y la ayuda: la elección se mantiene al pasar de
+  una página a la otra.
+- **La captura del README vive ya en el repositorio** (`captura-inicio.png`) y
+  deja de ser un adjunto de GitHub: la página servía el adjunto con una URL
+  firmada que caduca a los cinco minutos y el fichero no formaba parte del repo,
+  así que un clon o un fork se quedaban sin imagen. Se guarda optimizada (322 KB
+  → 255 KB) e idéntica píxel a píxel.
+
+**Commits de esta versión:**
+[`8391261`](https://github.com/rzazo24/prospectoya/commit/8391261) ·
+[`3cbea2d`](https://github.com/rzazo24/prospectoya/commit/3cbea2d) ·
+[`03e3383`](https://github.com/rzazo24/prospectoya/commit/03e3383) ·
+[`b5ddba5`](https://github.com/rzazo24/prospectoya/commit/b5ddba5)
 
 ## [0.1.0] - 2026-09-20
 
@@ -112,5 +128,6 @@ vanilla contra la API pública de CIMA (AEMPS).
 [`3396182`](https://github.com/rzazo24/prospectoya/commit/3396182) ·
 [`7495276`](https://github.com/rzazo24/prospectoya/commit/7495276)
 
-[Sin publicar]: https://github.com/rzazo24/prospectoya/compare/v0.1.0...HEAD
+[Sin publicar]: https://github.com/rzazo24/prospectoya/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/rzazo24/prospectoya/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/rzazo24/prospectoya/releases/tag/v0.1.0
