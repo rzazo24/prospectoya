@@ -13,6 +13,7 @@ const resultsStatus = document.getElementById("results-status");
 const detailSection = document.getElementById("detail-section");
 const detailName = document.getElementById("detail-name");
 const detailLab = document.getElementById("detail-lab");
+const quickSummary = document.getElementById("quick-summary");
 const sectionsAccordion = document.getElementById("sections-accordion");
 const docTabs = document.querySelectorAll(".doc-tab");
 
@@ -221,7 +222,12 @@ async function selectMedicamento(medicamento) {
   // (Ojo: /medicamentos no devuelve `cn`; habría que pedirlo con
   // obtenerMedicamento({ nregistro }) para tener el Código Nacional.)
 
-  await cargarSecciones(currentTipoDoc);
+  // El resumen rápido y el acordeón son consultas independientes:
+  // se lanzan en paralelo para no encadenar esperas.
+  await Promise.all([
+    cargarSecciones(currentTipoDoc),
+    renderQuickSummary(medicamento.nregistro),
+  ]);
 }
 
 // --- Tabs Prospecto / Ficha técnica ---
@@ -320,6 +326,453 @@ function renderAccordion(secciones) {
     item.appendChild(body);
     sectionsAccordion.appendChild(item);
   });
+}
+
+// --- Resumen rápido (dosis, contraindicaciones y alertas clave) ---
+//
+// Cómo se localiza cada dato (verificado contra la API real el 20/09/2026):
+// el prospecto NO tiene una sección "Contraindicaciones": todo eso vive
+// dentro de "Qué necesita saber antes de empezar a tomar…", dividido en
+// subtítulos ("No tome…", "Embarazo y lactancia", "Conducción y uso de
+// máquinas", "Toma de … con alimentos, bebidas y alcohol"). Por eso cada
+// campo busca primero en las secciones del prospecto, luego en los
+// subtítulos del contenido y, si no hay nada, en la ficha técnica.
+
+const CAMPOS_RESUMEN = [
+  {
+    id: "posologia",
+    etiqueta: "Dosis y forma de tomarlo",
+    secciones: [/c[óo]mo tomar/i, /posolog/i, /forma de administraci/i],
+    subTitulos: [/^posolog/i, /^dosis/i, /^cu[áa]nto (?:tomar|usar)/i, /^adultos/i, /^uso en/i],
+    frases: [/\b\d+(?:[.,]\d+)?\s*(?:mg|g|ml)\b/i],
+    extraerPorFrases: true,
+    contextoPrevio: true,
+    prefijarTitulo: true,
+    primerosBloques: 3,
+    truncar: 420,
+  },
+  {
+    id: "contraindicaciones",
+    etiqueta: "No lo tome si… (contraindicaciones)",
+    secciones: [/contraindicac/i, /qu[ée] necesita saber/i],
+    seccionesEspecificas: [/contraindicac/i],
+    subTitulos: [/^no tome/i, /^no usar/i, /^no utilice/i, /^no debe/i, /contraindicac/i],
+    frases: [/est[áa] contraindicad/i, /no debe (?:tomar|usar|utilizar)/i],
+    extraerPorFrases: true,
+    seccionCompleta: true,
+    truncar: 420,
+  },
+  {
+    id: "embarazo",
+    etiqueta: "Embarazo y lactancia",
+    secciones: [/embarazo/i, /lactanc/i, /fertilidad/i, /qu[ée] necesita saber/i, /advertencias/i],
+    seccionesEspecificas: [/embarazo/i, /lactanc/i, /fertilidad/i],
+    subTitulos: [/embarazo/i, /lactanc/i],
+    frases: [/est[áa] embarazada/i, /lactanc/i],
+    extraerPorFrases: true,
+    seccionCompleta: true,
+    truncar: 380,
+  },
+  {
+    id: "conduccion",
+    etiqueta: "Conducción y uso de máquinas",
+    secciones: [/conduc/i, /m[áa]quinas/i, /qu[ée] necesita saber/i, /advertencias/i],
+    seccionesEspecificas: [/conduc/i, /m[áa]quinas/i],
+    subTitulos: [/conduc/i, /m[áa]quinas/i],
+    frases: [/conducir/i, /maquinaria/i],
+    extraerPorFrases: true,
+    seccionCompleta: true,
+    truncar: 320,
+  },
+  {
+    id: "alcohol",
+    etiqueta: "Alcohol",
+    secciones: [/alcohol/i, /alimentos/i, /qu[ée] necesita saber/i, /interacci/i, /advertencias/i],
+    subTitulos: [/alcohol/i],
+    frases: [/alcohol/i],
+    extraerPorFrases: true,
+    prioridadFrases: true,
+    maxFrases: 1,
+    truncar: 320,
+  },
+];
+
+/**
+ * Extrae el resumen del medicamento y lo pinta en #quick-summary.
+ * Si no se encuentra ningún dato, el bloque queda oculto.
+ * @param {string} nregistro
+ */
+async function renderQuickSummary(nregistro) {
+  quickSummary.hidden = false;
+  quickSummary.innerHTML = "<p class='quick-summary-loading'>Cargando resumen…</p>";
+
+  let datos;
+  try {
+    datos = await extraerResumenRapido(nregistro);
+  } catch (err) {
+    console.error(err);
+    quickSummary.hidden = true;
+    quickSummary.innerHTML = "";
+    return;
+  }
+
+  // Si el usuario ya ha seleccionado otro medicamento, se descarta este resultado
+  if (nregistro !== currentNRegistro) return;
+
+  const conDatos = CAMPOS_RESUMEN.filter((campo) => datos.resumen[campo.id]);
+
+  if (conDatos.length === 0) {
+    quickSummary.hidden = true;
+    quickSummary.innerHTML = "";
+    return;
+  }
+
+  quickSummary.innerHTML = "";
+
+  const titulo = document.createElement("h3");
+  titulo.className = "quick-summary-title";
+  titulo.textContent = "Resumen rápido";
+  quickSummary.appendChild(titulo);
+
+  const grid = document.createElement("div");
+  grid.className = "quick-summary-grid";
+  conDatos.forEach((campo) =>
+    grid.appendChild(crearTarjetaResumen(campo, datos.resumen[campo.id]))
+  );
+  quickSummary.appendChild(grid);
+
+  const nota = document.createElement("p");
+  nota.className = "quick-summary-note";
+  nota.textContent =
+    "Resumen extraído automáticamente del prospecto. No sustituye el consejo de un profesional sanitario.";
+  quickSummary.appendChild(nota);
+}
+
+/** Construye la tarjeta de un campo del resumen (texto plano, sin HTML). */
+function crearTarjetaResumen(campo, dato) {
+  const tarjeta = document.createElement("article");
+  tarjeta.className = `quick-summary-card quick-summary-card-${campo.id}`;
+
+  const titulo = document.createElement("h4");
+  titulo.className = "quick-summary-card-title";
+  titulo.textContent = campo.etiqueta;
+  tarjeta.appendChild(titulo);
+
+  const texto = document.createElement("p");
+  texto.textContent = dato.texto; // textContent: aquí nunca se inyecta HTML
+  tarjeta.appendChild(texto);
+
+  const fuente = document.createElement("p");
+  fuente.className = "quick-summary-source";
+  fuente.textContent = `${dato.documento} · ${dato.origen}`;
+  tarjeta.appendChild(fuente);
+
+  return tarjeta;
+}
+
+
+/**
+ * Recorre los documentos (prospecto primero, ficha técnica como respaldo) y
+ * devuelve los campos del resumen que han podido localizarse.
+ * @returns {Promise<{resumen: Object, sinDatos: string[]}>}
+ */
+async function extraerResumenRapido(nregistro) {
+  const resumen = {};
+  const pendientes = new Set(CAMPOS_RESUMEN.map((campo) => campo.id));
+
+  for (const tipoDoc of [2, 1]) {
+    if (pendientes.size === 0) break;
+
+    const campos = CAMPOS_RESUMEN.filter((campo) => pendientes.has(campo.id));
+    let cargadas = [];
+
+    try {
+      cargadas = await cargarDocumentoParaResumen(tipoDoc, nregistro, campos);
+    } catch (err) {
+      console.error(`No se pudo cargar el documento ${tipoDoc}:`, err);
+      continue;
+    }
+
+    for (const campo of campos) {
+      const candidatas = cargadas.filter((cargada) =>
+        coincide(cargada.seccion.titulo, campo.secciones)
+      );
+      const dato = buscarCampo(candidatas, campo);
+      if (dato) {
+        resumen[campo.id] = dato;
+        pendientes.delete(campo.id);
+      }
+    }
+  }
+
+  return { resumen, sinDatos: [...pendientes] };
+}
+
+/**
+ * Descarga las secciones de un documento que interesan para los campos dados
+ * y las convierte en bloques de texto.
+ * @returns {Promise<Array<{seccion: Object, documento: string, bloques: Array}>>}
+ */
+async function cargarDocumentoParaResumen(tipoDoc, nregistro, campos) {
+  const documento = tipoDoc === 2 ? "Prospecto" : "Ficha técnica";
+  const secciones = await listarSecciones(tipoDoc, nregistro);
+  const patrones = campos.flatMap((campo) => campo.secciones);
+
+  const objetivo = secciones.filter((seccion) => coincide(seccion.titulo, patrones));
+
+  const cargadas = await Promise.all(
+    objetivo.map(async (seccion) => {
+      try {
+        const html = await obtenerContenidoSeccion(tipoDoc, nregistro, seccion.seccion);
+        return { seccion, documento, bloques: extraerBloques(html) };
+      } catch (err) {
+        console.warn(`No se pudo leer la sección ${seccion.seccion}:`, err);
+        return null;
+      }
+    })
+  );
+
+  return cargadas.filter(Boolean);
+}
+
+/**
+ * Busca un campo del resumen dentro de las secciones candidatas.
+ * Orden de búsqueda: subtítulo → frase clave → sección completa → inicio.
+ * @returns {{texto: string, origen: string, documento: string}|null}
+ */
+function buscarCampo(secciones, campo) {
+  /** Frases concretas que mencionan las palabras clave del campo. */
+  const porFrases = () => {
+    for (const candidata of secciones) {
+      for (const bloque of candidata.bloques) {
+        const frases = extraerFrases(
+          bloque.texto,
+          campo.frases,
+          campo.maxFrases || 2,
+          campo.contextoPrevio
+        );
+        if (frases) {
+          return {
+            texto: recortar(frases, campo.truncar),
+            origen: candidata.seccion.titulo,
+            documento: candidata.documento,
+          };
+        }
+      }
+    }
+    return null;
+  };
+
+  // 0) Algunos campos (p. ej. alcohol) son más fiables buscados por frase: el
+  //    subtítulo "…con alimentos, bebidas y alcohol" habla de otras cosas
+  //    antes de llegar a la advertencia que de verdad interesa.
+  if (campo.prioridadFrases) {
+    const dato = porFrases();
+    if (dato) return dato;
+  }
+
+  // 1) Subtítulo del tipo "Embarazo y lactancia" o "No tome…"
+  for (const candidata of secciones) {
+    const indice = candidata.bloques.findIndex(
+      (bloque) => bloque.titulo && coincide(bloque.titulo, campo.subTitulos)
+    );
+    if (indice !== -1) {
+      const bloque = candidata.bloques[indice];
+      const encontrado = recogerTexto(candidata.bloques, indice, campo);
+      if (encontrado) {
+        // En posología interesa saber a quién va dirigida la dosis
+        // ("Adultos: …", "Uso en niños: …"), salvo si el texto ya lo repite.
+        const inicio = encontrado.toLowerCase().slice(0, 60);
+        const yaSeRepite = inicio.includes(bloque.titulo.toLowerCase());
+        const prefijo =
+          campo.prefijarTitulo && !yaSeRepite ? `${formatearTitulo(bloque.titulo)} ` : "";
+        return {
+          texto: limpiarTexto(`${prefijo}${encontrado}`),
+          origen: candidata.seccion.titulo,
+          documento: candidata.documento,
+        };
+      }
+    }
+  }
+
+  // 2) Frases concretas (sin cambiar el orden de prioridad)
+  if (campo.extraerPorFrases) {
+    const dato = porFrases();
+    if (dato) return dato;
+  }
+
+  // 3) Secciones que YA son el dato en sí (p. ej. "4.3 Contraindicaciones" o
+  //    "4.7 Efectos sobre la capacidad para conducir…" de la ficha técnica).
+  //    Importante: solo valen las secciones específicas del campo, nunca las
+  //    contenedoras del prospecto ("Qué necesita saber antes de empezar…"),
+  //    porque su contenido empieza por otros temas y confundiría.
+  if (campo.seccionCompleta) {
+    const especificas = secciones.filter((candidata) =>
+      coincide(candidata.seccion.titulo, campo.seccionesEspecificas)
+    );
+    for (const candidata of especificas) {
+      const texto = limpiarTexto(
+        candidata.bloques.map((bloque) => bloque.texto || "").join(" ")
+      );
+      if (texto) {
+        return {
+          texto: recortar(texto, campo.truncar),
+          origen: candidata.seccion.titulo,
+          documento: candidata.documento,
+        };
+      }
+    }
+  }
+
+  // 4) Primeros bloques de la sección (la posología suele ir al principio)
+  if (campo.primerosBloques) {
+    for (const candidata of secciones) {
+      const texto = limpiarTexto(
+        candidata.bloques
+          .filter((bloque) => bloque.texto)
+          .slice(0, campo.primerosBloques)
+          .map((bloque) => bloque.texto)
+          .join(" ")
+      );
+      if (texto) {
+        return {
+          texto: recortar(texto, campo.truncar),
+          origen: candidata.seccion.titulo,
+          documento: candidata.documento,
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
+/** Recoge el texto de un bloque con subtítulo y los que le siguen. */
+function recogerTexto(bloques, indice, campo) {
+  const maxBloques = campo.maxBloques || 3;
+  const partes = [];
+
+  for (let i = indice; i < bloques.length && partes.length < maxBloques; i++) {
+    if (i > indice && bloques[i].titulo) break; // empieza otro subtítulo
+    if (bloques[i].texto) partes.push(bloques[i].texto);
+  }
+
+  return recortar(limpiarTexto(partes.join(" ")), campo.truncar);
+}
+
+/**
+ * Devuelve solo las frases del texto que encajan con los patrones, unidas en
+ * un párrafo corto. Sirve para campos que no tienen subtítulo propio (p. ej.
+ * el alcohol, que aparece como una frase suelta dentro de "Advertencias").
+ * @param {boolean} contextoPrevio - arrastra la frase anterior cuando parece
+ *   una etiqueta corta ("Adultos: Dosis de medio comprimido…"), para no
+ *   empezar la dosis por la mitad.
+ */
+function extraerFrases(texto, patrones, maximo, contextoPrevio) {
+  if (!texto) return "";
+
+  // Se corta por final de frase manteniendo el separador. Ojo: NO se corta
+  // por ":" porque aparece dentro de paréntesis y partía frases completas.
+  const oraciones = texto
+    .split(/(?<=[.;!?])\s+/)
+    .map((oracion) => oracion.trim())
+    .filter(Boolean);
+
+  const elegidas = [];
+
+  oraciones.forEach((oracion, i) => {
+    if (elegidas.length >= maximo) return;
+    if (!coincide(oracion, patrones)) return;
+
+    if (contextoPrevio && elegidas.length === 0 && i > 0 && oraciones[i - 1].length <= 90) {
+      elegidas.push(oraciones[i - 1]);
+    }
+    elegidas.push(oracion);
+  });
+
+  return limpiarTexto(elegidas.join(" "));
+}
+
+/**
+ * Convierte el HTML de una sección en bloques planos { titulo, texto }.
+ * Los párrafos que van entero en negrita/subrayado se toman como subtítulos y
+ * su contenido se acumula en `texto`.
+ * CIMA alterna <p><strong>…</strong></p> y <ul><li><strong>…</strong></li></ul>
+ * para los mismos subtítulos, así que hay que cubrir ambos casos.
+ */
+function extraerBloques(html) {
+  const doc = new DOMParser().parseFromString(html || "", "text/html");
+  const bloques = [];
+
+  doc.body.querySelectorAll("p, li, h1, h2, h3, h4, h5, h6, div").forEach((el) => {
+    if (el.querySelector("p, li, h1, h2, h3, h4, h5, h6, div")) return; // no es bloque hoja
+
+    const texto = limpiarTexto(el.textContent);
+    if (!texto) return;
+
+    if (esTituloBloque(el, texto)) {
+      bloques.push({ titulo: texto, texto: "" });
+      return;
+    }
+
+    const ultimo = bloques[bloques.length - 1];
+    if (ultimo && ultimo.titulo) {
+      ultimo.texto = ultimo.texto ? `${ultimo.texto} ${texto}` : texto;
+    } else {
+      bloques.push({ titulo: null, texto });
+    }
+  });
+
+  return bloques;
+}
+
+/** Decide si un bloque es un subtítulo (todo su contenido va destacado). */
+function esTituloBloque(el, texto) {
+  if (/^H[1-6]$/.test(el.tagName)) return true;
+  if (texto.length > 120) return false;
+
+  const destacados = el.querySelectorAll(
+    'strong, b, u, [style*="font-weight:bold"], [style*="font-weight: bold"], [style*="font-weight:700"]'
+  );
+  if (destacados.length === 0) return false;
+
+  const textoDestacado = limpiarTexto(
+    Array.from(destacados).map((nodo) => nodo.textContent).join(" ")
+  );
+
+  return textoDestacado.length > 0 && textoDestacado === texto;
+}
+
+/** Añade dos puntos a un subtítulo si no termina ya en signo de puntuación. */
+function formatearTitulo(titulo) {
+  const limpio = limpiarTexto(titulo);
+  return /[.:;]$/.test(limpio) ? limpio : `${limpio}:`;
+}
+
+/** Normaliza espacios (incluido el espacio duro) y recorta los extremos. */
+function limpiarTexto(texto) {
+  return (texto || "").replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/** ¿El texto encaja con alguno de los patrones indicados? */
+function coincide(texto, patrones) {
+  if (!texto || !patrones || patrones.length === 0) return false;
+  return patrones.some((patron) => patron.test(texto));
+}
+
+/** Recorta a `maximo` caracteres intentando no partir una frase. */
+function recortar(texto, maximo) {
+  if (!texto || texto.length <= maximo) return texto;
+
+  const corte = texto.slice(0, maximo);
+  const ultimoPunto = Math.max(
+    corte.lastIndexOf(". "),
+    corte.lastIndexOf("; "),
+    corte.lastIndexOf(": ")
+  );
+
+  const recorte = ultimoPunto > maximo * 0.4 ? corte.slice(0, ultimoPunto + 1) : corte;
+  return `${recorte.trim()} […]`;
 }
 
 // --- TODO Fase 2 ---
