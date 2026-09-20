@@ -1,4 +1,6 @@
 # ProspectoYa — Web mejorada para consultar medicamentos
+<img width="1200" height="798" alt="prospectoya" src="https://github.com/user-attachments/assets/d0b5721b-6573-4bf7-8c37-3e2d35b8b9d9" />
+
 
 Web estática (HTML/CSS/JS vanilla, sin frameworks, sin build) que consulta
 la API pública de CIMA (AEMPS) para mejorar la experiencia de buscar y leer
