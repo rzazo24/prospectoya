@@ -145,6 +145,56 @@ a { color: var(--brand-strong); }
   -webkit-backdrop-filter: blur(14px);
 }
 
+/* Aviso de "sin conexión": lo enseña pwa.js cuando el navegador detecta que no
+   hay red. Como es un estado poco frecuente, va como banda discreta sobre el
+   fondo del aviso (los mismos colores que el aviso sanitario de la ayuda). */
+.aviso-conexion {
+  max-width: var(--medida);
+  margin: 0 auto;
+  padding: 0.55rem 1.25rem;
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--warning-text);
+  background: var(--warning-bg);
+  border-bottom: 1px solid var(--warning-border);
+}
+.aviso-conexion[hidden] { display: none; }
+
+/* Aviso de "hay versión nueva": pwa.js lo enseña cuando el service worker ha
+   entrado con un sw.js más reciente. Va fijo abajo, como los avisos de las
+   apps, y no recarga solo: el usuario decide cuándo (puede estar leyendo). */
+.aviso-version {
+  position: fixed;
+  left: 50%;
+  bottom: 1rem;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  padding: 0.55rem 0.6rem 0.55rem 1rem;
+  font-size: 0.9rem;
+  color: var(--brand-contrast);
+  background: var(--brand);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-lg);
+}
+.aviso-version[hidden] { display: none; }
+
+.aviso-version-boton {
+  flex: none;
+  padding: 0.4rem 0.85rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--brand);
+  background: var(--brand-contrast);
+  border: 0;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+
 .brand {
   display: inline-flex;
   align-items: center;

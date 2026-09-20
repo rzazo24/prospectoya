@@ -1,7 +1,7 @@
 /**
  * Test de humo del buscador (composer tipo ChatGPT/DeepSeek) de ProspectoYa.
- * Carga index.html + tema.js + api.js + app.js reales en jsdom, con fetch
- * simulado. Sólo lee los ficheros del proyecto: no escribe nada en el repo.
+ * Carga index.html + tema.js + pwa.js + api.js + app.js reales en jsdom, con
+ * fetch simulado. Sólo lee los ficheros del proyecto: no escribe nada en el repo.
  *
  *   cd tests && node test-busqueda.js
  */
@@ -14,12 +14,14 @@ const RAIZ = path.resolve(__dirname, "..");
 const api = fs.readFileSync(path.join(RAIZ, "api.js"), "utf8");
 const app = fs.readFileSync(path.join(RAIZ, "app.js"), "utf8");
 const tema = fs.readFileSync(path.join(RAIZ, "tema.js"), "utf8");
+const pwa = fs.readFileSync(path.join(RAIZ, "pwa.js"), "utf8");
 
+// Los <script src> se sustituyen por su código en línea: jsdom no carga
+// ficheros externos, y así se ejecuta exactamente lo que carga la página.
 let html = fs.readFileSync(path.join(RAIZ, "index.html"), "utf8");
-html = html.replace(
-  '<script src="tema.js"></script>\n  <script src="api.js"></script>\n  <script src="app.js"></script>',
-  `<script>${tema}</script>\n  <script>${api}</script>\n  <script>${app}</script>`
-);
+for (const [fichero, codigo] of [["tema.js", tema], ["api.js", api], ["app.js", app], ["pwa.js", pwa]]) {
+  html = html.replace(`<script src="${fichero}"></script>`, `<script>${codigo}</script>`);
+}
 
 // Respuestas simuladas de la API de CIMA
 const MEDICAMENTOS = [

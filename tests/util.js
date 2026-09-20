@@ -87,6 +87,12 @@ function navegador() {
  * un fichero y hay un tiempo máximo, para que un cuelgue se vea como error en
  * lugar de dejar la suite parada.
  *
+ * Con `presupuesto: 0` se omite el tiempo virtual de Chrome: hay cosas (el
+ * service worker, por ejemplo) que tardan en tiempo real y con el reloj virtual
+ * no llegan a terminar antes del volcado. En ese caso la página se mide en
+ * tiempo real y conviene que ella misma controle cuándo acaba (ver el truco de
+ * la compuerta en test-pwa.js).
+ *
  * @param {string} url
  * @param {{alto?:number, ancho?:number, escala?:number, perfil?:string, presupuesto?:number, tiempoMaximo?:number}} [opciones]
  * @returns {Promise<string>} HTML final de la página
@@ -106,7 +112,8 @@ function domConChrome(url, opciones = {}) {
     args.push(`--window-size=${opciones.ancho || 1100},${opciones.alto || 800}`);
   }
   if (opciones.perfil) args.push(`--user-data-dir=${opciones.perfil}`);
-  args.push(`--virtual-time-budget=${opciones.presupuesto || 6000}`, "--dump-dom", url);
+  if (opciones.presupuesto !== 0) args.push(`--virtual-time-budget=${opciones.presupuesto || 6000}`);
+  args.push("--dump-dom", url);
 
   const tiempoMaximo = opciones.tiempoMaximo || 60000;
   const salida = path.join(carpetaTemporal("dom"), "dom.html");
@@ -177,11 +184,28 @@ const TIPOS = {
   ".css": "text/css; charset=utf-8",
   ".js": "application/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
+  ".webmanifest": "application/manifest+json; charset=utf-8",
   ".md": "text/markdown; charset=utf-8",
   ".png": "image/png",
   ".svg": "image/svg+xml",
   ".ico": "image/vnd.microsoft.icon",
 };
+
+/**
+ * Lee las dimensiones reales de un PNG sin dependencias.
+ *
+ * El manifest declara el tamaño de cada icono ("192x192"), pero eso es un
+ * texto: aquí se mira la cabecera de verdad (bloque IHDR, bytes 16-23).
+ *
+ * @param {string} fichero ruta absoluta
+ * @returns {{ancho:number, alto:number}|null} null si no es un PNG legible
+ */
+function tamanoPng(fichero) {
+  const bytes = fs.readFileSync(fichero);
+  const firma = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  if (bytes.length < 24 || !bytes.subarray(0, 8).equals(firma)) return null;
+  return { ancho: bytes.readUInt32BE(16), alto: bytes.readUInt32BE(20) };
+}
 
 /**
  * Servidor estático mínimo (Node, sin dependencias) sobre una carpeta.
@@ -240,4 +264,5 @@ module.exports = {
   leerDiag,
   campos,
   servirHttp,
+  tamanoPng,
 };

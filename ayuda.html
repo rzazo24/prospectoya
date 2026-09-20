@@ -10,6 +10,15 @@
   <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
   <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <!-- App instalable (PWA): ver "PWA" en el README -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#4d6bfe" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#16171b" media="(prefers-color-scheme: dark)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <!-- iOS/iPadOS: nombre bajo el icono y aspecto a pantalla completa -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ProspectoYa">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <!-- Tema antes del primer pintado para evitar el destello claro/oscuro -->
   <script>
     (function () {
@@ -49,6 +58,19 @@
       </button>
     </nav>
   </header>
+
+  <!-- Aviso de "sin conexión": lo enseña pwa.js cuando el navegador detecta que
+       no hay red. La ayuda se lee igual, pero buscar necesita internet. -->
+  <p id="aviso-conexion" class="aviso-conexion" role="status" hidden>
+    Sin conexión: puedes leer la página, pero las búsquedas necesitan internet.
+  </p>
+
+  <!-- Aviso de versión nueva: lo enseña pwa.js cuando el service worker detecta
+       que hay una versión más reciente publicada. No recarga sola: avisa. -->
+  <div id="aviso-version" class="aviso-version" role="status" hidden>
+    <span>Hay una versión nueva.</span>
+    <button id="recargar-version" class="aviso-version-boton" type="button">Recargar</button>
+  </div>
 
   <main class="app">
     <article class="ayuda">
@@ -197,7 +219,18 @@
       <h2>7. Preguntas frecuentes</h2>
 
       <h3>¿Hay que registrarse o instalar algo?</h3>
-      <p>No. Se abre en el navegador y ya está: ni cuenta, ni app que instalar.</p>
+      <p>
+        No: se abre en el navegador y ya está, sin cuenta y sin descargar nada de una tienda de
+        aplicaciones. Aun así, si quieres tenerla a mano, se puede
+        <strong>añadir a la pantalla de inicio</strong> y queda con su icono, a pantalla completa y
+        abriendo al instante:
+      </p>
+      <ul>
+        <li><strong>Android (Chrome)</strong>: menú <em>⋮</em> → <em>Añadir a pantalla de inicio</em>.</li>
+        <li><strong>iPhone/iPad (Safari)</strong>: botón <em>Compartir</em> → <em>Añadir a la pantalla
+          de inicio</em>.</li>
+        <li><strong>Ordenador (Chrome/Edge)</strong>: el icono de instalar de la barra de direcciones.</li>
+      </ul>
 
       <h3>¿Por qué no hay un chat con IA que me resuma el prospecto?</h3>
       <p>
@@ -241,6 +274,12 @@
           propias, así que siempre se muestra lo último publicado por la AEMPS.</li>
         <li><strong>No aparece el desplegable</strong>: hacen falta 3 letras, o bien el código
           completo (6 dígitos de CN o el número de registro).</li>
+        <li><strong>Sin conexión a internet</strong>: la web se abre igual —el navegador guarda
+          una copia de las páginas y los estilos—, pero las búsquedas necesitan la API de la AEMPS.
+          Mientras estés sin red verás un aviso arriba; al volver la conexión desaparece solo.</li>
+        <li><strong>Sale un aviso de "Hay una versión nueva"</strong>: es la web avisándote de que
+          se ha publicado una actualización. Pulsa <em>Recargar</em> cuando te venga bien (si estás
+          leyendo un prospecto, puedes terminar antes).</li>
       </ul>
 
       <p class="aviso">
@@ -278,5 +317,8 @@
   </footer>
 
   <script src="tema.js"></script>
+  <!-- Mismo pwa.js que en el buscador: aquí sólo hace falta para el aviso de
+       "sin conexión" y para el service worker (la ayuda también se abre sola). -->
+  <script src="pwa.js"></script>
 </body>
 </html>

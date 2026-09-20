@@ -128,6 +128,41 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
   exige **URL absoluta**, así que apunta a `https://prospectoya.vercel.app/…`: si
   el dominio cambia, hay que actualizarlo ahí.
 
+### App instalable (`manifest.webmanifest`, `sw.js`, `pwa.js`)
+
+La web se puede **instalar** como app (Chrome/Edge en Android y escritorio:
+*Instalar*; iPhone/iPad: Compartir → *Añadir a la pantalla de inicio*) y se abre
+**sin conexión**, porque guarda su propia "cáscara": las dos páginas, los
+estilos, el JS, el manifest y los iconos.
+
+- **`manifest.webmanifest`** declara el nombre, el arranque (`./`, relativo para
+  que funcione también en una subcarpeta), `display: standalone` y los cuatro
+  iconos. Los colores (`theme_color`, `background_color`) son los mismos tokens
+  de `styles.css`, y las páginas añaden dos `<meta name="theme-color">` (claro y
+  oscuro) más las etiquetas de iOS (`apple-mobile-web-app-*`).
+- **`sw.js`** precachea la cáscara al instalarse y después:
+  - las **navegaciones** van primero a la red —así, con conexión, siempre se ve
+    lo último publicado— y, si fallan, se sirve la copia guardada;
+  - el **resto de ficheros propios** se sirven de la copia y se actualizan en
+    segundo plano, sin pasos manuales;
+  - **la API de CIMA no se toca**: va directa a la red y no se guarda nunca (los
+    datos tienen que estar frescos). Sin conexión el buscador da error y la
+    página lo avisa con el cartel de "sin conexión".
+- **`pwa.js`** registra el service worker, enseña u oculta el aviso de conexión
+  y avisa cuando hay **versión nueva**: pregunta al service worker en marcha qué
+  versión lleva (`VERSION`, en `sw.js`) y, si cambia, muestra abajo *"Hay una
+  versión nueva"* con un botón **Recargar**. No recarga sola —puede haber un
+  prospecto a medio leer— y sólo avisa si la versión cambia de verdad: hay
+  cambios de control (el navegador reactiva o reclama la página) que no son una
+  actualización. También llama a `registration.update()` al abrir y al volver a
+  la pestaña, porque el navegador, por su cuenta, sólo busca versiones nuevas
+  cada 24 h.
+
+**Al publicar cambios**, sube `VERSION` en `sw.js` (por ejemplo `v1` → `v2`): el
+caché lleva la versión en el nombre, al activarse se borran los anteriores y
+quien tenga la web abierta verá el aviso de recargar. No hace falta nada más: el
+sitio se sigue sirviendo tal cual desde el repositorio.
+
 ## Fase 2 (después del MVP)
 
 4. Badge de "problema de suministro activo" (`GET /psuministro`).
@@ -158,14 +193,20 @@ sugiere el PDF de documentación** en varios puntos:
 ```
 index.html         → estructura de la página (buscador, resultados, detalle)
 ayuda.html         → página de ayuda: cómo funciona, FAQ y enlace al repositorio
-styles.css         → estilos (buscador, detalle y ayuda)
+styles.css         → estilos (buscador, detalle, ayuda y avisos)
 api.js             → funciones que llaman a la API de CIMA (fetch)
 app.js             → lógica de UI: búsqueda, render de resultados, acordeón, resumen
 tema.js            → tema claro/oscuro (lo comparten index.html y ayuda.html)
+pwa.js             → app instalable: registra el service worker y los avisos
+sw.js              → service worker: guarda la "cáscara" para abrir sin conexión
+manifest.webmanifest → ficha de la app (nombre, arranque, colores e iconos)
 favicon.svg        → icono maestro (cápsula de marca); de aquí salen los demás
 favicon-32.png     → respaldo del icono para navegadores sin soporte de SVG
 favicon.ico        → respaldo multi-tamaño (16/32/48) para navegadores antiguos
 apple-touch-icon.png → icono para iOS/iPadOS (180×180, opaco)
+icono-192.png / icono-512.png → iconos de la app instalada (192×192, 512×512)
+icono-maskable-192.png / icono-maskable-512.png → los mismos, con fondo a sangre
+                     y la marca centrada: Android los recorta con su máscara
 social-preview.png → imagen 1280×640: Social preview del repo y `og:image` de la web
 captura-inicio.png → captura del buscador que se muestra al principio del README
 LICENSE            → licencia MIT
@@ -197,6 +238,27 @@ google-chrome --headless --window-size=512,512 \
 Después se reduce a 32×32 (`favicon-32.png`) y a 180×180 (`apple-touch-icon.png`,
 esta vez **sin** esquinas redondeadas y opaco, porque iOS aplica su propia
 máscara), y se empaquetan los tamaños 16/32/48 en `favicon.ico`.
+
+Los cuatro iconos de la app instalada (192 y 512, normales y *maskable*) salen
+del mismo SVG. Los **maskable** son los que Android recorta con su máscara
+(círculo, gota, cuadrado redondeado…): llevan fondo a sangre, sin esquinas
+transparentes, y la cápsula al 66%, dentro del 80% central, que es la zona que
+ningún recorte toca:
+
+```bash
+# 2) Variante maskable: fondo a sangre y la cápsula al 66% (zona segura)
+sed -e 's/width="64" height="64"/width=512 height=512/' \
+    -e 's|rx="15" fill="#4d6bfe"|fill="#4d6bfe"|' \
+    -e 's|rotate(-45 32 32)|rotate(-45 32 32) scale(0.66) translate(16.4848 16.4848)|' \
+    favicon.svg > /tmp/icono-maskable.svg
+google-chrome --headless --window-size=512,512 \
+  --screenshot=icono-maskable-512.png file:///tmp/icono-maskable.svg
+```
+
+(Los dos `sed` van a juego con el texto literal de `favicon.svg`: si se cambia
+el SVG, hay que revisarlos. La suite `tests/test-pwa.js` comprueba en un canvas
+que el icono maskable no tiene ni un píxel transparente y que la marca no se
+sale de esa zona segura, así que un error aquí no pasa desapercibido.)
 
 Dos avisos si editas el SVG: el color va literal (no puede usar las variables de
 `styles.css`, porque el favicono se carga como documento suelto) y en un
@@ -242,16 +304,18 @@ Chrome/Chromium (Node las demás no necesitan nada instalado):
 ```bash
 cd tests
 npm install          # jsdom (única dependencia, sólo de desarrollo)
-npm test             # 122 comprobaciones: estructura, buscador, móvil, páginas, iconos y z-index
+npm test             # 207 comprobaciones: estructura, buscador, móvil, páginas, PWA, iconos y z-index
 npm run test:api-real   # contra la API real de CIMA (necesita red)
 ```
 
-Resumen: `test-html.js` (estructura de las dos páginas y metaetiquetas),
+Resumen: `test-html.js` (estructura de las dos páginas, metaetiquetas y avisos),
 `test-busqueda.js` (buscador completo en jsdom con `fetch` simulado),
 `test-movil.js` (el buscador en un viewport de móvil, sin zoom al escribir),
 `test-paginas.js` (las dos páginas en Chrome real, servidas por HTTP),
-`test-iconos.js` (los favicons cargan y miden lo que deben), `test-solape.js`
-(regresión del z-index del desplegable) y `test-api-real.js` (la API de verdad).
+`test-pwa.js` (app instalable: manifest, iconos, service worker, sin conexión y
+aviso de versión nueva), `test-iconos.js` (los favicons cargan y miden lo que
+deben), `test-solape.js` (regresión del z-index del desplegable) y
+`test-api-real.js` (la API de verdad).
 En [`tests/README.md`](tests/README.md) está el detalle de cada una.
 
 ## Notas para quien continúe el desarrollo

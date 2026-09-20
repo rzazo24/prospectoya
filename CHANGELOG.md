@@ -17,8 +17,33 @@ y `Eliminado` (solo los que apliquen).
 
 ### Añadido
 
-- **Suite `tests/test-movil.js`** (`npm run test:movil`): comprueba el buscador
-  en un viewport de móvil (390×844). El proyecto pasa a 122 comprobaciones.
+- **La web se puede instalar como app (PWA)** y se abre **sin conexión**:
+  - `manifest.webmanifest` con el nombre, el arranque (`./`), `display:
+    standalone` y los cuatro iconos (`icono-192.png`, `icono-512.png` y sus
+    variantes *maskable*, generados desde `favicon.svg`). Las páginas añaden los
+    `<meta name="theme-color">` de los dos temas y las etiquetas de iOS.
+  - `sw.js`: guarda la "cáscara" (las dos páginas, los estilos, el JS, el
+    manifest y los iconos) para que la web abra al instante y sin conexión. Las
+    navegaciones van primero a la red y el resto de ficheros propios se
+    actualizan en segundo plano. **La API de CIMA no se cachea nunca**: los
+    datos van siempre directos a la AEMPS.
+  - `pwa.js` (lo cargan las dos páginas): registra el service worker y gestiona
+    los avisos.
+  - Aviso de **"sin conexión"** cuando el navegador detecta que no hay red.
+- **Aviso de versión nueva**: al publicar cambios (subiendo `VERSION` en
+  `sw.js`), quien tenga la web abierta ve abajo *"Hay una versión nueva"* con un
+  botón **Recargar**. No recarga sola y sólo avisa si la versión cambia de
+  verdad (hay cambios de control que no son actualizaciones): `pwa.js` pregunta
+  la versión al service worker en marcha. Además se busca actualización al abrir
+  y al volver a la pestaña, porque el navegador sólo lo hace por su cuenta cada
+  24 h.
+- **Suite `tests/test-pwa.js`**: manifest, iconos (comprobando en un canvas que
+  los *maskable* no tienen transparencia y que la marca cabe en la zona segura),
+  `sw.js`, el aviso de versión con `pwa.js` en jsdom y dos pasadas por Chrome
+  real, la segunda **con el servidor apagado**. El proyecto pasa a 207
+  comprobaciones.
+- La ayuda explica cómo **añadir la web a la pantalla de inicio** y qué hacer si
+  aparece el aviso de versión nueva.
 
 ### Corregido
 

@@ -113,7 +113,7 @@ function medir(sitio, pagina) {
 
 (async () => {
   const sitio = carpetaTemporal("solape");
-  copiar(sitio, ["api.js", "app.js", "tema.js", "index.html", "favicon.svg"]);
+  copiar(sitio, ["api.js", "app.js", "tema.js", "pwa.js", "index.html", "favicon.svg"]);
 
   const css = leer("styles.css");
   const cssViejo = cssSinArreglo(css);

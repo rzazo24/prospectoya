@@ -11,6 +11,16 @@
   <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
   <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <!-- App instalable (PWA): manifest con nombre, iconos y colores; el color de
+       la barra del sistema cambia con el tema. Ver "PWA" en el README. -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#4d6bfe" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#16171b" media="(prefers-color-scheme: dark)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <!-- iOS/iPadOS: nombre bajo el icono y aspecto a pantalla completa -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ProspectoYa">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <!-- Tema antes del primer pintado para evitar el destello claro/oscuro -->
   <script>
     (function () {
@@ -68,6 +78,20 @@
       </button>
     </nav>
   </header>
+
+  <!-- Aviso de "sin conexión": lo enseña pwa.js cuando el navegador detecta que
+       no hay red. La web se abre igual (va guardada), pero buscar necesita
+       internet: los datos de la AEMPS no se guardan nunca. -->
+  <p id="aviso-conexion" class="aviso-conexion" role="status" hidden>
+    Sin conexión: puedes leer la página, pero las búsquedas necesitan internet.
+  </p>
+
+  <!-- Aviso de versión nueva: lo enseña pwa.js cuando el service worker detecta
+       que hay una versión más reciente publicada. No recarga sola: avisa. -->
+  <div id="aviso-version" class="aviso-version" role="status" hidden>
+    <span>Hay una versión nueva.</span>
+    <button id="recargar-version" class="aviso-version-boton" type="button">Recargar</button>
+  </div>
 
   <main class="app">
 
@@ -199,5 +223,8 @@
   <script src="tema.js"></script>
   <script src="api.js"></script>
   <script src="app.js"></script>
+  <!-- El último: registra el service worker y el aviso de "sin conexión".
+       La web funciona aunque no esté (ver pwa.js). -->
+  <script src="pwa.js"></script>
 </body>
 </html>

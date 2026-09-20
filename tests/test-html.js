@@ -23,6 +23,39 @@ for (const fichero of ["index.html", "ayuda.html"]) {
       Boolean(doc.querySelector('link[href="favicon.ico"]')) &&
       Boolean(doc.querySelector('link[href="apple-touch-icon.png"]'))
   );
+  // --- App instalable (PWA): lo que tiene que declarar cada página ---
+  const manifest = doc.querySelector('link[rel="manifest"]');
+  comprobar("declara el manifest de la app", Boolean(manifest) && manifest.getAttribute("href") === "manifest.webmanifest");
+  comprobar("el manifest declarado existe", fs.existsSync(path.join(RAIZ, "manifest.webmanifest")));
+  comprobar(
+    "theme-color con los dos temas (claro y oscuro)",
+    [...doc.querySelectorAll('meta[name="theme-color"]')]
+      .map((m) => m.getAttribute("content"))
+      .join(" ") === "#4d6bfe #16171b"
+  );
+  comprobar(
+    "metas de app instalada (Android e iOS)",
+    doc.querySelector('meta[name="mobile-web-app-capable"]')?.getAttribute("content") === "yes" &&
+      doc.querySelector('meta[name="apple-mobile-web-app-title"]')?.getAttribute("content") === "ProspectoYa"
+  );
+  comprobar("carga pwa.js (service worker y aviso de conexión)", Boolean(doc.querySelector('script[src="pwa.js"]')));
+  {
+    const aviso = doc.getElementById("aviso-conexion");
+    comprobar(
+      "aviso de sin conexión, oculto de salida",
+      Boolean(aviso) && aviso.hasAttribute("hidden") && aviso.getAttribute("role") === "status",
+      aviso ? aviso.outerHTML.slice(0, 60) : "(no está)"
+    );
+  }
+  {
+    const aviso = doc.getElementById("aviso-version");
+    const boton = doc.getElementById("recargar-version");
+    comprobar(
+      "aviso de versión nueva, oculto de salida y con botón de recargar",
+      Boolean(aviso) && aviso.hasAttribute("hidden") && aviso.getAttribute("role") === "status" && Boolean(boton) && boton.tagName === "BUTTON",
+      aviso ? aviso.outerHTML.slice(0, 60) : "(no está)"
+    );
+  }
   comprobar("carga styles.css", Boolean(doc.querySelector('link[href="styles.css"]')));
   comprobar("carga tema.js", Boolean(doc.querySelector('script[src="tema.js"]')));
   comprobar("tema aplicado antes de pintar (script en el <head>)", html.includes('localStorage.getItem("prospectoya-tema")'));

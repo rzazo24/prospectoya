@@ -26,10 +26,17 @@ const FICHEROS = [
   "api.js",
   "app.js",
   "tema.js",
+  "pwa.js",
+  "sw.js",
+  "manifest.webmanifest",
   "favicon.svg",
   "favicon-32.png",
   "favicon.ico",
   "apple-touch-icon.png",
+  "icono-192.png",
+  "icono-512.png",
+  "icono-maskable-192.png",
+  "icono-maskable-512.png",
   "social-preview.png",
 ];
 
