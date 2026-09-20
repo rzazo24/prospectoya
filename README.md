@@ -36,12 +36,30 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
 
 ## Prioridades del MVP (Fase 1)
 
-1. Buscador con autocompletado en tiempo real (`GET /medicamentos`).
+1. Buscador con autocompletado en tiempo real (`GET /medicamentos`). ✅
 2. Visor del prospecto/ficha técnica por secciones, tipo acordeón/tabs
-   (usando `docSegmentado/secciones` + `docSegmentado/contenido`).
+   (usando `docSegmentado/secciones` + `docSegmentado/contenido`). ✅
 3. Resumen rápido arriba de la ficha: dosis, contraindicaciones, alertas
    clave (embarazo, conducción, alcohol) extraídas de las secciones
-   correspondientes del prospecto.
+   correspondientes del prospecto. ✅
+
+### Cómo funciona el resumen rápido (`app.js`)
+
+- La configuración vive en `CAMPOS_RESUMEN`: un array con un objeto por tarjeta
+  (`etiqueta`, patrones de `secciones`, `subTitulos`, `frases`, límite de
+  longitud…). Añadir un campo nuevo = añadir un objeto ahí, sin tocar el resto.
+- Para cada campo, `buscarCampo()` prueba por orden: **subtítulo** del prospecto
+  → **frase** que mencione la palabra clave (`extraerPorFrases`) → **sección
+  completa** (`seccionCompleta`, solo si la sección es específica del tema, p.ej.
+  "4.3 Contraindicaciones" de la ficha técnica) → **primeros bloques** de la
+  sección (caso de la posología).
+- El prospecto se consulta primero (lenguaje para el paciente) y, solo si queda
+  algún campo vacío, se usa la **ficha técnica** como respaldo. Cada tarjeta
+  indica de qué documento y sección salió el texto.
+- El HTML se trocea con `DOMParser` + `extraerBloques()`, que detecta como
+  subtítulo cualquier párrafo cuyo contenido vaya entero en negrita/subrayado
+  (cubre las dos variantes de CIMA). El texto de las tarjetas se pinta siempre
+  con `textContent`, nunca con `innerHTML`.
 
 ## Fase 2 (después del MVP)
 
@@ -51,14 +69,45 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
 7. Botón "copiar para IA": vuelca el texto de una sección o del prospecto
    completo en un formato limpio (markdown plano) al portapapeles.
 
+## Formas de respuesta REALES de la API (verificado el 20/09/2026)
+
+Antes de tocar estas llamadas conviene saber que la API **no coincide con lo que
+sugiere el PDF de documentación** en varios puntos:
+
+| Punto | Realidad comprobada |
+|---|---|
+| CORS | `Access-Control-Allow-Origin: *` presente en todas las llamadas (sin proxy). |
+| `GET /docSegmentado/secciones/{tipoDoc}` | Array de `{ seccion, titulo, orden }`. La clave del id es **`seccion`** (string, p.ej. `"4.2"`) y el título viene en **`titulo`**. |
+| `GET /docSegmentado/contenido/{tipoDoc}` | **No devuelve HTML plano**: devuelve un array JSON `[{ seccion, titulo, contenido, orden }]` con el HTML dentro de `contenido`. `api.js` ya lo parsea y une los fragmentos. |
+| Orden de las secciones | El array ya llega en el orden del documento. **No ordenar por `orden`**: en la ficha técnica ese campo no es monótono (las secciones 4, 4.1, 4.2… comparten valores bajos). |
+| `GET /medicamentos?nombre=X` | Ignora `pagina` y `tamanioPagina` (devuelve `tamanioPagina: 200` y hasta 200 filas de golpe). El recorte de la lista se hace en cliente (`MAX_RESULTADOS`). Tampoco devuelve `cn`: para `/psuministro` habrá que pedir `obtenerMedicamento({ nregistro })` primero. |
+| Prospecto (tipoDoc=2) | **No existe una sección "Contraindicaciones"**. Todo (contraindicaciones, embarazo, conducción, alcohol) vive dentro de la sección *"Qué necesita saber antes de empezar a tomar…"*, dividido en subtítulos. Además, CIMA alterna `<p><strong>…</strong></p>` y `<ul><li><strong>…</strong></li></ul>` para esos mismos subtítulos. |
+
 ## Estructura de archivos
 
 ```
-index.html        → estructura de la página (buscador, resultados, detalle)
-css/styles.css     → estilos
-js/api.js          → funciones que llaman a la API de CIMA (fetch)
-js/app.js          → lógica de UI: búsqueda, render de resultados, acordeón
+index.html         → estructura de la página (buscador, resultados, detalle)
+styles.css         → estilos
+api.js             → funciones que llaman a la API de CIMA (fetch)
+app.js             → lógica de UI: búsqueda, render de resultados, acordeón, resumen
+README.md          → este documento
 ```
+
+> Los ficheros están **en la raíz** del proyecto (no hay `css/` ni `js/`), y
+> `index.html` los referencia con rutas planas. Mantener ambos sincronizados:
+> si se mueven a subcarpetas, hay que actualizar las rutas.
+
+## Cómo probarlo en local
+
+No hay build ni dependencias; basta con servir la carpeta como sitio estático
+(abrir `index.html` con `file://` también funciona, pero algunos navegadores
+bloquean peticiones desde ese origen):
+
+```bash
+python3 -m http.server 8765
+# http://127.0.0.1:8765/index.html
+```
+
 
 ## Notas para quien continúe el desarrollo
 
@@ -66,6 +115,7 @@ js/app.js          → lógica de UI: búsqueda, render de resultados, acordeón
   descartado a propósito para esta fase.
 - No añadir dependencias de build (webpack, vite...) ni frameworks. El
   proyecto se sirve tal cual desde Vercel como sitio estático.
-- El HTML que devuelve `docSegmentado/contenido` viene ya formateado con
-  tags como `<h2>`, `<p>`; se puede inyectar con cuidado (ver comentarios
-  en `js/api.js` sobre sanitización básica antes de usar `innerHTML`).
+- El HTML de `docSegmentado/contenido` viene formateado con tags como `<p>`,
+  `<strong>` y `<ul>`; se puede inyectar con cuidado (ver comentarios en
+  `api.js` sobre sanitización básica antes de usar `innerHTML`). Ese HTML va
+  **dentro del JSON** de la respuesta, no en el cuerpo como texto plano.
