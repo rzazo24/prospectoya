@@ -75,7 +75,7 @@
             type="text"
             id="search-input"
             name="q"
-            placeholder="Busca por nombre, principio activo o laboratorio…"
+            placeholder="Busca por nombre, principio activo o código nacional (CN)…"
             autocomplete="off"
             spellcheck="false"
             aria-autocomplete="list"
@@ -109,6 +109,8 @@
         <button type="button" class="chip js-ejemplo" data-ejemplo="ibuprofeno">ibuprofeno</button>
         <button type="button" class="chip js-ejemplo" data-ejemplo="omeprazol">omeprazol</button>
         <button type="button" class="chip js-ejemplo" data-ejemplo="amoxicilina">amoxicilina</button>
+        <!-- Ejemplo de búsqueda por código nacional (6 dígitos) -->
+        <button type="button" class="chip js-ejemplo" data-ejemplo="662025">CN 662025</button>
       </div>
     </section>
 
@@ -130,6 +132,7 @@
         <span class="detail-eyebrow">Medicamento</span>
         <h2 id="detail-name"></h2>
         <p id="detail-lab"></p>
+        <p id="detail-cn" class="detail-cn" hidden></p>
         <!-- TODO Fase 2: badge de problema de suministro aquí -->
         <span id="supply-issue-badge" class="badge badge-warning" hidden>
           Problema de suministro activo

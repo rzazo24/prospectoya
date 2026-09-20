@@ -432,6 +432,16 @@ a { color: var(--brand-strong); }
   font-size: 0.85rem;
   color: var(--text-muted);
 }
+
+/* Código nacional del envase (llega de /presentaciones, a veces en diferido) */
+.result-cn {
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+.result-cn[hidden] { display: none; }
 .result-tags {
   display: flex;
   flex-wrap: wrap;
@@ -483,6 +493,15 @@ a { color: var(--brand-strong); }
   font-size: 0.92rem;
   color: var(--text-soft);
 }
+
+/* Códigos nacionales (uno por envase) del medicamento abierto */
+.detail-cn {
+  margin: 0.35rem 0 0;
+  font-size: 0.86rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-soft);
+}
+.detail-cn[hidden] { display: none; }
 
 /* --- Badges --- */
 .badge {

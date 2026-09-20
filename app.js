@@ -18,6 +18,7 @@ const resultsStatus = document.getElementById("results-status");
 const detailSection = document.getElementById("detail-section");
 const detailName = document.getElementById("detail-name");
 const detailLab = document.getElementById("detail-lab");
+const detailCN = document.getElementById("detail-cn");
 const quickSummary = document.getElementById("quick-summary");
 const sectionsAccordion = document.getElementById("sections-accordion");
 const docTabs = document.querySelectorAll(".doc-tab");
@@ -27,6 +28,17 @@ const docTabs = document.querySelectorAll(".doc-tab");
 // hasta 200 filas de golpe, así que el recorte se hace aquí.)
 const MAX_SUGERENCIAS = 8;
 const MAX_RESULTADOS = 60;
+
+// Patrones para distinguir un código nacional (CN, 6 dígitos exactos) o un
+// nº de registro (5-6 dígitos) de una búsqueda por nombre.
+const RE_SOLO_DIGITOS = /^\d+$/;
+const RE_CODIGO_NACIONAL = /^\d{6}$/;
+
+// Si el navegador no soporta IntersectionObserver, se piden los CN de los
+// primeros resultados de la lista (en vez de esperar a que entren en pantalla).
+const MAX_CNS_SIN_OBSERVADOR = 12;
+// Cuántos CN se muestran en un resultado antes de resumir el resto con "+N".
+const MAX_CNS_VISIBLES = 2;
 
 const CLAVE_TEMA = "prospectoya-tema";
 
@@ -86,6 +98,59 @@ function actualizarBotonEnvio() {
   searchSubmit.disabled = searchInput.value.trim().length === 0;
 }
 
+/** ¿El término es sólo dígitos (código nacional o nº de registro)? */
+function esNumerico(term) {
+  return RE_SOLO_DIGITOS.test(term);
+}
+
+/** Longitudes con las que merece la pena consultar un código: el CN son 6
+ *  dígitos exactos y los nº de registro van de 5 a 10 (hay también tipo EMA,
+ *  p.ej. "1231752001"), así que por debajo de 5 no se consulta. */
+function tieneLongitudDeCodigo(term) {
+  return term.length >= 5;
+}
+
+/**
+ * Lanza la consulta adecuada según lo escrito: por código nacional si son 6
+ * dígitos, por nº de registro si es un número sin coincidencia como CN, y por
+ * nombre en el resto de casos.
+ * @param {string} term - texto del buscador
+ * @returns {Promise<{resultados: Array, totalFilas: number, porCodigoNacional: string|null}>}
+ */
+async function consultarSegunTermino(term) {
+  if (RE_CODIGO_NACIONAL.test(term)) {
+    // /presentaciones devuelve el envase exacto con su `cn` y el `nregistro`
+    const porCN = await listarPresentaciones({ cn: term });
+    const resultados = porCN.resultados || [];
+    if (resultados.length > 0) {
+      return { resultados, totalFilas: porCN.totalFilas, porCodigoNacional: term };
+    }
+    // Un número de 6 dígitos también puede ser un nº de registro antiguo
+    const porNregistro = await buscarMedicamentos({ nregistro: term });
+    return {
+      resultados: porNregistro.resultados || [],
+      totalFilas: porNregistro.totalFilas,
+      porCodigoNacional: null,
+    };
+  }
+
+  if (esNumerico(term)) {
+    const porNregistro = await buscarMedicamentos({ nregistro: term });
+    return {
+      resultados: porNregistro.resultados || [],
+      totalFilas: porNregistro.totalFilas,
+      porCodigoNacional: null,
+    };
+  }
+
+  const porNombre = await buscarMedicamentos({ nombre: term });
+  return {
+    resultados: porNombre.resultados || [],
+    totalFilas: porNombre.totalFilas,
+    porCodigoNacional: null,
+  };
+}
+
 searchInput.addEventListener("input", (e) => {
   const term = e.target.value.trim();
   clearTimeout(debounceTimer);
@@ -96,11 +161,19 @@ searchInput.addEventListener("input", (e) => {
     return;
   }
 
+  // Con números no se consulta hasta tener un código con longitud válida:
+  // a medias, el filtro `cn` nunca coincidiría (es exacto) y el de `nregistro`
+  // devolvería cero filas.
+  if (esNumerico(term) && !tieneLongitudDeCodigo(term)) {
+    ocultarSugerencias();
+    return;
+  }
+
   // Debounce simple para no saturar la API mientras el usuario escribe
   debounceTimer = setTimeout(async () => {
     try {
-      const data = await buscarMedicamentos({ nombre: term });
-      renderSuggestions(data.resultados || []);
+      const data = await consultarSegunTermino(term);
+      renderSuggestions(data.resultados);
     } catch (err) {
       console.error(err);
       ocultarSugerencias();
@@ -261,7 +334,8 @@ if (searchExamples) {
 }
 
 /**
- * Busca medicamentos y pinta la lista completa de resultados.
+ * Busca por nombre, código nacional (6 dígitos) o nº de registro y pinta la
+ * lista completa de resultados.
  * @param {string} term - texto introducido por el usuario
  */
 async function buscarYRenderizarResultados(term) {
@@ -273,12 +347,23 @@ async function buscarYRenderizarResultados(term) {
     return;
   }
 
+  // Un número a medias (menos de 5 dígitos) no se consulta: la API ignora los
+  // filtros vacíos y devolvería el catálogo completo
+  if (esNumerico(term) && !tieneLongitudDeCodigo(term)) {
+    resultsList.innerHTML = "";
+    mostrarEstadoResultados(
+      `«${term}» no es un código válido: el código nacional (CN) tiene 6 dígitos y el nº de registro, 5 o más.`,
+      true
+    );
+    return;
+  }
+
   resultsList.innerHTML = "";
   mostrarEstadoResultados(`Buscando «${term}»…`);
 
   try {
-    const data = await buscarMedicamentos({ nombre: term });
-    renderResultados(data.resultados || [], term, data.totalFilas);
+    const { resultados, totalFilas, porCodigoNacional } = await consultarSegunTermino(term);
+    renderResultados(resultados, term, totalFilas, porCodigoNacional);
   } catch (err) {
     console.error(err);
     resultsList.innerHTML = "";
@@ -292,26 +377,49 @@ async function buscarYRenderizarResultados(term) {
 /**
  * Pinta en #results-list los medicamentos encontrados (lista completa, no
  * el desplegable) y actualiza el mensaje de estado.
+ * @param {Array} medicamentos
+ * @param {string} term - texto buscado (para el mensaje de estado)
+ * @param {number} totalFilas - total que informa la API
+ * @param {string|null} porCodigoNacional - CN usado en la búsqueda, si lo hubo
  */
-function renderResultados(medicamentos, term, totalFilas) {
+function renderResultados(medicamentos, term, totalFilas, porCodigoNacional = null) {
   resultsList.innerHTML = "";
 
   if (medicamentos.length === 0) {
-    mostrarEstadoResultados(
-      `Sin resultados para «${term}». Prueba con el principio activo (por ejemplo, «paracetamol»).`
-    );
+    mostrarEstadoResultados(mensajeSinResultados(term));
     return;
   }
 
   const visibles = medicamentos.slice(0, MAX_RESULTADOS);
-  visibles.forEach((med) => resultsList.appendChild(crearItemResultado(med)));
+  const items = visibles.map((med) => crearItemResultado(med));
+  items.forEach((li) => resultsList.appendChild(li));
+
+  // Los CN que no vengan ya en la respuesta (búsquedas por nombre) se piden
+  // cuando el resultado entra en pantalla, de uno en uno y con caché.
+  const sinCN = items.filter((li) => li.dataset.cnPendiente === "true");
+  if (observadorCN) {
+    sinCN.forEach((li) => observadorCN.observe(li));
+  } else {
+    sinCN.slice(0, MAX_CNS_SIN_OBSERVADOR).forEach(cargarCNDeResultado);
+  }
 
   const total = Number.isFinite(totalFilas) ? totalFilas : medicamentos.length;
-  let estado = `${total} resultado${total === 1 ? "" : "s"} para «${term}»`;
+  const busca = porCodigoNacional
+    ? `el código nacional «${porCodigoNacional}»`
+    : `«${term}»`;
+  let estado = `${total} resultado${total === 1 ? "" : "s"} para ${busca}`;
   if (visibles.length < total) {
     estado += ` — mostrando los primeros ${visibles.length}`;
   }
   mostrarEstadoResultados(estado);
+}
+
+/** Mensaje cuando la búsqueda no devuelve nada, con la pista adecuada. */
+function mensajeSinResultados(term) {
+  if (esNumerico(term)) {
+    return `Sin resultados para el código «${term}». Comprueba que el código nacional (6 dígitos) sea el de tu envase.`;
+  }
+  return `Sin resultados para «${term}». Prueba con el principio activo (por ejemplo, «paracetamol»).`;
 }
 
 /** Crea el <li> de un resultado, clicable para cargar su detalle. */
@@ -331,6 +439,18 @@ function crearItemResultado(medicamento) {
     li.appendChild(lab);
   }
 
+  // Código nacional: las respuestas de /presentaciones ya lo traen (búsquedas
+  // por CN); en el resto se rellena en diferido, cuando el resultado se ve.
+  const cn = document.createElement("span");
+  cn.className = "result-cn";
+  if (medicamento.cn) {
+    cn.textContent = `CN ${medicamento.cn}`;
+  } else {
+    cn.hidden = true;
+    li.dataset.cnPendiente = "true";
+  }
+  li.appendChild(cn);
+
   const etiquetas = document.createElement("span");
   etiquetas.className = "result-tags";
 
@@ -349,6 +469,9 @@ function crearItemResultado(medicamento) {
 
   li.addEventListener("click", () => {
     marcarResultadoActivo(medicamento.nregistro);
+    // Si el CN aún no se había pedido (o no había entrado en pantalla), se
+    // pinta ahora: la respuesta suele estar ya en caché.
+    cargarCNDeResultado(li);
     selectMedicamento(medicamento);
   });
 
@@ -360,6 +483,82 @@ function marcarResultadoActivo(nregistro) {
   resultsList.querySelectorAll("li").forEach((li) => {
     li.classList.toggle("active", li.dataset.nregistro === String(nregistro));
   });
+}
+
+// --- Código nacional (CN) de los resultados ---
+// /medicamentos NO devuelve el CN: sólo /presentaciones lo trae (uno por
+// envase). Como no admite consultas por lotes, se pide un medicamento a la vez,
+// cacheado, y sólo cuando el resultado entra en pantalla.
+
+/** Caché nregistro → promesa con sus CN. Guardar la promesa evita pedir dos
+ *  veces lo mismo si el usuario abre la ficha antes de que llegue la respuesta. */
+const cacheCN = new Map();
+
+/** Observa los resultados para pedir su CN cuando se ven; null si no hay soporte. */
+const observadorCN =
+  typeof IntersectionObserver === "function"
+    ? new IntersectionObserver(
+        (entradas) => {
+          entradas.forEach((entrada) => {
+            if (!entrada.isIntersecting) return;
+            observadorCN.unobserve(entrada.target);
+            cargarCNDeResultado(entrada.target);
+          });
+        },
+        { rootMargin: "150px" } // se adelanta un poco al scroll
+      )
+    : null;
+
+/**
+ * CN (uno por envase) de un medicamento, con caché.
+ * @param {string} nregistro
+ * @returns {Promise<string[]>} lista de códigos nacionales (vacía si no hay)
+ */
+function cnsDeMedicamento(nregistro) {
+  const clave = String(nregistro || "");
+  // Sin nregistro no se consulta: la API ignora los filtros vacíos y
+  // devolvería las presentaciones de todo el catálogo.
+  if (!clave) return Promise.resolve([]);
+
+  if (!cacheCN.has(clave)) {
+    const promesa = listarPresentaciones({ nregistro: clave })
+      .then((data) =>
+        (data.resultados || []).map((presentacion) => presentacion.cn).filter(Boolean)
+      )
+      .catch((err) => {
+        cacheCN.delete(clave); // que un fallo puntual no se quede cacheado
+        throw err;
+      });
+    cacheCN.set(clave, promesa);
+  }
+
+  return cacheCN.get(clave);
+}
+
+/** Pide (o reutiliza de la caché) el CN de un resultado y lo pinta. */
+async function cargarCNDeResultado(li) {
+  if (!li.isConnected) return;
+
+  try {
+    const cns = await cnsDeMedicamento(li.dataset.nregistro);
+    if (li.isConnected) pintarCNDeResultado(li, cns);
+  } catch (err) {
+    // El resultado sigue siendo válido sin el CN: no se muestra nada y ya está.
+    console.error(err);
+  }
+}
+
+/** Vuelca los CN en el hueco `.result-cn` del resultado. */
+function pintarCNDeResultado(li, cns) {
+  const hueco = li.querySelector(".result-cn");
+  if (!hueco || cns.length === 0) return;
+
+  const visibles = cns.slice(0, MAX_CNS_VISIBLES).map((cn) => `CN ${cn}`);
+  const restantes = cns.length - visibles.length;
+
+  hueco.textContent = restantes > 0 ? `${visibles.join(" · ")} · +${restantes}` : visibles.join(" · ");
+  hueco.title = `${cns.length === 1 ? "Código nacional" : "Códigos nacionales"}: ${cns.join(", ")}`;
+  hueco.hidden = false;
 }
 
 /** Mensaje de estado bajo el buscador (resultados encontrados o error). */
@@ -379,16 +578,38 @@ async function selectMedicamento(medicamento) {
   detailSection.scrollIntoView({ behavior: "smooth", block: "start" });
 
   // TODO Fase 2: llamar a comprobarProblemaSuministro() con el CN
-  // y mostrar #supply-issue-badge si corresponde.
-  // (Ojo: /medicamentos no devuelve `cn`; habría que pedirlo con
-  // obtenerMedicamento({ nregistro }) para tener el Código Nacional.)
+  // (ya disponible en mostrarCNsDeDetalle()) y mostrar #supply-issue-badge.
+  // Ojo: /psuministro responde por CN de un envase concreto, no por nregistro.
 
-  // El resumen rápido y el acordeón son consultas independientes:
+  // El resumen rápido, el acordeón y los CN son consultas independientes:
   // se lanzan en paralelo para no encadenar esperas.
   await Promise.all([
     cargarSecciones(currentTipoDoc),
     renderQuickSummary(medicamento.nregistro),
+    mostrarCNsDeDetalle(medicamento.nregistro),
   ]);
+}
+
+/**
+ * Pinta en #detail-cn los códigos nacionales (uno por envase) del medicamento
+ * abierto. Reutiliza la misma caché que la lista de resultados, así que si el
+ * usuario ya había hecho scroll hasta su resultado no hay petición extra.
+ * @param {string} nregistro
+ */
+async function mostrarCNsDeDetalle(nregistro) {
+  detailCN.hidden = true;
+  detailCN.textContent = "";
+
+  try {
+    const cns = await cnsDeMedicamento(nregistro);
+    // Si mientras tanto se ha abierto otro medicamento, no se pisa su cabecera
+    if (currentNRegistro !== nregistro || cns.length === 0) return;
+
+    detailCN.textContent = `${cns.length === 1 ? "Código nacional" : "Códigos nacionales"} (envases): ${cns.join(", ")}`;
+    detailCN.hidden = false;
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 // --- Tabs Prospecto / Ficha técnica ---

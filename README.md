@@ -23,6 +23,7 @@ Base: `https://cima.aemps.es/cima/rest/`
 | Endpoint | Uso |
 |---|---|
 | `GET /medicamentos?nombre=X` | Búsqueda de medicamentos (también admite `practiv1`, `laboratorio`, `atc`, `cn`, `nregistro`, etc.) |
+| `GET /presentaciones?{filtros}` | Presentaciones (envases) **con su `cn`** (Código Nacional); acepta los mismos filtros que `/medicamentos` (`nombre`, `cn`, `nregistro`, `pactivos`…) |
 | `GET /medicamento?nregistro=X` | Ficha completa de un medicamento (incluye `docs[]` con enlaces a PDF de ficha técnica y prospecto) |
 | `GET /docSegmentado/secciones/2?nregistro=X` | Lista de secciones disponibles del PROSPECTO (tipoDoc=2) |
 | `GET /docSegmentado/contenido/2?nregistro=X&seccion=X` | Contenido HTML de una sección del prospecto |
@@ -36,12 +37,14 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
 
 ## Prioridades del MVP (Fase 1)
 
-1. Buscador con autocompletado en tiempo real (`GET /medicamentos`). ✅
+1. Buscador con autocompletado en tiempo real (`GET /medicamentos`), también por
+   código nacional (CN) y nº de registro (`GET /presentaciones`). ✅
 2. Visor del prospecto/ficha técnica por secciones, tipo acordeón/tabs
    (usando `docSegmentado/secciones` + `docSegmentado/contenido`). ✅
 3. Resumen rápido arriba de la ficha: dosis, contraindicaciones, alertas
    clave (embarazo, conducción, alcohol) extraídas de las secciones
    correspondientes del prospecto. ✅
+
 ### Cómo funciona el buscador (`app.js`)
 
 - El buscador es un *composer* de una línea inspirado en ChatGPT/DeepSeek: lupa
@@ -51,6 +54,20 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
 - Al escribir 3 letras o más se consulta `GET /medicamentos` con un *debounce*
   de 300 ms y se pinta el desplegable `#search-suggestions` (máx.
   `MAX_SUGERENCIAS` = 8). Con menos de 3 letras el desplegable se oculta.
+- **Búsqueda por código**: si lo escrito son sólo dígitos, `consultarSegunTermino()`
+  espera a tener al menos 5 dígitos antes de consultar (por debajo avisa, porque la
+  API ignora los filtros vacíos y devolvería el catálogo completo). Con 6 dígitos
+  busca por **código nacional** en `GET /presentaciones?cn=…` (coincidencia
+  exacta) y, si no hay nada, reintenta como nº de registro; con el resto de
+  longitudes (5 o 8-10 dígitos) va directo a `GET /medicamentos?nregistro=…`.
+- **El CN sale en cada resultado** (`.result-cn`): las respuestas de
+  `/presentaciones` ya lo traen (búsquedas por CN, con el nombre del envase); en
+  las búsquedas por nombre se pide en diferido, medicamento a medicamento,
+  cuando el resultado entra en pantalla (`IntersectionObserver`, con
+  `MAX_CNS_SIN_OBSERVADOR` como respaldo si el navegador no lo soporta) y queda
+  en caché (`cacheCN`, `nregistro → CN[]`). La ficha del medicamento lista todos
+  los CN de sus envases (`#detail-cn`) reutilizando esa misma caché, así que
+  abrir un resultado ya visto no gasta peticiones.
 - Teclado: ↑ / ↓ recorren las sugerencias (realce `.is-active`, equivalente al
   hover, que además actualiza `aria-activedescendant`), Enter abre la sugerencia
   marcada o lanza la búsqueda completa si no hay ninguna, y Escape cierra el
@@ -100,7 +117,10 @@ sugiere el PDF de documentación** en varios puntos:
 | `GET /docSegmentado/secciones/{tipoDoc}` | Array de `{ seccion, titulo, orden }`. La clave del id es **`seccion`** (string, p.ej. `"4.2"`) y el título viene en **`titulo`**. |
 | `GET /docSegmentado/contenido/{tipoDoc}` | **No devuelve HTML plano**: devuelve un array JSON `[{ seccion, titulo, contenido, orden }]` con el HTML dentro de `contenido`. `api.js` ya lo parsea y une los fragmentos. |
 | Orden de las secciones | El array ya llega en el orden del documento. **No ordenar por `orden`**: en la ficha técnica ese campo no es monótono (las secciones 4, 4.1, 4.2… comparten valores bajos). |
-| `GET /medicamentos?nombre=X` | Ignora `pagina` y `tamanioPagina` (devuelve `tamanioPagina: 200` y hasta 200 filas de golpe). El recorte de la lista se hace en cliente (`MAX_RESULTADOS`). Tampoco devuelve `cn`: para `/psuministro` habrá que pedir `obtenerMedicamento({ nregistro })` primero. |
+| `GET /medicamentos?nombre=X` | Ignora `pagina` y `tamanioPagina` (devuelve `tamanioPagina: 200` y hasta 200 filas de golpe). El recorte de la lista se hace en cliente (`MAX_RESULTADOS`). **No devuelve `cn`.** |
+| `GET /presentaciones?…` | Es el único endpoint que trae el **`cn`**, además del `nombre` del envase ("… , 20 comprimidos"). El filtro `cn` es de **coincidencia exacta** (`?cn=662025` → 1 fila; `?cn=6620` o `?cn=66202500` → 0) y `nregistro` sólo admite **un** valor (`?nregistro=a,b` ni parámetros repetidos → 0 filas). También ignora `pagina`/`tamanioPagina` y tope de 200 filas: para una búsqueda por nombre amplia NO cubre todos los medicamentos (p.ej. "paracetamol": 195 medicamentos vs 84 nregistros en la respuesta de presentaciones). Por eso `app.js` pide el CN medicamento a medicamento, cacheado y cuando el resultado entra en pantalla. |
+| Filtros con valor **vacío** | Se ignoran y se devuelve el catálogo entero: `GET /medicamentos?nregistro=` responde con las **25.464** filas de medicamentos. Nunca llamar con el término vacío (de ahí los avisos de `app.js` para códigos incompletos). |
+| Formato de los nº de registro | 5 dígitos en la mayoría de medicamentos, pero también los hay de 8-10 (registros tipo EMA, p.ej. `07428001`, `1231752001`), así que la búsqueda numérica no se limita a 5-6 dígitos. |
 | Prospecto (tipoDoc=2) | **No existe una sección "Contraindicaciones"**. Todo (contraindicaciones, embarazo, conducción, alcohol) vive dentro de la sección *"Qué necesita saber antes de empezar a tomar…"*, dividido en subtítulos. Además, CIMA alterna `<p><strong>…</strong></p>` y `<ul><li><strong>…</strong></li></ul>` para esos mismos subtítulos. |
 
 ## Estructura de archivos

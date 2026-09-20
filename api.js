@@ -37,6 +37,38 @@ async function obtenerMedicamento(params) {
 }
 
 /**
+ * Lista presentaciones (envases) de medicamentos, cada una con su Código
+ * Nacional (`cn`).
+ * Doc: GET /presentaciones?{condiciones}
+ *
+ * Acepta los mismos filtros que `/medicamentos` (nombre, cn, nregistro,
+ * pactivos, laboratorio…), así que sirve tanto para resolver el CN de un
+ * medicamento concreto como para buscar directamente por código nacional.
+ *
+ * VERIFICADO CONTRA LA API REAL (20/09/2026):
+ * - Devuelve `{ totalFilas, pagina, tamanioPagina, resultados[] }` y cada fila
+ *   trae `cn` + `nregistro` además de los campos del medicamento
+ *   (nombre, labtitular, receta, generico, comerc, docs…). El `nombre` es el de
+ *   la presentación, con el envase incluido ("… , 20 comprimidos").
+ * - El filtro `cn` es de coincidencia EXACTA: `?cn=662025` devuelve 1 fila,
+ *   pero `?cn=6620` o `?cn=66202500` devuelven 0.
+ * - NO admite lotes (`?nregistro=70310,77758` ni parámetros repetidos → 0).
+ *   Por eso el CN de una lista de resultados se pide medicamento a medicamento
+ *   (ver `cnsDeMedicamento()` en `app.js`).
+ * - También ignora `pagina`/`tamanioPagina` y devuelve como mucho 200 filas, de
+ *   modo que NO cubre todos los medicamentos de una búsqueda por nombre amplia.
+ *
+ * @param {Object} params - p.ej. { cn: "662025" } o { nregistro: "70310" }
+ * @returns {Promise<Object>} resultado paginado de CIMA (con .resultados[])
+ */
+async function listarPresentaciones(params) {
+  const query = new URLSearchParams(params).toString();
+  const res = await fetch(`${CIMA_BASE_URL}/presentaciones?${query}`);
+  if (!res.ok) throw new Error(`Error listando presentaciones: ${res.status}`);
+  return res.json();
+}
+
+/**
  * Lista las secciones disponibles de un documento segmentado.
  * Doc: GET /docSegmentado/secciones/{tipoDoc}?nregistro=X
  * @param {number} tipoDoc - 1 = ficha técnica, 2 = prospecto
