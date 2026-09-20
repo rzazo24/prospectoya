@@ -13,7 +13,13 @@ parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
 Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
 y `Eliminado` (solo los que apliquen).
 
-## [Sin publicar]
+## [0.4.0] - 2026-09-20
+
+Cuarta entrega: las dos páginas estrenan un **botón de "volver arriba"** para
+volver de un toque al buscador o a la ayuda cuando se ha bajado leyendo un
+prospecto. Todo sigue sin backend, sin build, sin frameworks y **sin
+dependencias en el sitio** (la única, `jsdom`, es de desarrollo y vive en
+`tests/`).
 
 ### Añadido
 
@@ -204,7 +210,8 @@ vanilla contra la API pública de CIMA (AEMPS).
 [`3396182`](https://github.com/rzazo24/prospectoya/commit/3396182) ·
 [`7495276`](https://github.com/rzazo24/prospectoya/commit/7495276)
 
-[Sin publicar]: https://github.com/rzazo24/prospectoya/compare/v0.3.0...HEAD
+[Sin publicar]: https://github.com/rzazo24/prospectoya/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/rzazo24/prospectoya/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/rzazo24/prospectoya/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/rzazo24/prospectoya/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/rzazo24/prospectoya/releases/tag/v0.1.0
