@@ -13,7 +13,13 @@ parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
 Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
 y `Eliminado` (solo los que apliquen).
 
-## [Sin publicar]
+## [0.3.0] - 2026-09-20
+
+Tercera entrega: la web se puede **instalar como app** y se abre **sin conexión**,
+y quien la tenga abierta recibe un **aviso cuando hay versión nueva**. Incluye
+además el arreglo del zoom automático al escribir en el móvil. Todo sigue sin
+backend, sin build, sin frameworks y **sin dependencias en el sitio** (la única,
+`jsdom`, es de desarrollo y vive en `tests/`).
 
 ### Añadido
 
@@ -55,6 +61,10 @@ y `Eliminado` (solo los que apliquen).
   se queda en 17px. En el compositor, `touch-action: manipulation` quita además
   el zoom por doble toque al pulsarlo o al tocar un chip; el pellizco para
   ampliar y el zoom del navegador siguen funcionando igual.
+
+**Commits de esta versión:**
+[`f53dfae`](https://github.com/rzazo24/prospectoya/commit/f53dfae) ·
+[`a229cc1`](https://github.com/rzazo24/prospectoya/commit/a229cc1)
 
 ## [0.2.0] - 2026-09-20
 
@@ -171,6 +181,7 @@ vanilla contra la API pública de CIMA (AEMPS).
 [`3396182`](https://github.com/rzazo24/prospectoya/commit/3396182) ·
 [`7495276`](https://github.com/rzazo24/prospectoya/commit/7495276)
 
-[Sin publicar]: https://github.com/rzazo24/prospectoya/compare/v0.2.0...HEAD
+[Sin publicar]: https://github.com/rzazo24/prospectoya/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/rzazo24/prospectoya/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/rzazo24/prospectoya/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/rzazo24/prospectoya/releases/tag/v0.1.0
