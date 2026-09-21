@@ -106,8 +106,11 @@ console.log("--- index.html (campo de búsqueda y ejemplos) ---");
     (ejemplos[4] ? ejemplos[4].textContent.trim() : "") === "662025",
     ejemplos[4] ? ejemplos[4].textContent.trim() : "(no está)"
   );
-  // Si se quita el enlace del pie, la ayuda tiene que seguir a mano en la barra
   comprobar("la ayuda sigue accesible desde el buscador (barra de arriba)", Boolean(doc.querySelector('.topbar a[href="ayuda.html"]')));
+  // El buscador va sin pie a propósito (interfaz limpia): el aviso sanitario está
+  // en la ayuda y de citar la fuente se encarga el badge del hero.
+  comprobar("el buscador no tiene pie (es a propósito)", !doc.querySelector("footer.site-footer"));
+  comprobar("y aun sin pie sigue citando la fuente: AEMPS en el badge", doc.body.textContent.includes("AEMPS"));
 }
 
 // --- og / twitter: sólo index.html ------------------------------
@@ -143,6 +146,7 @@ console.log("--- ayuda.html (contenido) ---");
   comprobar("el repositorio es el último enlace de la ayuda", [...doc.querySelectorAll(".ayuda a")].pop().href.includes("github.com/rzazo24/prospectoya"));
   comprobar("enlace de vuelta al buscador", Boolean(doc.querySelector('.ayuda a[href="./"]')));
   comprobar("cita la AEMPS", doc.body.textContent.includes("AEMPS"));
+  comprobar("la ayuda sí conserva el pie (fuente de datos y repositorio)", Boolean(doc.querySelector("footer.site-footer")));
   comprobar("aviso sanitario destacado", Boolean(doc.querySelector(".ayuda .aviso")));
   comprobar("tabla de atajos con 4 filas", doc.querySelectorAll(".ayuda-tabla tbody tr").length === 4);
   comprobar("explica el código nacional", doc.body.textContent.includes("código nacional"));

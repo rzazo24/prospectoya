@@ -28,7 +28,7 @@ y `Eliminado` (solo los que apliquen).
   y la ayuda aclara que es un CN. Comprobado contra la API real: los cinco
   devuelven resultados (metformina 181, paracetamol 195, trajenta 1, crestor 18 y
   662025, un envase).
-- **La cáscara de la PWA sube a `v6`** en `sw.js` (por los cambios de las páginas,
+- **La cáscara de la PWA sube a `v7`** en `sw.js` (por los cambios de las páginas,
   los textos y los estilos): quien tenga la web abierta verá el aviso de "versión
   nueva" y el caché anterior se borra al activarse.
 
@@ -43,6 +43,13 @@ y `Eliminado` (solo los que apliquen).
   rectángulo centrado y se gira sobre su propio centro).
 
 ### Eliminado
+
+- **El pie de la página del buscador**, entero (atribución a la AEMPS y aviso
+  sanitario), para dejar la interfaz más limpia. El aviso («esta web no da
+  consejo médico») sigue donde tiene que seguir: en la ayuda, que es la página
+  donde se explica todo lo demás, y la atribución a la AEMPS ya la lleva el badge
+  del hero («Datos oficiales de la AEMPS · CIMA»). El pie de la ayuda se queda
+  como estaba.
 
 - **El texto de dentro del buscador** (placeholder): el campo ya no lleva nada
   escrito y se explica con la lupa; la etiqueta accesible se queda, que es la que

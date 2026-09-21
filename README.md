@@ -2,7 +2,7 @@
 
 <!-- Captura del sitio real (1200x798). Va en la raíz del repo, con ruta
      relativa, para que se vea también al clonar o hacer fork. -->
-<img width="1200" height="798" alt="Pantalla de inicio de ProspectoYa: el buscador con el titular «El prospecto, pero legible», los chips de ejemplo (metformina, paracetamol, trajenta, crestor, 662025) y el pie con la fuente de datos" src="captura-inicio.png">
+<img width="1200" height="798" alt="Pantalla de inicio de ProspectoYa: el buscador con el titular «El prospecto, pero legible» y los chips de ejemplo (metformina, paracetamol, trajenta, crestor, 662025)" src="captura-inicio.png">
 
 Web estática (HTML/CSS/JS vanilla, sin frameworks, sin build) que consulta
 la API pública de CIMA (AEMPS) para mejorar la experiencia de buscar y leer
@@ -114,8 +114,12 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
   (`ayuda.html`), que explica de dónde salen los datos, cómo se busca (nombre,
   CN, nº de registro), cómo se lee el resumen rápido, atajos de teclado, FAQ y
   aviso sanitario, y termina con el enlace al repositorio. Se llega a ella desde
-  el enlace *Ayuda* de la barra superior y desde el pie de la página del buscador
-  (y vuelve con *← Volver al buscador*).
+  el enlace *Ayuda* de la barra superior (y vuelve con *← Volver al buscador*).
+- **El buscador no lleva pie** (a propósito, para que la interfaz quede limpia):
+  el aviso sanitario ("esta web no da consejo médico") vive en la ayuda y la
+  fuente de datos se cita en el badge del hero («Datos oficiales de la AEMPS ·
+  CIMA»). `test-html.js` lo comprueba en las dos direcciones: sin pie en el
+  buscador y con pie en la ayuda.
 - `ayuda.html` **no carga `api.js` ni `app.js`**: son solo texto y estilos. Lo
   único de comportamiento que necesita es el botón de tema, que vive en
   `tema.js`.
