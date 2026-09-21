@@ -1025,7 +1025,7 @@ function buscarCampo(secciones, campo) {
         );
         if (frases) {
           return {
-            texto: recortar(frases, campo.truncar),
+            texto: capitalizar(recortar(frases, campo.truncar)),
             origen: candidata.seccion.titulo,
             documento: candidata.documento,
           };
@@ -1059,7 +1059,7 @@ function buscarCampo(secciones, campo) {
         const prefijo =
           campo.prefijarTitulo && !yaSeRepite ? `${formatearTitulo(bloque.titulo)} ` : "";
         return {
-          texto: limpiarTexto(`${prefijo}${encontrado}`),
+          texto: capitalizar(limpiarTexto(`${prefijo}${encontrado}`)),
           origen: candidata.seccion.titulo,
           documento: candidata.documento,
         };
@@ -1088,7 +1088,7 @@ function buscarCampo(secciones, campo) {
       );
       if (texto) {
         return {
-          texto: recortar(texto, campo.truncar),
+          texto: capitalizar(recortar(texto, campo.truncar)),
           origen: candidata.seccion.titulo,
           documento: candidata.documento,
         };
@@ -1108,7 +1108,7 @@ function buscarCampo(secciones, campo) {
       );
       if (texto) {
         return {
-          texto: recortar(texto, campo.truncar),
+          texto: capitalizar(recortar(texto, campo.truncar)),
           origen: candidata.seccion.titulo,
           documento: candidata.documento,
         };
@@ -1119,13 +1119,29 @@ function buscarCampo(secciones, campo) {
   return null;
 }
 
-/** Recoge el texto de un bloque con subtítulo y los que le siguen. */
+/**
+ * Recoge el texto de un bloque con subtítulo y los que le siguen.
+ *
+ * VERIFICADO CONTRA LA API REAL (22/09/2026, nregistro 68477, lorazepam): el
+ * subtítulo "Embarazo y lactancia" va seguido de una frase genérica
+ * ("Consulte a su médico o farmacéutico antes de utilizar cualquier
+ * medicamento.") y LUEGO de un sub-subtítulo más concreto, "Embarazo:", con
+ * el contenido de verdad (riesgo de malformaciones, paso placentario…). Antes
+ * de este arreglo, el bucle paraba en "Embarazo:" por ser otro subtítulo, así
+ * que la tarjeta se quedaba con la frase genérica y perdía el contenido real.
+ * Ahora solo para si el subtítulo siguiente NO encaja con los patrones del
+ * propio campo (`campo.subTitulos`): si encaja (como "Embarazo:" dentro de
+ * "embarazo"), se trata como continuación del mismo tema, no como un tema
+ * distinto — y de paso, para este campo en concreto, también engancha
+ * "Lactancia:" si viene justo después, que es lo que anuncia la etiqueta de
+ * la tarjeta ("Embarazo y lactancia").
+ */
 function recogerTexto(bloques, indice, campo) {
   const maxBloques = campo.maxBloques || 3;
   const partes = [];
 
   for (let i = indice; i < bloques.length && partes.length < maxBloques; i++) {
-    if (i > indice && bloques[i].titulo) break; // empieza otro subtítulo
+    if (i > indice && bloques[i].titulo && !coincide(bloques[i].titulo, campo.subTitulos)) break;
     if (bloques[i].texto) partes.push(bloques[i].texto);
   }
 
@@ -1224,6 +1240,17 @@ function formatearTitulo(titulo) {
 /** Normaliza espacios (incluido el espacio duro) y recorta los extremos. */
 function limpiarTexto(texto) {
   return (texto || "").replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Pone en mayúscula la primera letra. CIMA no siempre la lleva: las listas
+ * (`<li>`) de contraindicaciones suelen empezar en minúscula en el HTML
+ * origen ("si es alérgico a…"), como continuación implícita del subtítulo
+ * ("No tome X si…"); sin el subtítulo delante, en la tarjeta se leía como una
+ * frase a medias. No toca el resto del texto.
+ */
+function capitalizar(texto) {
+  return texto ? texto.charAt(0).toUpperCase() + texto.slice(1) : texto;
 }
 
 /** ¿El texto encaja con alguno de los patrones indicados? */

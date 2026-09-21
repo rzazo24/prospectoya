@@ -13,6 +13,37 @@ parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
 Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
 y `Eliminado` (solo los que apliquen).
 
+## Sin publicar
+
+### Corregido
+
+- **El resumen rápido ya no se corta en un subtítulo del mismo tema**: cuando
+  el prospecto anida un subtítulo general y uno más concreto justo después
+  (comprobado con datos reales, nregistro `68477`, lorazepam: "Embarazo y
+  lactancia" → una frase genérica → "Embarazo:" → el contenido de verdad
+  sobre el riesgo en el embarazo), `recogerTexto()` paraba en el segundo
+  subtítulo por creer que era un tema distinto, y la tarjeta se quedaba solo
+  con la frase genérica de en medio ("Consulte a su médico o farmacéutico
+  antes de utilizar cualquier medicamento."), perdiendo el contenido
+  relevante. Ahora solo para si el subtítulo siguiente **no** encaja con los
+  patrones del propio campo (`campo.subTitulos`); si encaja (como
+  "Embarazo:" dentro de "embarazo"), sigue recogiendo texto como si fuera
+  continuación del mismo tema. Encontrado con un barrido de calidad contra
+  la API real sobre 50 medicamentos variados (el mismo tipo de comprobación
+  que ya había sacado la tarjeta de Alcohol).
+- **Las tarjetas del resumen rápido ya no empiezan en minúscula**: en las
+  listas de contraindicaciones, CIMA suele escribir cada `<li>` en minúscula
+  ("si es alérgico a…"), como continuación implícita de su subtítulo ("No
+  tome X si…"); sin ese subtítulo delante, la tarjeta se leía como una frase
+  a medias. Ahora una función `capitalizar()`, aplicada en las cuatro vías de
+  salida de `buscarCampo()`, pone en mayúscula la primera letra del texto
+  final. Detectado en el mismo barrido: 9 de 50 medicamentos lo tenían.
+- Nueva suite **`test-resumen.js`** (Node + jsdom, sin red): fija los dos
+  arreglos con un prospecto simulado, y comprueba que fallan sin ellos
+  (verificado a mano). Hasta ahora la extracción del resumen rápido no tenía
+  ningún test dedicado. `npm test` pasa a 10 suites y 347 comprobaciones.
+  Toca `app.js` (cáscara), así que `VERSION` sube en `sw.js` (`v16` → `v17`).
+
 ## [0.6.0] - 2026-09-22
 
 Sexta entrega: se corrigen varios detalles de accesibilidad y de ajuste fino
