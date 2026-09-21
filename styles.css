@@ -326,7 +326,10 @@ body:has(.aviso-version:not([hidden])) .btn-subir { bottom: 5rem; }
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.35rem 0.8rem 0.35rem 0.65rem;
+  /* Con el relleno simétrico, lo que se ve dentro del badge (el icono y el
+     texto) queda centrado: medido, 13.8px de aire a cada lado. Con 0.65rem a la
+     izquierda se iba 1.2px hacia la izquierda (11.4 vs 13.8). */
+  padding: 0.35rem 0.8rem;
   font-size: 0.78rem;
   font-weight: 500;
   color: var(--text-soft);
@@ -1139,14 +1142,59 @@ body:has(.aviso-version:not([hidden])) .btn-subir { bottom: 5rem; }
 
 /* --- Móvil --- */
 @media (max-width: 640px) {
-  .app { padding: 0.5rem 1rem 3rem; }
+  /* --- El bloque de arriba, centrado en la pantalla ---
+     En un móvil la página se quedaba pegada al techo: el hero y el buscador
+     ocupaban el tercio de arriba y debajo sobraba media pantalla vacía. El body
+     pasa a ser una columna con el alto de la pantalla y #app se queda con el
+     hueco libre. */
+  body {
+    display: flex;
+    flex-direction: column;
+    /* dvh y no vh: en el móvil la barra del navegador cuenta en vh y el bloque
+       saldría por debajo del centro que se ve. dvh se ajusta al alto visible. */
+    min-height: 100dvh;
+  }
+  .app {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem 1rem 3rem;
+  }
+  /* El hero y la lista son las dos asas del bloque: con el margen automático, el
+     hueco sobrante se reparte a partes iguales por arriba y por abajo. Los
+     márgenes automáticos valen 0 en cuanto el contenido no cabe (una lista
+     larga), así que con resultados no hay nada que centrar: la página se ve
+     como siempre y nada queda fuera de la vista (con justify-content: center el
+     principio del contenido se iría por encima del borde y no se podría leer). */
+  .app > .hero { margin-top: auto; }
+  .app > .results-section { margin-bottom: auto; }
+  /* Estado de partida (sin lista y sin aviso): la sección de resultados no
+     enseña nada, así que se queda sin su aire de arriba y el bloque centrado
+     acaba justo bajo el buscador. */
+  .results-section:not(:has(.results-list li)):not(:has(.results-status:not([hidden]))) {
+    padding-top: 0;
+  }
+  /* Y en ese mismo estado el aire del final de la página no hace falta: se le
+     quita al #app (su relleno de arriba, 0.5rem, más el aire que el hero ya
+     tiene encima, 1.75rem) para que el reparto del hueco sea simétrico y el
+     bloque salga centrado a 0px (medido; con los 3rem se quedaba 12px por
+     encima del centro). Con lista o aviso a la vista, el #app recupera sus
+     3rem. OJO: el :has() no se puede anidar dentro de otro :has() —la regla se
+     descarta sin avisar—, de ahí que el filtro de los resultados vaya suelto. */
+  .app:has(.results-section):not(:has(.results-list li)):not(:has(.results-status:not([hidden]))) {
+    padding-bottom: calc(0.5rem + 1.75rem);
+  }
   .topbar { padding: 0.7rem 1rem; }
   .hero { padding: 1.75rem 0 1.25rem; }
   .hero h1 { font-size: 1.65rem; }
-  .composer { padding-left: 0.85rem; border-radius: var(--radius-lg); }
+  /* El buscador, más bajo: el relleno del campo y el del propio compositor
+     bajan, así que el alto lo marca el botón (38px) y el rectángulo se queda
+     en 56px (medido; antes 66px). El campo sigue pasando de los 40px de alto
+     que exige test-movil.js, para no quedar apretado al escribir. */
+  .composer { padding: 0.3rem 0.3rem 0.3rem 0.85rem; border-radius: var(--radius-lg); }
   /* Un poco por encima de 16px: evita el zoom al enfocar el campo en los
      navegadores móviles que aplican el límite de forma estricta */
-  #search-input { font-size: max(17px, 1rem); }
+  #search-input { padding: 0.55rem 0; font-size: max(17px, 1rem); }
   .composer-submit { width: 38px; height: 38px; padding: 9px; }
   /* El resumen ya se pone solo a una tarjeta por fila (15rem de base): aquí
      sólo hace falta que ocupen el ancho entero. */

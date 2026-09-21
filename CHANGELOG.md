@@ -62,9 +62,32 @@ y `Eliminado` (solo los que apliquen).
   arriba y abajo equilibrado. El buscador de la tarjeta lleva el mismo aire a los
   dos lados (20px): con el de la web (28px a la izquierda y 13 a la derecha) la
   tinta de la tarjeta quedaba 8,5px a la derecha aunque la caja fuera centrada.
-- **La cáscara de la PWA sube a `v10`** en `sw.js` (por los cambios de las
-  páginas, los estilos y el detalle): quien tenga la web abierta verá el aviso de
-  "versión nueva" y el caché anterior se borra al activarse.
+- **En el móvil, el bloque de arriba queda centrado en la pantalla**: antes el
+  hero, el buscador y los chips se quedaban pegados al techo y debajo sobraba
+  media pantalla vacía. Ahora el `body` es una columna del alto de la pantalla
+  (`100dvh` y no `vh`: en el móvil la barra del navegador cuenta en `vh` y el
+  bloque saldría por debajo del centro que se ve), `#app` se queda con el hueco
+  libre y los **márgenes automáticos** del hero y de la sección de resultados
+  reparten lo que sobra a partes iguales: medido a 390px, **234,9px de aire
+  arriba y abajo** (desfase 0px; antes el bloque quedaba a 36px del topbar). Los
+  márgenes automáticos valen 0 en cuanto el contenido no cabe, así que con una
+  lista larga la página se ve como siempre (el hero a 8px del topbar) y nada
+  queda fuera de la vista: por eso **no** se usa `justify-content: center`, que
+  dejaría el principio del contenido por encima del borde sin poder desplazarlo
+  hacia arriba. El centrado solo actúa en el estado de partida (sin resultados ni
+  aviso), y en cuanto hay lista el `#app` recupera sus 3rem de aire de abajo. Lo
+  mide `test-movil.js`, que además comprueba que la medición detecta el centrado
+  deshecho (con el parche la medición se va a 36px y 424px) y que con 30
+  resultados el hero vuelve arriba y el hueco automático es 0.
+- **El buscador del móvil es un poco más bajo**: de 66px a **56,4px** (medido a
+  390px), con el relleno del campo (0,7rem → 0,55rem) y el del propio compositor
+  (0,45rem → 0,3rem) más ajustados, así que el alto lo marca el botón. El campo
+  sigue con 44,8px de alto, por encima de los 40px que pide `test-movil.js`. El
+  buscador del escritorio no se toca (ahí se ve bien).
+- **La cáscara de la PWA sube a `v11`** en `sw.js` (por los cambios de los
+  estilos: el centrado del móvil, el buscador más bajo y el badge): quien tenga
+  la web abierta verá el aviso de "versión nueva" y el caché anterior se borra al
+  activarse.
 
 ### Corregido
 
@@ -92,6 +115,12 @@ y `Eliminado` (solo los que apliquen).
   (solo se mueve, de tamaño queda igual) y `test-paginas.js` ahora lo mide con
   `getBBox` en las dos páginas. El `favicon.svg` ya estaba bien (se dibuja con un
   rectángulo centrado y se gira sobre su propio centro).
+- **La tinta del badge del hero iba 1,2px a la izquierda**: «Datos oficiales de la
+  AEMPS · CIMA» tenía el relleno asimétrico (0,65rem a la izquierda y 0,8rem a la
+  derecha), así que el icono dejaba menos aire que el texto (11,4px frente a
+  13,8px) aunque la caja estuviera centrada. Con el relleno simétrico deja
+  **13,8px a cada lado** (medido). Lo comprueba `test-movil.js`, y con el relleno
+  viejo la comprobación falla.
 
 ### Eliminado
 
