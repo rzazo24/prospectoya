@@ -7,12 +7,15 @@
  *    existente, enlace a la ayuda que resuelve, y el tema elegido se guarda.
  *  - ayuda.html: sin errores, hereda el tema de la otra página (misma clave de
  *    localStorage), el botón funciona y el enlace al repositorio va al final.
+ *  - la maqueta del social preview: el lienzo mide 1280x640 y los bloques (marca,
+ *    titular, entradilla, buscador, chips y cierre) van centrados, con el mismo
+ *    aire arriba y abajo. Se sirve aquí para poder medirla con Chrome.
  *
  *   cd tests && node test-paginas.js
  */
 const fs = require("fs");
 const path = require("path");
-const { comprobar, resumen, leer, carpetaTemporal, copiar, navegador, domConChrome, leerDiag, campos, servirHttp } = require("./util");
+const { RAIZ, comprobar, resumen, leer, carpetaTemporal, copiar, navegador, domConChrome, leerDiag, campos, servirHttp } = require("./util");
 
 if (!navegador()) {
   console.log("OMITIDO: no encuentro Chrome/Chromium (define la variable CHROME con la ruta al ejecutable)");
@@ -125,6 +128,35 @@ const DIAG_AYUDA = `
   </script>
 `;
 
+// La maqueta del social preview (tests/maqueta-social-preview.html) se mide
+// aquí porque es donde hay Chrome: la tarjeta se genera a mano desde ella, así
+// que lo que se comprueba es que no se desmonte. Ya pasó una vez: sin
+// `box-sizing: border-box` (que sí tiene styles.css) el .lienzo medía 1280 más
+// sus 180px de padding, y la tarjeta salía 90px hacia la derecha.
+const DIAG_TARJETA = `
+  <pre id="diag" style="display:none"></pre>
+  <script>
+    const diag = document.getElementById("diag");
+    const log = (m) => { diag.textContent += m + "\\n"; };
+    const caja = (selector) => document.querySelector(selector).getBoundingClientRect();
+
+    window.addEventListener("load", () => {
+      const lienzo = caja(".lienzo");
+      // El centro bueno es el de la IMAGEN (el viewport), no el del .lienzo: si
+      // el padding lo estira, comparando con su propio centro no se vería nada.
+      const centro = window.innerWidth / 2;
+      log("lienzo=" + lienzo.width.toFixed(1) + "x" + lienzo.height.toFixed(1));
+      for (const [nombre, selector] of [["marca", ".marca"], ["h1", "h1"], ["entradilla", ".entradilla"], ["buscador", ".buscador"], ["chips", ".chips"], ["cierre", ".cierre"]]) {
+        const c = caja(selector);
+        log("desfase_" + nombre + "=" + (c.x + c.width / 2 - centro).toFixed(1));
+      }
+      log("aire_arriba=" + caja(".marca").y.toFixed(1));
+      log("aire_abajo=" + (lienzo.y + lienzo.height - (caja(".cierre").y + caja(".cierre").height)).toFixed(1));
+      log("listo=si");
+    });
+  </script>
+`;
+
 (async () => {
   const sitio = carpetaTemporal("paginas");
   copiar(sitio, FICHEROS);
@@ -136,6 +168,14 @@ const DIAG_AYUDA = `
   ]) {
     fs.writeFileSync(path.join(sitio, fichero), leer(fichero).replace("</body>", `${driver}</body>`));
   }
+
+  // La maqueta de la tarjeta social también se sirve (con su fuente) para poder
+  // medirla con Chrome, igual que las páginas.
+  fs.copyFileSync(path.join(RAIZ, "tests/inter-latin.woff2"), path.join(sitio, "inter-latin.woff2"));
+  fs.writeFileSync(
+    path.join(sitio, "maqueta.html"),
+    leer("tests/maqueta-social-preview.html").replace("</body>", `${DIAG_TARJETA}</body>`)
+  );
 
   const { url, cerrar } = await servirHttp(sitio);
 
@@ -172,6 +212,22 @@ const DIAG_AYUDA = `
     comprobar("tabla de atajos con 4 filas", ayuda.atajos === "4", ayuda.atajos);
     comprobar("cita la fuente de datos (AEMPS)", ayuda.cita_aemps === "si", ayuda.cita_aemps);
     comprobar("y el logo también está centrado aquí", centrado(ayuda.logo_desfase), ayuda.logo_desfase);
+
+    console.log("--- maqueta del social preview (1280x640) ---");
+    const tarjeta = campos(leerDiag(await domConChrome(`${url}/maqueta.html`, { ancho: 1280, alto: 640, presupuesto: 4000 })));
+    const bloques = ["marca", "h1", "entradilla", "buscador", "chips", "cierre"];
+    comprobar("la maqueta se mide entera", tarjeta.listo === "si", Object.keys(tarjeta).join(" "));
+    comprobar("el lienzo mide 1280x640 (el padding no lo estira)", tarjeta.lienzo === "1280.0x640.0", tarjeta.lienzo);
+    comprobar(
+      "los seis bloques van centrados (±0,5 px)",
+      bloques.every((nombre) => Math.abs(Number(tarjeta["desfase_" + nombre])) <= 0.5),
+      bloques.map((nombre) => `${nombre}:${tarjeta["desfase_" + nombre]}`).join(" ")
+    );
+    comprobar(
+      "el aire de arriba y el de abajo están equilibrados (±2 px)",
+      Math.abs(Number(tarjeta.aire_arriba) - Number(tarjeta.aire_abajo)) <= 2,
+      `${tarjeta.aire_arriba} / ${tarjeta.aire_abajo}`
+    );
   } finally {
     cerrar();
   }

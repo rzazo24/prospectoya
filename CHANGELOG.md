@@ -35,7 +35,11 @@ y `Eliminado` (solo los que apliquen).
   actuales, y su maqueta vive en `tests/maqueta-social-preview.html` (con la
   tipografía Inter en un fichero local), para poder rehacerla cuando cambie la
   interfaz. `og:title`, `twitter:title` y `og:image:alt` se han puesto a juego
-  con el titular nuevo.
+  con el titular nuevo. La tarjeta va **centrada** (la maqueta necesita el
+  `* { box-sizing: border-box }` de `styles.css` y 21px de aire de más arriba) y
+  `test-paginas.js` lo mide con Chrome en las dos direcciones: el lienzo a
+  1280×640, los seis bloques a ±0,5 px del centro de la imagen y el aire de
+  arriba y abajo equilibrado.
 - **La cáscara de la PWA sube a `v8`** en `sw.js` (por los cambios de las páginas,
   los textos y los estilos): quien tenga la web abierta verá el aviso de "versión
   nueva" y el caché anterior se borra al activarse.

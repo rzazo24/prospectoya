@@ -37,7 +37,7 @@ También se pueden lanzar directamente, que es útil al depurar:
 |---|---|---|
 | `test-html.js` | Estructura de las dos páginas: cabeceras, `meta description`, los 4 iconos, `styles.css`, `tema.js`, que todos los `<script src>` existen, las metaetiquetas `og:`/`twitter:` y el contenido y los enlaces de la ayuda (incluido que el repositorio es el último enlace). | Node + jsdom |
 | `test-busqueda.js` | El buscador completo en jsdom con `fetch` simulado: autocompletado con *debounce*, teclado (↑ ↓ Enter Esc), búsqueda por CN y por nº de registro, aviso con códigos incompletos, CN en diferido (una sola petición por `nregistro`, caché reutilizada) y CN de todos los envases en la ficha. | Node + jsdom |
-| `test-paginas.js` | Las dos páginas en Chrome real, servidas por HTTP (como en Vercel): sin errores de JS, `og:image` absoluta y con el fichero presente, enlace a la ayuda con HTTP 200, el tema se guarda y **se mantiene al pasar de una página a otra** (mismo perfil de Chrome), que la **cápsula del logo quede centrada** en su cuadrado (medido con `getBBox`), y la ayuda se lee como se espera. | Chrome/Chromium |
+| `test-paginas.js` | Las dos páginas en Chrome real, servidas por HTTP (como en Vercel): sin errores de JS, `og:image` absoluta y con el fichero presente, enlace a la ayuda con HTTP 200, el tema se guarda y **se mantiene al pasar de una página a otra** (mismo perfil de Chrome), que la **cápsula del logo quede centrada** en su cuadrado (medido con `getBBox`), y la ayuda se lee como se espera. Mide también la **maqueta del social preview**: el lienzo tiene que medir 1280×640 y los seis bloques ir centrados (±0,5 px), con el mismo aire arriba y abajo. | Chrome/Chromium |
 | `test-pwa.js` | Que la web se pueda **instalar como app** y funcione **sin conexión**: el manifest (JSON válido, `standalone`, colores que coinciden con `styles.css` y los iconos de 192 y 512 px), los iconos de verdad (los `maskable` opacos y con la marca dentro del 80% central que recortan los lanzadores), `sw.js` (cáscara completa, nada de la API de CIMA), el aviso de **versión nueva** con el `pwa.js` real en jsdom (avisa si la versión cambia, y **no** avisa si sólo cambia el control), y en Chrome real: registro, `clients.claim`, precache de la cáscara y una pasada **con el servidor apagado** en la que la página se sigue abriendo. | Node + jsdom + Chrome/Chromium |
 | `test-arriba.js` | El **botón de "volver arriba"** en las dos páginas: arranca oculto, aparece al bajar, al pulsarlo se le pide a la ventana subir al principio (`window.scrollTo` con `top: 0`, con y sin `prefers-reduced-motion`), el foco no se pierde, la URL no cambia y no se solapa con el aviso de versión. | Chrome/Chromium |
 | `test-movil.js` | El buscador en un viewport de móvil (390×844): el campo mide 16px o más —por debajo, los móviles amplían la página al enfocarlo y molesta al escribir—, el viewport no prohíbe el zoom, el compositor no amplía al doble toque y la página no desborda a lo ancho. | Chrome/Chromium |
@@ -78,6 +78,11 @@ google-chrome --headless --window-size=1280,640 --hide-scrollbars \
   instaladas ni de que haya red al generar.
 - `test-html.js` compara la maqueta con la página: si cambian el titular, la
   entradilla o los chips en `index.html` y la tarjeta no se rehace, avisa.
+- `test-paginas.js` la mide con Chrome: el lienzo tiene que medir **1280×640** y
+  los seis bloques ir centrados (±0,5 px), con el aire de arriba y el de abajo
+  equilibrados. Ahí se pillaría, por ejemplo, que falte el
+  `* { box-sizing: border-box }` (sin él, `.lienzo` mide 1280 más sus 180px de
+  padding y **toda la tarjeta sale 90px a la derecha**).
 - `test-arriba.js` **no mide dónde acaba la página**: una animación de subida no
   es cosa de un test. El driver espía `window.scrollTo` y comprueba qué se le
   pide a la ventana (`top` y `behavior`), que es lo que decide el código.

@@ -40,6 +40,12 @@
       --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
 
+    /* El mismo reset que styles.css (línea 84). Sin esto, .lienzo mide 1280 más
+       sus 180px de padding (box-sizing content-box) dentro de un lienzo de 1280
+       con overflow:hidden: el contenido se centra en x=730 y la tarjeta sale
+       90px desplazada a la derecha. No quitar. */
+    * { box-sizing: border-box; }
+
     /* El lienzo es exactamente lo que se captura: 1280×640 */
     html, body { margin: 0; width: 1280px; height: 640px; overflow: hidden; }
     body {
@@ -55,7 +61,11 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 0 90px;
+      /* 21px de aire de más arriba: el primer bloque es un cuadrado (su tinta
+         llega al borde de la caja) y el último es texto (con su interlineado
+         debajo), así que centrando las cajas quedaban 21px de más abajo.
+         Medido sobre la tinta del PNG: sin esto, 51 arriba y 72 abajo. */
+      padding: 21px 90px 0;
     }
 
     /* --- Marca (igual que .brand de styles.css) --- */
