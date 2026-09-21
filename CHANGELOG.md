@@ -13,6 +13,17 @@ parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
 Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
 y `Eliminado` (solo los que apliquen).
 
+## Sin publicar
+
+### Corregido
+
+- **Tabular fuera del buscador cierra el desplegable de sugerencias**: antes
+  solo lo cerraban `Esc` y un clic fuera; si se salía con `Tab` (por ejemplo
+  hacia el botón de enviar) el desplegable se quedaba abierto y
+  `aria-expanded="true"` seguía puesto en el input aunque ya no tuviera el
+  foco. Ahora un `focusout` en `#search-input` lo cierra salvo que el foco
+  vaya a parar al propio input. Lo cubre `test-busqueda.js`.
+
 ## [0.5.0] - 2026-09-21
 
 Quinta entrega: el detalle del medicamento **se abre en una ventana centrada** (un

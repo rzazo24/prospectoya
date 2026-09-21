@@ -290,6 +290,14 @@ document.addEventListener("pointerdown", (e) => {
   if (!composerWrap.contains(e.target)) ocultarSugerencias();
 });
 
+// Tabular fuera del campo también lo cierra (con el foco fuera ya no se puede
+// elegir nada): las opciones no son focusables (se marcan con
+// aria-activedescendant), así que el único destino legítimo del foco dentro
+// del combobox es el propio input.
+searchInput.addEventListener("focusout", (e) => {
+  if (e.relatedTarget !== searchInput) ocultarSugerencias();
+});
+
 // Chips de ejemplo ("Prueba con…"): buscan directamente al pulsarlos
 if (searchExamples) {
   searchExamples.addEventListener("click", (e) => {

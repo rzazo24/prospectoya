@@ -227,6 +227,15 @@ const escribir = (valor) => {
   document.body.dispatchEvent(new window.Event("pointerdown", { bubbles: true }));
   comprobar("un clic fuera cierra el desplegable", lista.hidden === true);
 
+  // --- 5b. Tabular fuera del campo también cierra el desplegable --------
+  escribir("parac");
+  input.focus();
+  await esperar(500);
+  comprobar("el desplegable se reabre para probar el tabulado", lista.hidden === false);
+
+  boton.focus();
+  comprobar("tabular al botón de enviar cierra el desplegable", lista.hidden === true);
+
   // --- 6. Texto demasiado corto -----------------------------------------
   escribir("pa");
   await esperar(400);
