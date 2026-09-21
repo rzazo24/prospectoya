@@ -707,9 +707,15 @@ body:has(.aviso-version:not([hidden])) .btn-subir { bottom: 5rem; }
   background: var(--warning-bg);
   border: 1px solid var(--warning-border);
 }
-/* El badge de problema de suministro lleva `hidden` en el HTML mientras la Fase
-   2 no lo active: sin esta regla, el `display` de arriba se impone al atributo y
-   el aviso salía SIEMPRE (aunque no hubiera problema de suministro). */
+.badge-info {
+  color: var(--brand-strong);
+  background: var(--brand-soft);
+  border: 1px solid var(--brand-ring);
+}
+/* Los dos badges llevan `hidden` en el HTML por defecto (solo salen si el
+   medicamento tiene psum o triangulo): sin esta regla, el `display` de arriba
+   se impone al atributo y saldrían SIEMPRE, tuviera o no el medicamento el
+   problema en cuestión. */
 .badge[hidden] { display: none; }
 
 /* --- Resumen rápido --- */
@@ -811,16 +817,36 @@ body:has(.aviso-version:not([hidden])) .btn-subir { bottom: 5rem; }
   color: var(--text-muted);
 }
 
-/* --- Pestañas (segmented control) --- */
+/* --- Pestañas (segmented control) + enlace al documento oficial --- */
+.doc-tabs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
+  margin-bottom: 1rem;
+}
+
 .doc-tabs {
   display: inline-flex;
   gap: 0.2rem;
-  margin-bottom: 1rem;
   padding: 0.25rem;
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
 }
+
+/* Enlace al PDF/HTML oficial de la pestaña activa (campo docs[] del
+   medicamento); actualizarEnlaceDocumentoOficial() lo mueve al abrir el
+   detalle y al cambiar de pestaña, y lo oculta si ese documento no existe. */
+.detail-doc-oficial {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-soft);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.detail-doc-oficial:hover { color: var(--brand-strong); text-decoration: underline; }
 
 .doc-tab {
   padding: 0.42rem 1.05rem;

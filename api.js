@@ -126,21 +126,20 @@ async function obtenerContenidoSeccion(tipoDoc, nregistro, seccion) {
 }
 
 /**
- * (Fase 2) Comprueba si un medicamento tiene un problema de suministro activo.
- * Doc: GET /psuministro?cn=X
+ * (Fase 2) Obtiene equivalentes clínicos (VMP/VMPP) de un medicamento por su
+ * principio activo.
+ * Doc: GET /vmpp?practiv1=X
+ *
+ * VERIFICADO CONTRA LA API REAL (22/09/2026): `nregistro` NO filtra (devuelve
+ * el catálogo VMPP entero, 7022 filas, sin relación con el registro pedido).
+ * `practiv1` sí filtra por nombre de principio activo (ej. "paracetamol" →
+ * 101 filas, todas con ese principio activo). Por eso la función pide el
+ * nombre del principio activo (el campo `pactivos` del medicamento), no el
+ * nregistro.
+ * @param {string} principioActivo - p.ej. "paracetamol" (campo `pactivos`)
  */
-async function comprobarProblemaSuministro(cn) {
-  const res = await fetch(`${CIMA_BASE_URL}/psuministro?cn=${encodeURIComponent(cn)}`);
-  if (!res.ok) throw new Error(`Error comprobando suministro: ${res.status}`);
-  return res.json();
-}
-
-/**
- * (Fase 2) Obtiene equivalentes clínicos (VMP/VMPP) de un medicamento.
- * Doc: GET /vmpp?nregistro=X
- */
-async function obtenerEquivalentes(nregistro) {
-  const res = await fetch(`${CIMA_BASE_URL}/vmpp?nregistro=${encodeURIComponent(nregistro)}`);
+async function obtenerEquivalentes(principioActivo) {
+  const res = await fetch(`${CIMA_BASE_URL}/vmpp?practiv1=${encodeURIComponent(principioActivo)}`);
   if (!res.ok) throw new Error(`Error obteniendo equivalentes: ${res.status}`);
   return res.json();
 }

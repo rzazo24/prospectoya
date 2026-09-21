@@ -27,7 +27,23 @@ for (const [fichero, codigo] of [["tema.js", tema], ["arriba.js", arriba], ["api
 // Respuestas simuladas de la API de CIMA
 const MEDICAMENTOS = [
   { nregistro: "77758", nombre: "PARACETAMOL CINFA 1 g COMPRIMIDOS", labtitular: "CINFA", receta: false, generico: true, comerc: true },
-  { nregistro: "70001", nombre: "PARACETAMOL KERN PHARMA 500 mg", labtitular: "KERN PHARMA", receta: false, generico: true, comerc: true },
+  {
+    nregistro: "70001",
+    nombre: "PARACETAMOL KERN PHARMA 500 mg",
+    labtitular: "KERN PHARMA",
+    receta: false,
+    generico: true,
+    comerc: true,
+    // psum, triangulo y docs: campos reales de /medicamentos y /presentaciones
+    // que ya trae el propio medicamento (verificado contra la API real,
+    // 22/09/2026); no hace falta pedirlos aparte.
+    psum: true,
+    triangulo: true,
+    docs: [
+      { tipo: 1, url: "https://cima.aemps.es/cima/pdfs/ft/70001/FT_70001.pdf", urlHtml: "https://cima.aemps.es/cima/dochtml/ft/70001/FT_70001.html", secc: true },
+      { tipo: 2, url: "https://cima.aemps.es/cima/pdfs/p/70001/P_70001.pdf", urlHtml: "https://cima.aemps.es/cima/dochtml/p/70001/P_70001.html", secc: true },
+    ],
+  },
 ];
 
 // Presentaciones simuladas: /medicamentos NO trae el CN, /presentaciones sí
@@ -199,6 +215,27 @@ const escribir = (valor) => {
     document.activeElement === detalle,
     document.activeElement ? document.activeElement.id || document.activeElement.tagName : "(ninguno)"
   );
+  // psum, triangulo y docs ya vienen en el propio medicamento (MEDICAMENTOS[1]
+  // los lleva puestos): selectMedicamento() no pide nada aparte para pintarlos.
+  comprobar("el badge de problema de suministro sale (psum=true)", document.getElementById("supply-issue-badge").hidden === false);
+  comprobar("el badge de seguimiento adicional sale (triangulo=true)", document.getElementById("monitoring-badge").hidden === false);
+  const enlaceOficial = document.getElementById("detail-doc-oficial");
+  comprobar(
+    "el enlace al documento oficial sale y apunta al prospecto (pestaña activa)",
+    enlaceOficial.hidden === false && enlaceOficial.href === "https://cima.aemps.es/cima/dochtml/p/70001/P_70001.html",
+    enlaceOficial.href
+  );
+
+  // Al cambiar de pestaña, el enlace tiene que seguir a la pestaña activa
+  document.querySelector('.doc-tab[data-doc-type="1"]').click();
+  await esperar(50);
+  comprobar(
+    "al cambiar a Ficha técnica, el enlace pasa a apuntar a la ficha técnica",
+    enlaceOficial.href === "https://cima.aemps.es/cima/dochtml/ft/70001/FT_70001.html",
+    enlaceOficial.href
+  );
+  document.querySelector('.doc-tab[data-doc-type="2"]').click();
+  await esperar(50);
 
   // --- 4b. La ventana del detalle se cierra -----------------------------
   const botonCerrar = document.getElementById("detail-close");
@@ -385,6 +422,12 @@ const escribir = (valor) => {
     peticiones.filter((u) => u.includes("/presentaciones?nregistro=77758")).length === 0,
     peticiones.join(" | ")
   );
+  // Este medicamento (MEDICAMENTOS[0]) no lleva psum, triangulo ni docs: los
+  // dos badges y el enlace tienen que quedar ocultos, no a medias ni con
+  // datos del medicamento anterior.
+  comprobar("sin psum, el badge de suministro queda oculto", document.getElementById("supply-issue-badge").hidden === true);
+  comprobar("sin triangulo, el badge de seguimiento queda oculto", document.getElementById("monitoring-badge").hidden === true);
+  comprobar("sin docs, el enlace al documento oficial queda oculto", document.getElementById("detail-doc-oficial").hidden === true);
 
   // --- 12. Sin errores de runtime ---------------------------------------
   comprobar("sin errores de jsdom durante la ejecución", erroresJsdom.length === 0, erroresJsdom.join(" | "));

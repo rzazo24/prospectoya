@@ -217,9 +217,14 @@
           <h2 id="detail-name"></h2>
           <p id="detail-lab"></p>
           <p id="detail-cn" class="detail-cn" hidden></p>
-          <!-- TODO Fase 2: badge de problema de suministro aquí -->
+          <!-- Los dos badges siguientes los enseña/oculta selectMedicamento() según
+               los campos `psum` y `triangulo` que ya trae el propio medicamento
+               (de /medicamentos o /presentaciones): no hace falta pedir nada más. -->
           <span id="supply-issue-badge" class="badge badge-warning" hidden>
             Problema de suministro activo
+          </span>
+          <span id="monitoring-badge" class="badge badge-info" hidden title="La AEMPS pide vigilancia extra sobre este medicamento: cualquier efecto adverso interesa notificarlo.">
+            Medicamento en seguimiento adicional
           </span>
         </div>
 
@@ -227,10 +232,16 @@
         <!-- Se rellena desde app.js (renderQuickSummary) y queda oculto si no hay datos -->
         <div id="quick-summary" class="quick-summary" hidden></div>
 
-        <!-- Tabs: Prospecto / Ficha técnica -->
-        <div class="doc-tabs" role="tablist" aria-label="Tipo de documento">
-          <button class="doc-tab active" data-doc-type="2" role="tab" aria-selected="true">Prospecto</button>
-          <button class="doc-tab" data-doc-type="1" role="tab" aria-selected="false">Ficha técnica</button>
+        <!-- Tabs: Prospecto / Ficha técnica, y el enlace al documento oficial
+             (campo `docs[]`, ya presente en el medicamento) de la pestaña activa -->
+        <div class="doc-tabs-row">
+          <div class="doc-tabs" role="tablist" aria-label="Tipo de documento">
+            <button class="doc-tab active" data-doc-type="2" role="tab" aria-selected="true">Prospecto</button>
+            <button class="doc-tab" data-doc-type="1" role="tab" aria-selected="false">Ficha técnica</button>
+          </div>
+          <a id="detail-doc-oficial" class="detail-doc-oficial" href="#" target="_blank" rel="noopener" hidden>
+            Ver en cima.aemps.es ↗
+          </a>
         </div>
 
         <!-- Acordeón de secciones del documento -->

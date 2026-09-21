@@ -15,6 +15,35 @@ y `Eliminado` (solo los que apliquen).
 
 ## Sin publicar
 
+### Añadido
+
+- **Badge de "problema de suministro activo"**, **badge de "medicamento en
+  seguimiento adicional"** (el triángulo negro de la UE) y **enlace al
+  documento oficial** ("Ver en cima.aemps.es", junto a las pestañas
+  Prospecto/Ficha técnica, sigue a la pestaña activa). Los tres usan campos
+  que `/medicamentos` y `/presentaciones` ya traen en cada fila —`psum`,
+  `triangulo`, `docs[]`— así que no hace falta ninguna petición aparte:
+  `selectMedicamento()` los lee directamente del medicamento elegido.
+  Verificado con datos reales (`AMOXICILINA/ACIDO CLAVULANICO SANDOZ`,
+  nregistro `62800`, tiene `psum: true` de verdad ahora mismo). `ayuda.html`
+  y `README.md` lo explican; `test-busqueda.js` fija que los tres badges/
+  enlace salen cuando el medicamento los trae y se quedan ocultos cuando no
+  (sin arrastrar los del medicamento anterior).
+- **`obtenerEquivalentes()` corregida**: pedía `GET /vmpp?nregistro=X`, pero
+  verificado contra la API real que `nregistro` **no filtra** (devuelve el
+  catálogo VMPP entero, 7022 filas, sin relación con lo pedido). El filtro que
+  sí funciona es `practiv1` (nombre del principio activo): ahora la función lo
+  usa. Sigue sin llamarse desde `app.js` (Fase 2, sin UI de equivalentes).
+- **`comprobarProblemaSuministro()` quitada de `api.js`**: llamaba a
+  `GET /psuministro?cn=X`, y verificado contra la API real que **tampoco
+  filtra** (con un CN real que tiene un problema de suministro activo,
+  devuelve el listado nacional completo —862 filas— sin que ese CN aparezca
+  entre los resultados). No hacía falta arreglarla: el campo `psum`, ya
+  embebido en el medicamento (ver el badge, arriba), resuelve lo mismo sin
+  necesidad de este endpoint. `test-api-real.js` fija que ninguno de los dos
+  endpoints filtra, y que `practiv1` sí lo hace. Toca `index.html`, `app.js` y
+  `styles.css` (cáscara), así que `VERSION` sube en `sw.js` (`v15` → `v16`).
+
 ### Corregido
 
 - **Tabular fuera del buscador cierra el desplegable de sugerencias**: antes

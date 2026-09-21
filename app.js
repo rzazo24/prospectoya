@@ -24,6 +24,9 @@ const detailClose = document.getElementById("detail-close");
 const detailName = document.getElementById("detail-name");
 const detailLab = document.getElementById("detail-lab");
 const detailCN = document.getElementById("detail-cn");
+const supplyIssueBadge = document.getElementById("supply-issue-badge");
+const monitoringBadge = document.getElementById("monitoring-badge");
+const detailDocOficial = document.getElementById("detail-doc-oficial");
 const quickSummary = document.getElementById("quick-summary");
 const sectionsAccordion = document.getElementById("sections-accordion");
 const docTabs = document.querySelectorAll(".doc-tab");
@@ -47,6 +50,7 @@ const MAX_CNS_VISIBLES = 2;
 
 let currentNRegistro = null;
 let currentTipoDoc = 2; // 2 = prospecto por defecto, 1 = ficha técnica
+let currentDocs = []; // docs[] del medicamento abierto (PDF/HTML oficiales)
 let debounceTimer = null;
 let indiceSugerenciaActiva = -1; // -1 = ninguna sugerencia marcada con el teclado
 
@@ -584,9 +588,16 @@ async function selectMedicamento(medicamento) {
   detailLab.textContent = medicamento.labtitular || "";
   abrirDetalle();
 
-  // TODO Fase 2: llamar a comprobarProblemaSuministro() con el CN
-  // (ya disponible en mostrarCNsDeDetalle()) y mostrar #supply-issue-badge.
-  // Ojo: /psuministro responde por CN de un envase concreto, no por nregistro.
+  // psum, triangulo y docs ya vienen en el propio medicamento (lo trae
+  // /medicamentos o /presentaciones, según de dónde salió la elección): no
+  // hace falta pedir nada más para estos tres. VERIFICADO CONTRA LA API REAL
+  // (22/09/2026): /psuministro no filtra ni por cn ni por nregistro (siempre
+  // devuelve el listado nacional completo, ~862 filas), así que no sirve para
+  // consultar un medicamento suelto; por eso no hay una llamada aparte.
+  supplyIssueBadge.hidden = !medicamento.psum;
+  monitoringBadge.hidden = !medicamento.triangulo;
+  currentDocs = medicamento.docs || [];
+  actualizarEnlaceDocumentoOficial();
 
   // El resumen rápido, el acordeón y los CN son consultas independientes:
   // se lanzan en paralelo para no encadenar esperas.
@@ -630,9 +641,25 @@ docTabs.forEach((tab) => {
     tab.classList.add("active");
     tab.setAttribute("aria-selected", "true");
     currentTipoDoc = Number(tab.dataset.docType);
+    actualizarEnlaceDocumentoOficial();
     if (currentNRegistro) await cargarSecciones(currentTipoDoc);
   });
 });
+
+/**
+ * Enlaza #detail-doc-oficial al PDF/HTML oficial (campo `docs[]`) del
+ * documento de la pestaña activa (tipo 1 = ficha técnica, 2 = prospecto). Se
+ * oculta si ese documento en concreto no está en `currentDocs`.
+ */
+function actualizarEnlaceDocumentoOficial() {
+  const doc = currentDocs.find((d) => d.tipo === currentTipoDoc);
+  if (!doc || !doc.urlHtml) {
+    detailDocOficial.hidden = true;
+    return;
+  }
+  detailDocOficial.href = doc.urlHtml;
+  detailDocOficial.hidden = false;
+}
 
 // --- Acordeón de secciones ---
 

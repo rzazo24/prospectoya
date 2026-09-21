@@ -104,6 +104,67 @@ const comprobar = (desc, cond, extra = "") => {
     `orden1[0..2]=${orden1.resultados.slice(0, 3).map((m) => m.nregistro)}`
   );
 
+  // Cada fila de /medicamentos ya trae, sin coste extra, los campos que
+  // app.js usa para los badges y el enlace al documento oficial: docs[],
+  // psum, triangulo, conduc. No hace falta /medicamento?nregistro= para esto.
+  const paracetamol = await ctx.buscarMedicamentos({ nombre: "paracetamol" });
+  const conCampos = paracetamol.resultados[0];
+  comprobar(
+    "/medicamentos ya trae docs[], psum, triangulo y conduc por fila",
+    Array.isArray(conCampos.docs) &&
+      typeof conCampos.psum === "boolean" &&
+      typeof conCampos.triangulo === "boolean" &&
+      typeof conCampos.conduc === "boolean",
+    `docs=${Array.isArray(conCampos.docs)} psum=${typeof conCampos.psum} triangulo=${typeof conCampos.triangulo} conduc=${typeof conCampos.conduc}`
+  );
+
+  // /psuministro NO filtra ni por cn ni por nregistro: siempre devuelve el
+  // listado nacional completo. Se comprueba con un CN real (AMOXICILINA /
+  // ACIDO CLAVULANICO SANDOZ, nregistro 62800, con problema de suministro
+  // activo de verdad): si el filtro funcionara, todas las filas tendrían ese
+  // cn; en la práctica, ninguna de las 200 primeras lo tiene.
+  const psuministroPorCN = await (await ctx.fetch("https://cima.aemps.es/cima/rest/psuministro?cn=694998")).json();
+  comprobar(
+    "/psuministro?cn= no filtra: el cn pedido no aparece en sus propios resultados",
+    psuministroPorCN.totalFilas > 10 && !psuministroPorCN.resultados.some((r) => r.cn === "694998"),
+    `totalFilas=${psuministroPorCN.totalFilas}`
+  );
+
+  // /vmpp?nregistro= tampoco filtra (mismo problema); /vmpp?practiv1= sí.
+  const vmppPorNregistro = await (await ctx.fetch("https://cima.aemps.es/cima/rest/vmpp?nregistro=77758")).json();
+  comprobar(
+    "/vmpp?nregistro= no filtra: totalFilas es el catálogo VMPP entero",
+    vmppPorNregistro.totalFilas > 1000,
+    `totalFilas=${vmppPorNregistro.totalFilas}`
+  );
+  const equivalentes = await ctx.obtenerEquivalentes("paracetamol");
+  // La mayoría (no el 100%) menciona "paracetamol" en vmpDesc: unas pocas filas
+  // son combinados genéricos ("Mezcla de principios activos para resfriado…")
+  // que lo llevan sin nombrarlo en la descripción.
+  const conParacetamolEnDesc = equivalentes.resultados.filter((r) => /paracetamol/i.test(r.vmpDesc)).length;
+  comprobar(
+    "obtenerEquivalentes() usa practiv1 y sí filtra por paracetamol",
+    equivalentes.totalFilas > 0 &&
+      equivalentes.totalFilas < vmppPorNregistro.totalFilas &&
+      conParacetamolEnDesc >= equivalentes.resultados.length * 0.9,
+    `totalFilas=${equivalentes.totalFilas} conParacetamolEnDesc=${conParacetamolEnDesc}/${equivalentes.resultados.length}`
+  );
+
+  // /maestras exige los dos parámetros: solo `maestra` no devuelve nada.
+  const maestraSinNombre = await ctx.fetch("https://cima.aemps.es/cima/rest/maestras?maestra=1");
+  const cuerpoSinNombre = await maestraSinNombre.text();
+  comprobar(
+    "/maestras sin `nombre` responde 204 sin cuerpo",
+    maestraSinNombre.status === 204 && cuerpoSinNombre === "",
+    `status=${maestraSinNombre.status}`
+  );
+  const principiosActivos = await (await ctx.fetch("https://cima.aemps.es/cima/rest/maestras?maestra=1&nombre=paracetamol")).json();
+  comprobar(
+    "/maestras?maestra=1&nombre= (principios activos) sí funciona",
+    principiosActivos.totalFilas > 0 && principiosActivos.resultados.some((r) => /paracetamol/i.test(r.nombre)),
+    `totalFilas=${principiosActivos.totalFilas}`
+  );
+
   console.log(fallos === 0 ? "\nAPI REAL OK" : `\n${fallos} fallo(s) contra la API real`);
   process.exitCode = fallos === 0 ? 0 : 1;
 })().catch((err) => {

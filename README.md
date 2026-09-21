@@ -28,14 +28,19 @@ Base: `https://cima.aemps.es/cima/rest/`
 |---|---|
 | `GET /medicamentos?nombre=X` | Búsqueda de medicamentos (también admite `practiv1`, `laboratorio`, `atc`, `cn`, `nregistro`, etc.) |
 | `GET /presentaciones?{filtros}` | Presentaciones (envases) **con su `cn`** (Código Nacional); acepta los mismos filtros que `/medicamentos` (`nombre`, `cn`, `nregistro`, `pactivos`…) |
-| `GET /medicamento?nregistro=X` | Ficha completa de un medicamento (incluye `docs[]` con enlaces a PDF de ficha técnica y prospecto) |
+| `GET /medicamento?nregistro=X` | Ficha completa de un medicamento: además de lo que ya trae `/medicamentos` (`docs[]`, `psum`, `triangulo`, `conduc`…), añade `atcs[]` y `principiosActivos[]` estructurados. Sin usar todavía. |
 | `GET /docSegmentado/secciones/2?nregistro=X` | Lista de secciones disponibles del PROSPECTO (tipoDoc=2) |
 | `GET /docSegmentado/contenido/2?nregistro=X&seccion=X` | Contenido HTML de una sección del prospecto |
 | `GET /docSegmentado/secciones/1?nregistro=X` | Lista de secciones de la FICHA TÉCNICA (tipoDoc=1) |
 | `GET /docSegmentado/contenido/1?nregistro=X&seccion=X` | Contenido HTML de una sección de la ficha técnica |
-| `GET /psuministro?cn=X` | Problemas de suministro activos para un Código Nacional |
-| `GET /vmpp?nregistro=X` | Equivalentes clínicos (para "medicamentos equivalentes") |
-| `GET /maestras?maestra=X` | Catálogos: ATC, principios activos, laboratorios, formas farmacéuticas |
+| `GET /vmpp?practiv1=X` | Equivalentes clínicos por principio activo (para "medicamentos equivalentes", Fase 2). **`nregistro` no filtra** (verificado); hay que usar `practiv1` con el nombre del principio activo (`pactivos`). |
+| `GET /maestras?maestra=N&nombre=X` | Catálogos (`maestra=1` principios activos, `3` formas farmacéuticas, `4` vías de administración, `6` laboratorios…). **Los dos parámetros son obligatorios**: solo `maestra` devuelve 204 sin cuerpo (verificado). |
+
+`GET /psuministro` existe en la API pero **no sirve para consultar un
+medicamento suelto**: ni `cn` ni `nregistro` filtran de verdad (siempre
+devuelve el listado nacional completo, unas 862 filas). El problema de
+suministro de un medicamento concreto se lee del campo `psum`, que ya viene
+en `/medicamentos` y `/presentaciones`.
 
 Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
 
@@ -48,6 +53,10 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
 3. Resumen rápido arriba de la ficha: dosis, contraindicaciones, alertas
    clave (embarazo, conducción) extraídas de las secciones correspondientes
    del prospecto. ✅
+4. Badge de "problema de suministro activo", badge de "medicamento en
+   seguimiento adicional" y enlace al documento oficial: los tres, con campos
+   (`psum`, `triangulo`, `docs[]`) que ya trae el propio medicamento, sin
+   peticiones aparte. ✅
 
 ### Cómo funciona el buscador (`app.js`)
 
@@ -109,6 +118,25 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
   subtítulo cualquier párrafo cuyo contenido vaya entero en negrita/subrayado
   (cubre las dos variantes de CIMA). El texto de las tarjetas se pinta siempre
   con `textContent`, nunca con `innerHTML`.
+
+### Badges y documento oficial en el detalle (`app.js`)
+
+- **`#supply-issue-badge`** ("Problema de suministro activo") y
+  **`#monitoring-badge`** ("Medicamento en seguimiento adicional", el triángulo
+  negro de la UE) se enseñan u ocultan según los campos `psum` y `triangulo`
+  del propio medicamento — los trae `GET /medicamentos` y `GET /presentaciones`
+  en cada resultado, así que no hace falta ninguna llamada aparte.
+- **`#detail-doc-oficial`** enlaza al HTML oficial (`docs[].urlHtml`, también
+  del propio medicamento) del documento de la pestaña activa —Prospecto o
+  Ficha técnica— y `actualizarEnlaceDocumentoOficial()` lo actualiza al
+  cambiar de pestaña. Si esa pestaña no tiene documento, el enlace se oculta.
+- Los tres se rellenan en `selectMedicamento()`, sin peticiones extra: los tres
+  campos ya vienen en el objeto que se pasa (sugerencia o resultado).
+  **`GET /psuministro`** existía como función (`comprobarProblemaSuministro()`)
+  pero se ha quitado: verificado contra la API real que **no filtra** por `cn`
+  ni por `nregistro` (siempre el listado nacional completo, ~862 filas), así
+  que el campo `psum` ya embebido es la única vía razonable para un
+  medicamento suelto.
 
 ### Páginas, tema y ayuda (`ayuda.html`, `tema.js`)
 
@@ -235,10 +263,9 @@ sitio se sigue sirviendo tal cual desde el repositorio.
 
 ## Fase 2 (después del MVP)
 
-4. Badge de "problema de suministro activo" (`GET /psuministro`).
-5. "Mi botiquín": guardar medicamentos frecuentes en `localStorage`.
-6. Comparador de dos medicamentos lado a lado.
-7. Botón "copiar para IA": vuelca el texto de una sección o del prospecto
+4. "Mi botiquín": guardar medicamentos frecuentes en `localStorage`.
+5. Comparador de dos medicamentos lado a lado.
+6. Botón "copiar para IA": vuelca el texto de una sección o del prospecto
    completo en un formato limpio (markdown plano) al portapapeles.
 
 ## Formas de respuesta REALES de la API (verificado el 20 y 21/09/2026)
@@ -397,7 +424,7 @@ Chrome/Chromium (Node las demás no necesitan nada instalado):
 ```bash
 cd tests
 npm install          # jsdom (única dependencia, sólo de desarrollo)
-npm test             # 336 comprobaciones: estructura, buscador, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
+npm test             # 343 comprobaciones: estructura, buscador, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
 npm run test:api-real   # contra la API real de CIMA (necesita red)
 ```
 
