@@ -34,8 +34,32 @@ y `Eliminado` (solo los que apliquen).
   ser parte de la caja del hero, viaja con él se centre donde se centre, sin
   tener que adivinar cuánto hueco sobra según el alto del teléfono o si los
   chips ocupan una o dos filas.
+- **La ✕ del detalle ya no se queda "encendida" nada más abrir la ventana**:
+  `showModal()` enfoca por su cuenta el primer elemento enfocable de dentro
+  del `<dialog>`, y ese elemento es la propia ✕ (es lo primero en el
+  marcado) — con la regla global `:focus-visible` (anillo de 2px del color de
+  marca), eso se veía como un botón iluminado sin que nadie lo hubiera
+  tocado (comprobado con Chrome: `document.activeElement` era `#detail-close`
+  y `matches(":focus-visible")` daba `true` nada más llamar a
+  `selectMedicamento()`). Ahora `abrirDetalle()` enfoca el propio `<dialog>`
+  (`tabindex="-1"` en el HTML; ya tiene nombre accesible por
+  `aria-labelledby="detail-name"`, así que un lector de pantalla anuncia el
+  medicamento en vez de "botón cerrar") y se le quita su propio anillo de
+  foco (`.dialogo-detalle:focus-visible { outline: none }`, no hace falta:
+  el velo y el panel ya avisan de que hay algo modal). Lo fija
+  `test-busqueda.js`.
 
 ### Cambiado
+
+- **La ✕ del detalle y el botón de "volver arriba", más pequeños; los chips
+  de ejemplo, un poco más grandes** (a petición directa, viendo capturas
+  reales en el móvil). La ✕ pasa de 34px a 28px; "volver arriba", de 44px a
+  38px (por debajo del mínimo táctil recomendado de 44px a propósito: es una
+  acción secundaria y de baja frecuencia). Los chips suben de 0.86rem/0.32rem
+  0.75rem a 0.92rem/0.4rem 0.9rem (letra y relleno). Sin más comportamiento
+  que el tamaño; ningún test fijaba estas medidas. Junto con el arreglo del
+  foco de la ✕, toca `index.html`, `app.js` y `styles.css` (cáscara), así que
+  `VERSION` sube en `sw.js` (`v13` → `v14`).
 
 - **En el móvil, el hueco de arriba del bloque superior queda topado en
   100px** (antes se repartía a partes iguales con el de abajo: medido a

@@ -195,8 +195,13 @@
        (ver app.js). Es un <dialog> nativo, así que el fondo se oscurece y queda
        inerte (no se puede pulsar nada de detrás), el foco se queda dentro y
        Esc lo cierra. Se pone fuera de <main> a propósito: no forma parte del
-       flujo de la página. -->
-  <dialog id="detail-section" class="dialogo-detalle" aria-labelledby="detail-name">
+       flujo de la página.
+       tabindex="-1": showModal() enfoca por su cuenta el primer elemento
+       enfocable de dentro (la ✕, que es el primero en el marcado), y con
+       :focus-visible eso se veía como un anillo azul encendido nada más
+       abrirse, sin que nadie hubiera tocado nada. abrirDetalle() enfoca este
+       <dialog> en su lugar (ya tiene nombre accesible por aria-labelledby). -->
+  <dialog id="detail-section" class="dialogo-detalle" aria-labelledby="detail-name" tabindex="-1">
     <div class="dialogo-panel">
       <button id="detail-close" class="dialogo-cerrar" type="button" aria-label="Cerrar el detalle" title="Cerrar (Esc)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

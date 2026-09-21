@@ -554,7 +554,15 @@ function mostrarEstadoResultados(mensaje, esError = false) {
  * Si ya estaba abierta no se vuelve a abrir: `showModal()` avisaría por consola.
  */
 function abrirDetalle() {
-  if (!detailSection.open) detailSection.showModal();
+  if (!detailSection.open) {
+    detailSection.showModal();
+    // showModal() enfoca por su cuenta el primer elemento enfocable de dentro
+    // (la ✕): con :focus-visible se veía como un anillo encendido nada más
+    // abrirse, sin que nadie hubiera tocado nada. Se enfoca el propio <dialog>
+    // en su lugar (tabindex="-1" en el HTML; ya tiene nombre accesible por
+    // aria-labelledby, así que un lector de pantalla anuncia el medicamento).
+    detailSection.focus();
+  }
   // Un prospecto nuevo se lee desde arriba aunque el anterior se hubiera bajado.
   detailBody.scrollTop = 0;
 }

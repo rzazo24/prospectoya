@@ -191,6 +191,14 @@ const escribir = (valor) => {
     "el detalle lleva el nombre de la sugerencia",
     document.getElementById("detail-name").textContent === MEDICAMENTOS[1].nombre
   );
+  // showModal() enfocaría por su cuenta la ✕ (el primer elemento enfocable de
+  // dentro), y con :focus-visible eso se veía como un anillo encendido nada
+  // más abrirse. abrirDetalle() enfoca el propio <dialog> para evitarlo.
+  comprobar(
+    "el foco va al <dialog>, no a la ✕ (evita el anillo de foco al abrir)",
+    document.activeElement === detalle,
+    document.activeElement ? document.activeElement.id || document.activeElement.tagName : "(ninguno)"
+  );
 
   // --- 4b. La ventana del detalle se cierra -----------------------------
   const botonCerrar = document.getElementById("detail-close");
