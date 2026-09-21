@@ -24,6 +24,23 @@ y `Eliminado` (solo los que apliquen).
   foco. Ahora un `focusout` en `#search-input` lo cierra salvo que el foco
   vaya a parar al propio input. Lo cubre `test-busqueda.js`.
 
+### Cambiado
+
+- **Corrección sobre la paginación real de CIMA** (README): se daba por hecho
+  que `/medicamentos` y `/presentaciones` ignoraban `pagina` y `tamanioPagina`.
+  Verificado hoy contra la API real: **`pagina` sí pagina de verdad**
+  (`pagina=2` trae filas distintas de `pagina=1`); lo único que se ignora es
+  `tamanioPagina` (siempre 200 filas por página). Además, **`totalFilas` es el
+  total real del catálogo**, no un recorte a 200 (con "comprimidos":
+  `totalFilas: 13995` con solo 200 `resultados`). De paso se confirmaron dos
+  puntos que estaban en la lista de "sin confirmar": la búsqueda por `nombre`
+  **no distingue mayúsculas ni acentos**, y el **orden de los resultados es
+  estable** entre llamadas repetidas. No cambia ningún comportamiento del
+  sitio (con `MAX_RESULTADOS` = 60 nunca se nota), pero deja la puerta abierta
+  a paginar de verdad si algún día hiciera falta cubrir una búsqueda amplia
+  más allá de las 200 primeras filas. `test-api-real.js` fija estos cuatro
+  hechos contra la API real.
+
 ## [0.5.0] - 2026-09-21
 
 Quinta entrega: el detalle del medicamento **se abre en una ventana centrada** (un

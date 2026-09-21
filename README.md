@@ -238,7 +238,7 @@ sitio se sigue sirviendo tal cual desde el repositorio.
 7. Botón "copiar para IA": vuelca el texto de una sección o del prospecto
    completo en un formato limpio (markdown plano) al portapapeles.
 
-## Formas de respuesta REALES de la API (verificado el 20/09/2026)
+## Formas de respuesta REALES de la API (verificado el 20 y 21/09/2026)
 
 Antes de tocar estas llamadas conviene saber que la API **no coincide con lo que
 sugiere el PDF de documentación** en varios puntos:
@@ -249,10 +249,11 @@ sugiere el PDF de documentación** en varios puntos:
 | `GET /docSegmentado/secciones/{tipoDoc}` | Array de `{ seccion, titulo, orden }`. La clave del id es **`seccion`** (string, p.ej. `"4.2"`) y el título viene en **`titulo`**. |
 | `GET /docSegmentado/contenido/{tipoDoc}` | **No devuelve HTML plano**: devuelve un array JSON `[{ seccion, titulo, contenido, orden }]` con el HTML dentro de `contenido`. `api.js` ya lo parsea y une los fragmentos. |
 | Orden de las secciones | El array ya llega en el orden del documento. **No ordenar por `orden`**: en la ficha técnica ese campo no es monótono (las secciones 4, 4.1, 4.2… comparten valores bajos). |
-| `GET /medicamentos?nombre=X` | Ignora `pagina` y `tamanioPagina` (devuelve `tamanioPagina: 200` y hasta 200 filas de golpe). El recorte de la lista se hace en cliente (`MAX_RESULTADOS`). **No devuelve `cn`.** |
-| `GET /presentaciones?…` | Es el único endpoint que trae el **`cn`**, además del `nombre` del envase ("… , 20 comprimidos"). El filtro `cn` es de **coincidencia exacta** (`?cn=662025` → 1 fila; `?cn=6620` o `?cn=66202500` → 0) y `nregistro` sólo admite **un** valor (`?nregistro=a,b` ni parámetros repetidos → 0 filas). También ignora `pagina`/`tamanioPagina` y tope de 200 filas: para una búsqueda por nombre amplia NO cubre todos los medicamentos (p.ej. "paracetamol": 195 medicamentos vs 84 nregistros en la respuesta de presentaciones). Por eso `app.js` pide el CN medicamento a medicamento, cacheado y cuando el resultado entra en pantalla. |
+| `GET /medicamentos?nombre=X` | **`pagina` sí pagina de verdad** (`pagina=2` trae filas distintas de `pagina=1`); lo único que se ignora es `tamanioPagina` (siempre 200 filas por página, pidas lo que pidas). Y `totalFilas` **es el total real del catálogo, no un recorte a 200**: para "comprimidos" devuelve `totalFilas: 13995` con solo 200 `resultados`. El recorte de la lista visible (`MAX_RESULTADOS`) es cosa del cliente, no de la API. **No devuelve `cn`.** |
+| `GET /presentaciones?…` | Es el único endpoint que trae el **`cn`**, además del `nombre` del envase ("… , 20 comprimidos"). El filtro `cn` es de **coincidencia exacta** (`?cn=662025` → 1 fila; `?cn=6620` o `?cn=66202500` → 0) y `nregistro` sólo admite **un** valor (`?nregistro=a,b` ni parámetros repetidos → 0 filas). Como `/medicamentos`, sólo `tamanioPagina` se ignora (`pagina` sí funciona) y cada página tope en 200 filas: para una búsqueda por nombre amplia NO cubre todos los medicamentos sin pedir varias páginas (p.ej. "paracetamol": 195 medicamentos vs 84 nregistros en la primera página de presentaciones). Por eso `app.js` pide el CN medicamento a medicamento, cacheado y cuando el resultado entra en pantalla, en vez de paginar. |
 | Filtros con valor **vacío** | Se ignoran y se devuelve el catálogo entero: `GET /medicamentos?nregistro=` responde con las **25.464** filas de medicamentos. Nunca llamar con el término vacío (de ahí los avisos de `app.js` para códigos incompletos). |
 | Formato de los nº de registro | 5 dígitos en la mayoría de medicamentos, pero también los hay de 8-10 (registros tipo EMA, p.ej. `07428001`, `1231752001`), así que la búsqueda numérica no se limita a 5-6 dígitos. |
+| Mayúsculas, acentos y orden | La búsqueda por `nombre` **no distingue mayúsculas ni acentos** (`ibuprofeno`, `IBUPROFENO` y `ibuprofén` dan el mismo `totalFilas`; también `acido acetilsalicilico` y `ácido acetilsalicílico`): no hace falta normalizar el término antes de consultar. El **orden de los resultados es estable** entre llamadas repetidas con el mismo término. |
 | Prospecto (tipoDoc=2) | **No existe una sección "Contraindicaciones"**. Todo (contraindicaciones, embarazo, conducción, alcohol) vive dentro de la sección *"Qué necesita saber antes de empezar a tomar…"*, dividido en subtítulos. Además, CIMA alterna `<p><strong>…</strong></p>` y `<ul><li><strong>…</strong></li></ul>` para esos mismos subtítulos. |
 
 ## Estructura de archivos
@@ -393,7 +394,7 @@ Chrome/Chromium (Node las demás no necesitan nada instalado):
 ```bash
 cd tests
 npm install          # jsdom (única dependencia, sólo de desarrollo)
-npm test             # 329 comprobaciones: estructura, buscador, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
+npm test             # 331 comprobaciones: estructura, buscador, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
 npm run test:api-real   # contra la API real de CIMA (necesita red)
 ```
 
