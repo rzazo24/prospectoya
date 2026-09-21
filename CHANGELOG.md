@@ -18,10 +18,11 @@ y `Eliminado` (solo los que apliquen).
 ### Cambiado
 
 - **Ejemplos de búsqueda del buscador**: ahora son `metformina`, `paracetamol`,
-  `trajenta`, `crestor` y `CN 662025` (antes paracetamol, ibuprofeno, omeprazol,
-  amoxicilina y CN 662025). Comprobado contra la API real: los cinco devuelven
-  resultados (metformina 181, paracetamol 195, trajenta 1, crestor 18 y CN 662025
-  un envase).
+  `trajenta`, `crestor` y `662025` (antes paracetamol, ibuprofeno, omeprazol,
+  amoxicilina y CN 662025). El chip del código nacional enseña **sólo el número**
+  y la ayuda aclara que es un CN. Comprobado contra la API real: los cinco
+  devuelven resultados (metformina 181, paracetamol 195, trajenta 1, crestor 18 y
+  662025, un envase).
 - **La cáscara de la PWA sube a `v4`** en `sw.js` (por los cambios de las
   páginas y de los estilos): quien tenga la web abierta verá el aviso de "versión
   nueva" y el caché anterior se borra al activarse.

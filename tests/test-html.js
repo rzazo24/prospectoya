@@ -102,8 +102,8 @@ console.log("--- index.html (campo de búsqueda y ejemplos) ---");
     valores.join(",")
   );
   comprobar(
-    "el ejemplo del código nacional se ve que es un CN (no el número suelto)",
-    (ejemplos[4] ? ejemplos[4].textContent.trim() : "").startsWith("CN"),
+    "el ejemplo del código nacional es el número a secas (sin «CN»)",
+    (ejemplos[4] ? ejemplos[4].textContent.trim() : "") === "662025",
     ejemplos[4] ? ejemplos[4].textContent.trim() : "(no está)"
   );
   // Si se quita el enlace del pie, la ayuda tiene que seguir a mano en la barra
