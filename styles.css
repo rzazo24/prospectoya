@@ -787,7 +787,6 @@ body:has(.aviso-version:not([hidden])) .btn-subir { bottom: 5rem; }
 .quick-summary-card-embarazo::before { background: #d773b4; }
 .quick-summary-card-conduccion::before { background: #8b7bf0; }
 .quick-summary-card-contraindicaciones::before { background: var(--danger); }
-.quick-summary-card-alcohol::before { background: var(--warning-text); }
 
 .quick-summary-card-title {
   margin: 0 0 0.3rem;

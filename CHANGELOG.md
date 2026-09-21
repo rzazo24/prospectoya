@@ -104,6 +104,30 @@ y `Eliminado` (solo los que apliquen).
   más allá de las 200 primeras filas. `test-api-real.js` fija estos cuatro
   hechos contra la API real.
 
+### Eliminado
+
+- **La tarjeta "Alcohol" del resumen rápido**: probada la extracción real
+  (no simulada) contra 9 medicamentos reales de la API de CIMA
+  (paracetamol, ibuprofeno, esomeprazol, amoxicilina/clavulánico,
+  metformina, diazepam, metronidazol, tramadol y amlodipino/atorvastatina),
+  el campo `alcohol` fallaba de una forma que los otros cuatro (`posologia`,
+  `contraindicaciones`, `embarazo`, `conduccion`) no: en amoxicilina/
+  clavulánico extraía **texto incorrecto** ("contiene… alcohol bencílico…",
+  un excipiente, no una interacción — el patrón `/alcohol/i` no distingue
+  "bebe alcohol" de "alcohol bencílico"); en metronidazol —el medicamento
+  con la interacción con alcohol más conocida y grave de la muestra—
+  extraía un **puntero inútil** ("Consulte la sección…") en vez del aviso
+  de verdad; y en metformina y amlodipino/atorvastatina el resultado era un
+  fragmento de frase sin contexto ("Si bebe mucho alcohol."). Sólo 3 de los
+  9 casos (paracetamol, diazepam, tramadol) daban un texto claro y completo.
+  Los otros cuatro campos acertaban en los 9 casos. Revisa la decisión de
+  `v0.5.0` de incluir esta quinta tarjeta. Se quita la entrada `alcohol` de
+  `CAMPOS_RESUMEN` (`app.js`) y la regla `.quick-summary-card-alcohol::before`
+  (`styles.css`, ya no se usa); ayuda.html y README dejan de mencionarla
+  entre las alertas clave. Ningún test dependía del campo, así que no hace
+  falta tocar ninguna suite. Sube `VERSION` en `sw.js` (`v14` → `v15`) por
+  tocar `app.js`, `styles.css` y `ayuda.html` (cáscara).
+
 ## [0.5.0] - 2026-09-21
 
 Quinta entrega: el detalle del medicamento **se abre en una ventana centrada** (un

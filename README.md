@@ -46,8 +46,8 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
 2. Visor del prospecto/ficha técnica por secciones, tipo acordeón/tabs
    (usando `docSegmentado/secciones` + `docSegmentado/contenido`). ✅
 3. Resumen rápido arriba de la ficha: dosis, contraindicaciones, alertas
-   clave (embarazo, conducción, alcohol) extraídas de las secciones
-   correspondientes del prospecto. ✅
+   clave (embarazo, conducción) extraídas de las secciones correspondientes
+   del prospecto. ✅
 
 ### Cómo funciona el buscador (`app.js`)
 

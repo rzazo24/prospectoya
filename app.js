@@ -834,17 +834,6 @@ const CAMPOS_RESUMEN = [
     seccionCompleta: true,
     truncar: 320,
   },
-  {
-    id: "alcohol",
-    etiqueta: "Alcohol",
-    secciones: [/alcohol/i, /alimentos/i, /qu[ée] necesita saber/i, /interacci/i, /advertencias/i],
-    subTitulos: [/alcohol/i],
-    frases: [/alcohol/i],
-    extraerPorFrases: true,
-    prioridadFrases: true,
-    maxFrases: 1,
-    truncar: 320,
-  },
 ];
 
 /**
