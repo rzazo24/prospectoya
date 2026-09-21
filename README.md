@@ -2,7 +2,7 @@
 
 <!-- Captura del sitio real (1200x798). Va en la raíz del repo, con ruta
      relativa, para que se vea también al clonar o hacer fork. -->
-<img width="1200" height="798" alt="Pantalla de inicio de ProspectoYa: el buscador con el titular «Lee lo importante de cualquier medicamento sin pelearte con el prospecto», los chips de ejemplo (metformina, paracetamol, trajenta, crestor, 662025) y el pie con la fuente de datos" src="captura-inicio.png">
+<img width="1200" height="798" alt="Pantalla de inicio de ProspectoYa: el buscador con el titular «El prospecto, pero legible», los chips de ejemplo (metformina, paracetamol, trajenta, crestor, 662025) y el pie con la fuente de datos" src="captura-inicio.png">
 
 Web estática (HTML/CSS/JS vanilla, sin frameworks, sin build) que consulta
 la API pública de CIMA (AEMPS) para mejorar la experiencia de buscar y leer
