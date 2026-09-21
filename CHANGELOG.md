@@ -13,6 +13,27 @@ parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
 Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
 y `Eliminado` (solo los que apliquen).
 
+## [Sin publicar]
+
+### Cambiado
+
+- **Ejemplos de búsqueda del buscador**: ahora son `metformina`, `paracetamol`,
+  `trajenta`, `crestor` y `CN 662025` (antes paracetamol, ibuprofeno, omeprazol,
+  amoxicilina y CN 662025). Comprobado contra la API real: los cinco devuelven
+  resultados (metformina 181, paracetamol 195, trajenta 1, crestor 18 y CN 662025
+  un envase).
+- **La cáscara de la PWA sube a `v3`** en `sw.js` (cambian `index.html` y
+  `styles.css`): quien tenga la web abierta verá el aviso de "versión nueva" y el
+  caché anterior se borra al activarse.
+
+### Eliminado
+
+- **El texto de dentro del buscador** (placeholder): el campo ya no lleva nada
+  escrito y se explica con la lupa; la etiqueta accesible se queda, que es la que
+  leen los lectores de pantalla. De paso, deja de cortarse a medias en el móvil.
+- **El enlace «Cómo funciona y ayuda» del pie** del buscador: la ayuda sigue a un
+  toque desde `Ayuda`, en la barra de arriba (hay un test que lo comprueba).
+
 ## [0.4.0] - 2026-09-20
 
 Cuarta entrega: las dos páginas estrenan un **botón de "volver arriba"** para

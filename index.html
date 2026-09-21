@@ -120,11 +120,15 @@
             </svg>
           </span>
           <label for="search-input" class="visually-hidden">Buscar medicamento</label>
+          <!-- Sin placeholder a propósito: en el móvil se cortaba a medias y el
+               campo ya se explica con la lupa. La etiqueta accesible de arriba se
+               queda, que es la que leen los lectores de pantalla. No volver a
+               ponerle un texto dentro sin revisar cómo queda en pantallas
+               estrechas. -->
           <input
             type="text"
             id="search-input"
             name="q"
-            placeholder="Busca por nombre, principio activo o código nacional (CN)…"
             autocomplete="off"
             spellcheck="false"
             aria-autocomplete="list"
@@ -154,11 +158,14 @@
 
       <div class="search-examples" id="search-examples">
         <span class="search-examples-label">Prueba con</span>
+        <button type="button" class="chip js-ejemplo" data-ejemplo="metformina">metformina</button>
         <button type="button" class="chip js-ejemplo" data-ejemplo="paracetamol">paracetamol</button>
-        <button type="button" class="chip js-ejemplo" data-ejemplo="ibuprofeno">ibuprofeno</button>
-        <button type="button" class="chip js-ejemplo" data-ejemplo="omeprazol">omeprazol</button>
-        <button type="button" class="chip js-ejemplo" data-ejemplo="amoxicilina">amoxicilina</button>
-        <!-- Ejemplo de búsqueda por código nacional (6 dígitos) -->
+        <button type="button" class="chip js-ejemplo" data-ejemplo="trajenta">trajenta</button>
+        <button type="button" class="chip js-ejemplo" data-ejemplo="crestor">crestor</button>
+        <!-- Ejemplo de búsqueda por código nacional (6 dígitos).
+             VERIFICADO CONTRA LA API REAL (20/09/2026): los cinco ejemplos
+             devuelven resultados (metformina 181, paracetamol 195, trajenta 1,
+             crestor 18 y CN 662025 1 envase). -->
         <button type="button" class="chip js-ejemplo" data-ejemplo="662025">CN 662025</button>
       </div>
     </section>
@@ -226,7 +233,6 @@
         Agencia Española de Medicamentos y Productos Sanitarios (AEMPS) — CIMA
       </a>.
       Esta web no sustituye el consejo de un profesional sanitario.
-      <a href="ayuda.html">Cómo funciona y ayuda</a>.
     </p>
   </footer>
 

@@ -401,7 +401,6 @@ body:has(.aviso-version:not([hidden])) .btn-subir { bottom: 5rem; }
   background: transparent;
   border: 0;
 }
-#search-input::placeholder { color: var(--text-muted); }
 #search-input:focus { outline: none; }
 
 .composer-submit {

@@ -83,6 +83,33 @@ for (const fichero of ["index.html", "ayuda.html"]) {
   );
 }
 
+// --- buscador: campo sin texto dentro y ejemplos de búsqueda ---------
+console.log("--- index.html (campo de búsqueda y ejemplos) ---");
+{
+  const doc = new JSDOM(leer("index.html")).window.document;
+  const campo = doc.getElementById("search-input");
+  const ejemplos = [...doc.querySelectorAll("#search-examples .js-ejemplo")];
+  const valores = ejemplos.map((b) => b.dataset.ejemplo);
+
+  comprobar(
+    "el campo de búsqueda no lleva texto dentro y sigue teniendo etiqueta accesible",
+    Boolean(campo) && !campo.hasAttribute("placeholder") && Boolean(doc.querySelector('label[for="search-input"]')),
+    campo ? campo.outerHTML.slice(0, 80) : "(no está)"
+  );
+  comprobar(
+    "los cinco ejemplos de búsqueda son los acordados",
+    valores.join(",") === "metformina,paracetamol,trajenta,crestor,662025",
+    valores.join(",")
+  );
+  comprobar(
+    "el ejemplo del código nacional se ve que es un CN (no el número suelto)",
+    (ejemplos[4] ? ejemplos[4].textContent.trim() : "").startsWith("CN"),
+    ejemplos[4] ? ejemplos[4].textContent.trim() : "(no está)"
+  );
+  // Si se quita el enlace del pie, la ayuda tiene que seguir a mano en la barra
+  comprobar("la ayuda sigue accesible desde el buscador (barra de arriba)", Boolean(doc.querySelector('.topbar a[href="ayuda.html"]')));
+}
+
 // --- og / twitter: sólo index.html ------------------------------
 console.log("--- index.html (metaetiquetas al compartir) ---");
 {
