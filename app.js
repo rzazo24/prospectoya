@@ -3,6 +3,10 @@
  * Lógica de interfaz: búsqueda con autocompletado, render de resultados,
  * carga del detalle (prospecto/ficha técnica) y acordeón de secciones.
  *
+ * El detalle se abre en un <dialog> nativo (ventana centrada, fondo inerte,
+ * Esc para cerrar); da igual de dónde venga la elección: una sugerencia del
+ * desplegable o un resultado de la lista.
+ *
  * Depende de api.js (llamadas a CIMA) y de tema.js (tema claro/oscuro).
  */
 
@@ -15,6 +19,8 @@ const searchExamples = document.getElementById("search-examples");
 const resultsList = document.getElementById("results-list");
 const resultsStatus = document.getElementById("results-status");
 const detailSection = document.getElementById("detail-section");
+const detailBody = document.getElementById("detail-body");
+const detailClose = document.getElementById("detail-close");
 const detailName = document.getElementById("detail-name");
 const detailLab = document.getElementById("detail-lab");
 const detailCN = document.getElementById("detail-cn");
@@ -534,12 +540,33 @@ function mostrarEstadoResultados(mensaje, esError = false) {
 
 // --- Selección de medicamento y carga de detalle ---
 
+/**
+ * Abre el detalle en su ventana. `showModal()` deja el resto de la página
+ * inerte y el foco dentro de la ventana, y Esc la cierra (evento `cancel`).
+ * Si ya estaba abierta no se vuelve a abrir: `showModal()` avisaría por consola.
+ */
+function abrirDetalle() {
+  if (!detailSection.open) detailSection.showModal();
+  // Un prospecto nuevo se lee desde arriba aunque el anterior se hubiera bajado.
+  detailBody.scrollTop = 0;
+}
+
+function cerrarDetalle() {
+  if (detailSection.open) detailSection.close();
+}
+
+detailClose.addEventListener("click", cerrarDetalle);
+// El velo oscurecido no es un elemento: el clic del fondo llega con el propio
+// <dialog> como destino (lo de dentro siempre pasa por .dialogo-panel).
+detailSection.addEventListener("click", (e) => {
+  if (e.target === detailSection) cerrarDetalle();
+});
+
 async function selectMedicamento(medicamento) {
   currentNRegistro = medicamento.nregistro;
   detailName.textContent = medicamento.nombre;
   detailLab.textContent = medicamento.labtitular || "";
-  detailSection.hidden = false;
-  detailSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  abrirDetalle();
 
   // TODO Fase 2: llamar a comprobarProblemaSuministro() con el CN
   // (ya disponible en mostrarCNsDeDetalle()) y mostrar #supply-issue-badge.

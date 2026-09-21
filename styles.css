@@ -45,6 +45,14 @@
 
   --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --medida: 780px;
+  /* El renglón cómodo del prospecto y, a partir de él, la ventana del detalle:
+     exactamente el renglón más el relleno de la tarjeta, para que el texto la
+     llene de lado a lado y no quede hueco (con la columna más ancha el bloque
+     parecía descentrado). */
+  --medida-texto: 44rem;
+  --medida-detalle: calc(var(--medida-texto) + 2.4rem);
+  /* Velo del fondo cuando el detalle está abierto */
+  --velo: rgba(15, 16, 20, 0.5);
 }
 
 /* --- Tokens: tema oscuro --- */
@@ -78,6 +86,8 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow: 0 8px 24px rgba(0, 0, 0, 0.38), 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 22px 55px rgba(0, 0, 0, 0.55);
+
+  --velo: rgba(0, 0, 0, 0.62);
 }
 
 /* --- Base --- */
@@ -582,12 +592,67 @@ body:has(.aviso-version:not([hidden])) .btn-subir { bottom: 5rem; }
 }
 
 /* --- Detalle del medicamento --- */
-.detail-section {
-  padding-top: 2rem;
-  animation: aparecer 0.35s ease both;
+/* --- Ventana del detalle (prospecto / ficha técnica) --- */
+/* Es un <dialog> nativo abierto con showModal(): el fondo se oscurece, lo de
+   detrás no se puede pulsar, el foco se queda dentro y Esc cierra. El ancho es
+   justo el del renglón cómodo (--medida-detalle), así que el texto del
+   prospecto llega a los dos lados de su tarjeta. */
+.dialogo-detalle {
+  width: min(100% - 2rem, var(--medida-detalle));
+  max-height: min(92dvh, 62rem);
+  margin: auto; /* centrada en la pantalla */
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  overflow: visible; /* que la sombra del panel no se recorte */
+  animation: aparecer 0.28s ease both;
+}
+.dialogo-detalle::backdrop { background: var(--velo); }
+
+.dialogo-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-height: inherit;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden; /* las esquinas redondeadas recortan lo que va dentro */
 }
 
-.detail-header { margin-bottom: 1.25rem; }
+/* Lo que se desplaza es sólo el contenido: la ✕ y las esquinas se quedan fijas */
+.dialogo-cuerpo {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1.5rem 1.35rem 1.6rem;
+}
+
+.dialogo-cerrar {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 8px;
+  color: var(--text-soft);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+.dialogo-cerrar:hover {
+  color: var(--brand-strong);
+  border-color: var(--brand);
+}
+
+/* El relleno de la derecha deja sitio a la ✕, que va encima del título */
+.detail-header { margin-bottom: 1.25rem; padding-right: 3rem; }
 
 .detail-eyebrow {
   display: block;
@@ -635,6 +700,10 @@ body:has(.aviso-version:not([hidden])) .btn-subir { bottom: 5rem; }
   background: var(--warning-bg);
   border: 1px solid var(--warning-border);
 }
+/* El badge de problema de suministro lleva `hidden` en el HTML mientras la Fase
+   2 no lo active: sin esta regla, el `display` de arriba se impone al atributo y
+   el aviso salía SIEMPRE (aunque no hubiera problema de suministro). */
+.badge[hidden] { display: none; }
 
 /* --- Resumen rápido --- */
 .quick-summary {
@@ -675,14 +744,23 @@ body:has(.aviso-version:not([hidden])) .btn-subir { bottom: 5rem; }
   color: var(--text-muted);
 }
 
+/* El resumen lleva 5 apartados como mucho, así que en cuanto caben dos en una
+   fila siempre sobra una: se reparten en filas (2+2+1, 3+2…) y las incompletas
+   van centradas. Con `grid` la última fila se quedaba pegada a la izquierda y
+   el bloque entero parecía descentrado. */
 .quick-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(232px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 0.7rem;
 }
 
 .quick-summary-card {
   position: relative;
+  /* Se reparten el ancho que hay (y en el móvil ocupan la fila entera), pero
+     con tope: así una fila de una sola tarjeta no se estira de lado a lado. */
+  flex: 1 1 15rem;
+  max-width: 21rem;
   padding: 0.85rem 0.95rem 0.8rem 1.1rem;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1038,58 +1116,25 @@ body:has(.aviso-version:not([hidden])) .btn-subir { bottom: 5rem; }
 
 /* --- Pantallas grandes: se aprovecha el ancho ----------------------------- */
 /* Hasta 1179px la columna de --medida (780px) va sobrada. A partir de ahí se
-   ensancha y, en cuanto hay un medicamento abierto, la lista de resultados pasa
-   a ser una columna lateral y el documento ocupa el resto: se lee el prospecto
-   sin perder de vista los resultados, y la pantalla ancha se usa de verdad.
-   El texto largo del prospecto se queda en su medida cómoda (--medida-texto,
-   los mismos 44rem que ya se leían a 780px): ensanchar el párrafo no ayuda a
-   leer, así que lo que crece son las columnas, no el renglón. */
+   ensancha el contenedor y los resultados pasan a una rejilla de varias
+   columnas: la pantalla ancha se usa para ver más resultados de una vez.
+   El detalle no entra aquí: se abre en su ventana (--medida-detalle), así que
+   el renglón del prospecto mide siempre lo mismo. */
 @media (min-width: 1180px) {
-  :root {
-    --medida: 1060px;
-    --medida-texto: 44rem;
-  }
+  :root { --medida: 1060px; }
 
-  /* Los resultados, en varias columnas mientras ocupan todo el ancho */
+  /* Los resultados, en varias columnas */
   .results-list { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
-
-  /* Maestro-detalle (sólo cuando el detalle está a la vista) */
-  .app:has(#detail-section:not([hidden])) {
-    display: grid;
-    grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
-    column-gap: 2rem;
-    align-items: start;
-  }
-  .app:has(#detail-section:not([hidden])) > .hero,
-  .app:has(#detail-section:not([hidden])) > #search-section,
-  .app:has(#detail-section:not([hidden])) > #filters-section {
-    grid-column: 1 / -1;
-  }
-  .app:has(#detail-section:not([hidden])) #results-section { grid-column: 1; }
-  .app:has(#detail-section:not([hidden])) #detail-section {
-    grid-column: 2;
-    /* Alineado con la lista de la otra columna */
-    padding-top: 1.75rem;
-  }
-  /* En la columna lateral la lista va a una sola columna */
-  .app:has(#detail-section:not([hidden])) .results-list { grid-template-columns: 1fr; }
-
-  /* El renglón del prospecto no se estira con la pantalla */
-  .accordion-body p,
-  .accordion-body li { max-width: var(--medida-texto); }
 }
 
-/* Y si la pantalla es enorme, más ancho (la lista lateral también crece, para
-   que el documento no se lleve toda la diferencia) */
+/* Y si la pantalla es enorme, más ancho */
 @media (min-width: 1500px) {
   :root { --medida: 1260px; }
-  .app:has(#detail-section:not([hidden])) { grid-template-columns: minmax(320px, 460px) minmax(0, 1fr); }
   .ayuda { max-width: 52rem; }
 }
 
 @media (min-width: 1900px) {
   :root { --medida: 1400px; }
-  .app:has(#detail-section:not([hidden])) { grid-template-columns: minmax(340px, 520px) minmax(0, 1fr); }
 }
 
 /* --- Móvil --- */
@@ -1103,9 +1148,29 @@ body:has(.aviso-version:not([hidden])) .btn-subir { bottom: 5rem; }
      navegadores móviles que aplican el límite de forma estricta */
   #search-input { font-size: max(17px, 1rem); }
   .composer-submit { width: 38px; height: 38px; padding: 9px; }
-  .quick-summary-grid { grid-template-columns: 1fr; }
+  /* El resumen ya se pone solo a una tarjeta por fila (15rem de base): aquí
+     sólo hace falta que ocupen el ancho entero. */
+  .quick-summary-card { max-width: none; }
   .doc-tabs { width: 100%; }
   .doc-tab { flex: 1; }
+  /* El detalle, a pantalla completa: en el móvil una ventana centrada deja
+     franjas de fondo y desperdicia altura. */
+  .dialogo-detalle {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+  }
+  .dialogo-panel {
+    height: 100%;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+  }
+  .dialogo-cuerpo { padding: 1.1rem 1rem 1.5rem; }
+  .dialogo-cerrar { top: 0.5rem; right: 0.5rem; }
+  .detail-header { padding-right: 2.6rem; }
 }
 
 /* --- Accesibilidad: menos movimiento --- */

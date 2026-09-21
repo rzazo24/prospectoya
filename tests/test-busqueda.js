@@ -68,6 +68,16 @@ const dom = new JSDOM(html, {
       unobserve() {}
       disconnect() {}
     };
+    // jsdom tampoco implementa <dialog>: se simula abrir/cerrar lo justo para
+    // poder comprobar el estado. El centrado, el velo y el fondo inerte de
+    // verdad se miden en Chrome (test-resoluciones.js).
+    window.HTMLDialogElement.prototype.showModal = function () {
+      this.setAttribute("open", "");
+    };
+    window.HTMLDialogElement.prototype.close = function () {
+      this.removeAttribute("open");
+      this.dispatchEvent(new window.Event("close"));
+    };
     window.fetch = async (url) => {
       const u = String(url);
       peticiones.push(u);
@@ -176,11 +186,31 @@ const escribir = (valor) => {
   comprobar("Enter elige la sugerencia marcada", input.value === MEDICAMENTOS[1].nombre, input.value);
   comprobar("el desplegable se cierra al elegir", lista.hidden === true);
   comprobar("aria-activedescendant se limpia", input.hasAttribute("aria-activedescendant") === false);
-  comprobar("se muestra la ficha del medicamento", detalle.hidden === false);
+  comprobar("se abre la ventana del detalle", detalle.open === true);
   comprobar(
     "el detalle lleva el nombre de la sugerencia",
     document.getElementById("detail-name").textContent === MEDICAMENTOS[1].nombre
   );
+
+  // --- 4b. La ventana del detalle se cierra -----------------------------
+  const botonCerrar = document.getElementById("detail-close");
+  comprobar(
+    "la ventana trae botón de cerrar con etiqueta",
+    botonCerrar !== null && botonCerrar.getAttribute("aria-label") === "Cerrar el detalle"
+  );
+  botonCerrar.click();
+  comprobar("la ✕ cierra la ventana", detalle.open === false);
+  comprobar(
+    "cerrar no borra lo que había dentro",
+    document.getElementById("detail-name").textContent === MEDICAMENTOS[1].nombre
+  );
+
+  detalle.showModal();
+  comprobar("se puede volver a abrir", detalle.open === true);
+  // En un navegador de verdad, un clic en el velo llega con el propio <dialog>
+  // como destino (el velo no es un elemento); eso es lo que se simula aquí.
+  detalle.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  comprobar("un clic en el fondo oscurecido la cierra", detalle.open === false);
 
 
 

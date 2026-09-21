@@ -18,13 +18,25 @@ y `Eliminado` (solo los que apliquen).
 ### Cambiado
 
 - **La web se adapta a las pantallas grandes**: hasta 1179px se ve como siempre
-  (columna de 780px), y a partir de ahí el contenedor se ensancha (1060px; 1260px
-  desde 1500px; 1400px desde 1900px), los resultados pasan a una rejilla de varias
-  columnas y, **en cuanto hay un medicamento abierto, la lista se queda a la
-  izquierda y el documento a la derecha** (maestro-detalle hecho sólo con CSS, con
-  `:has()`). El renglón del prospecto se queda en 44rem —los mismos que ya se
-  leían—: lo que crece son las columnas, no el texto. Lo mide la suite nueva
-  `test-resoluciones.js` a 900, 1180, 1600 y 2560px.
+  (columna de 780px) y a partir de ahí el contenedor se ensancha (1060px; 1260px
+  desde 1500px; 1400px desde 1900px) y los resultados pasan a una rejilla de
+  varias columnas, que es en lo que se aprovecha el ancho. El renglón del
+  prospecto se queda en 44rem —los mismos que ya se leían—: lo que crece son las
+  columnas, no el texto. Lo mide `test-resoluciones.js` a 900, 1180, 1600 y
+  2560px.
+- **El prospecto se abre en una ventana centrada**, no dentro de la página: al
+  elegir una sugerencia del desplegable **o** un resultado de la lista se abre un
+  `<dialog>` nativo con `showModal()` — fondo oscurecido, lo de detrás inerte, el
+  foco dentro y `Esc` para cerrar (además de la ✕ y de un clic en el fondo). En el
+  móvil ocupa la pantalla entera; en el escritorio va centrada y mide
+  `--medida-detalle` (`--medida-texto` + el relleno de la tarjeta: 742px), de
+  forma que el texto del prospecto llena su tarjeta de lado a lado. Con esto
+  **desaparece el maestro-detalle** que se había probado para pantallas grandes
+  (ya no hay un documento al lado que justifique dejar la lista estrecha): los
+  resultados usan el ancho entero en varias columnas aunque la ventana esté
+  abierta. Lo comprueban `test-busqueda.js` (abrir desde los dos sitios, la ✕, el
+  fondo, volver a abrir) y `test-resoluciones.js` (modal, centrado a ±0,5px,
+  ancho ≤743px, el texto sin hueco, la ✕ a la vista y la lista sin encoger).
 - **Titular y subtítulo del buscador**: ahora son *«El prospecto, pero legible.»*
   y *«Busca por nombre o principio activo y encuentra lo importante en segundos.»*
   (antes «Lee lo importante de cualquier medicamento sin pelearte con el prospecto.»
@@ -50,12 +62,29 @@ y `Eliminado` (solo los que apliquen).
   arriba y abajo equilibrado. El buscador de la tarjeta lleva el mismo aire a los
   dos lados (20px): con el de la web (28px a la izquierda y 13 a la derecha) la
   tinta de la tarjeta quedaba 8,5px a la derecha aunque la caja fuera centrada.
-- **La cáscara de la PWA sube a `v9`** en `sw.js` (por los cambios de las páginas,
-  los textos y los estilos): quien tenga la web abierta verá el aviso de "versión
-  nueva" y el caché anterior se borra al activarse.
+- **La cáscara de la PWA sube a `v10`** en `sw.js` (por los cambios de las
+  páginas, los estilos y el detalle): quien tenga la web abierta verá el aviso de
+  "versión nueva" y el caché anterior se borra al activarse.
 
 ### Corregido
 
+- **El badge «Problema de suministro activo» salía siempre**, aunque no hubiera
+  ningún problema de suministro (y aunque la Fase 2 todavía no lo active): el
+  `hidden` del HTML no podía con el `display: inline-block` de `.badge`, porque
+  faltaba la regla `.badge[hidden] { display: none; }` que pide el propio
+  AGENTS.md. Se ha visto con datos reales de CIMA (`metformina`) al mirar la
+  captura del detalle. Ahora `test-resoluciones.js` mide el `display` del badge en
+  Chrome y comprueba que es `none` (sin la regla falla, comprobado).
+- **Las tarjetas del resumen rápido quedaban pegadas a la izquierda**: son 5
+  apartados, así que en cualquier rejilla sobra una fila (3+2, 2+2+1…) y con
+  `display: grid` la fila incompleta se alineaba al principio: medido con datos
+  reales de CIMA, se iba **130px** (a 1920px) y **168px** (a 1366px) a la
+  izquierda del centro, y el bloque entero se veía descentrado. Ahora las
+  tarjetas se reparten con `flex` + `justify-content: center` (y un tope de ancho
+  para que una fila de una sola tarjeta no se estire de lado a lado), así que
+  todas miden lo mismo y las filas incompletas van centradas. Lo mide
+  `test-resoluciones.js` en los cuatro anchos, y se ha comprobado que vuelve a
+  fallar si se pone `grid`.
 - **La cápsula del logotipo no estaba centrada** en el cuadrado de la barra de
   arriba (ni en el buscador ni en la ayuda): el dibujo estaba centrado en
   (10,5, 10,5) de un lienzo de 24×24, así que se iba **1,25 px** hacia arriba y a

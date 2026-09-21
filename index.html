@@ -186,40 +186,56 @@
       <ul id="results-list" class="results-list"></ul>
     </section>
 
-    <!-- Detalle del medicamento seleccionado -->
-    <section id="detail-section" class="detail-section" hidden>
+  </main>
 
-      <div id="detail-header" class="detail-header">
-        <span class="detail-eyebrow">Medicamento</span>
-        <h2 id="detail-name"></h2>
-        <p id="detail-lab"></p>
-        <p id="detail-cn" class="detail-cn" hidden></p>
-        <!-- TODO Fase 2: badge de problema de suministro aquí -->
-        <span id="supply-issue-badge" class="badge badge-warning" hidden>
-          Problema de suministro activo
-        </span>
-      </div>
-
-      <!-- Resumen rápido: dosis, contraindicaciones, alertas clave -->
-      <!-- Se rellena desde app.js (renderQuickSummary) y queda oculto si no hay datos -->
-      <div id="quick-summary" class="quick-summary" hidden></div>
-
-      <!-- Tabs: Prospecto / Ficha técnica -->
-      <div class="doc-tabs" role="tablist" aria-label="Tipo de documento">
-        <button class="doc-tab active" data-doc-type="2" role="tab" aria-selected="true">Prospecto</button>
-        <button class="doc-tab" data-doc-type="1" role="tab" aria-selected="false">Ficha técnica</button>
-      </div>
-
-      <!-- Acordeón de secciones del documento -->
-      <div id="sections-accordion" class="accordion"></div>
-
-      <!-- TODO Fase 2: botón "copiar para IA" -->
-      <button id="copy-for-ai" class="btn-secondary" hidden>
-        Copiar texto para pegar en una IA
+  <!-- Detalle del medicamento seleccionado: se abre en una ventana centrada
+       (ver app.js). Es un <dialog> nativo, así que el fondo se oscurece y queda
+       inerte (no se puede pulsar nada de detrás), el foco se queda dentro y
+       Esc lo cierra. Se pone fuera de <main> a propósito: no forma parte del
+       flujo de la página. -->
+  <dialog id="detail-section" class="dialogo-detalle" aria-labelledby="detail-name">
+    <div class="dialogo-panel">
+      <button id="detail-close" class="dialogo-cerrar" type="button" aria-label="Cerrar el detalle" title="Cerrar (Esc)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 6 6 18"/>
+          <path d="m6 6 12 12"/>
+        </svg>
       </button>
 
-    </section>
-  </main>
+      <div id="detail-body" class="dialogo-cuerpo">
+
+        <div id="detail-header" class="detail-header">
+          <span class="detail-eyebrow">Medicamento</span>
+          <h2 id="detail-name"></h2>
+          <p id="detail-lab"></p>
+          <p id="detail-cn" class="detail-cn" hidden></p>
+          <!-- TODO Fase 2: badge de problema de suministro aquí -->
+          <span id="supply-issue-badge" class="badge badge-warning" hidden>
+            Problema de suministro activo
+          </span>
+        </div>
+
+        <!-- Resumen rápido: dosis, contraindicaciones, alertas clave -->
+        <!-- Se rellena desde app.js (renderQuickSummary) y queda oculto si no hay datos -->
+        <div id="quick-summary" class="quick-summary" hidden></div>
+
+        <!-- Tabs: Prospecto / Ficha técnica -->
+        <div class="doc-tabs" role="tablist" aria-label="Tipo de documento">
+          <button class="doc-tab active" data-doc-type="2" role="tab" aria-selected="true">Prospecto</button>
+          <button class="doc-tab" data-doc-type="1" role="tab" aria-selected="false">Ficha técnica</button>
+        </div>
+
+        <!-- Acordeón de secciones del documento -->
+        <div id="sections-accordion" class="accordion"></div>
+
+        <!-- TODO Fase 2: botón "copiar para IA" -->
+        <button id="copy-for-ai" class="btn-secondary" hidden>
+          Copiar texto para pegar en una IA
+        </button>
+
+      </div>
+    </div>
+  </dialog>
 
   <!-- Botón de "volver arriba": lo enseña arriba.js cuando se baja por la
        página. Es un botón de verdad (teclado y lectores de pantalla) y no

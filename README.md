@@ -143,28 +143,34 @@ La web se ve igual de bien en un móvil de 320px que en un monitor de 2560: no h
 scroll horizontal a ningún ancho y sólo hay **dos grupos de reglas** (lo demás
 sale de `clamp()`, de `auto-fit` y de los tokens).
 
-- **Móvil (≤640px)**: una sola columna, el buscador a lo ancho y las pestañas del
-  documento repartidas (`@media (max-width: 640px)`).
+- **Móvil (≤640px)**: una sola columna, el buscador a lo ancho, las pestañas del
+  documento repartidas (`@media (max-width: 640px)`) y el detalle a pantalla
+  completa.
 - **Escritorio normal (641–1179px)**: la columna de siempre (`--medida` = 780px).
 - **Pantallas grandes (≥1180px)**: `--medida` crece (1060px; 1260px a partir de
-  1500px; 1400px a partir de 1900px), los resultados pasan a una rejilla de varias
-  columnas y, **en cuanto hay un medicamento abierto, la lista se queda a la
-  izquierda y el documento a la derecha** (maestro-detalle). Eso último se hace
-  sólo con CSS, con `:has()` sobre `#detail-section:not([hidden])`, así que el
-  `app.js` no sabe nada del ancho de la pantalla. El renglón del prospecto se
-  queda en `--medida-texto` (44rem, los mismos que ya se leían en la columna de
-  780px): ensanchar el párrafo no ayuda a leer, así que lo que crece son las
-  columnas, no el texto.
+  1500px; 1400px a partir de 1900px) y los resultados pasan a una rejilla de varias
+  columnas, que es en lo que se aprovecha el ancho.
+- **El detalle se sale del flujo**: se abre en una ventana centrada (`<dialog>`
+  nativo con `showModal()`), así que no compite con los resultados por el ancho.
+  La ventana mide `--medida-detalle` = `--medida-texto` (44rem) + el relleno de la
+  tarjeta = 742px: es, literalmente, el renglón cómodo del prospecto, así que el
+  texto **llena** su tarjeta de lado a lado y no queda hueco. (Con la columna de
+  808px que se probó antes, el renglón se quedaba en 704px y sobraban 67px a la
+  derecha dentro de la tarjeta: eso era lo que se veía descentrado.) En el móvil la
+  ventana es la pantalla entera.
 
 Medido en Chrome (lo comprueba `test-resoluciones.js`, que también sirve de
 resumen de lo que se espera de cada ancho):
 
-| Ancho de ventana | Contenedor | Resultados | Con el detalle abierto |
+| Ancho de ventana | Contenedor | Resultados | Ventana del detalle |
 |---|---|---|---|
-| 900px | 780px | una columna | apilados (la lista arriba) |
-| 1180px | 1060px | 3 columnas | lista 380px + documento 608px |
-| 1600px | 1260px | 3 columnas | lista 460px + documento 728px |
-| 2560px | 1400px | 4 columnas | lista 520px + documento 808px |
+| 900px | 780px | una columna | 742px, centrada |
+| 1180px | 1060px | 2 columnas | 742px, centrada |
+| 1600px | 1260px | 3 columnas | 742px, centrada |
+| 2560px | 1400px | 4 columnas | 742px, centrada |
+
+Con la ventana abierta, los resultados **siguen** repartidos en esas columnas
+(el fondo queda inerte, pero no cambia de sitio).
 
 ### Botón de "volver arriba" (`arriba.js`)
 
@@ -383,18 +389,22 @@ Chrome/Chromium (Node las demás no necesitan nada instalado):
 ```bash
 cd tests
 npm install          # jsdom (única dependencia, sólo de desarrollo)
-npm test             # 281 comprobaciones: estructura, buscador, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
+npm test             # 323 comprobaciones: estructura, buscador, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
 npm run test:api-real   # contra la API real de CIMA (necesita red)
 ```
 
 Resumen: `test-html.js` (estructura de las dos páginas, metaetiquetas y avisos),
-`test-busqueda.js` (buscador completo en jsdom con `fetch` simulado),
+`test-busqueda.js` (buscador completo en jsdom con `fetch` simulado, incluida la
+ventana del detalle: abrir desde una sugerencia y desde un resultado, la ✕, el
+clic en el fondo y volver a abrir),
 `test-movil.js` (el buscador en un viewport de móvil, sin zoom al escribir),
 `test-arriba.js` (el botón de "volver arriba" en las dos páginas),
 `test-paginas.js` (las dos páginas en Chrome real, servidas por HTTP, y que la
 cápsula del logo quede centrada en su cuadrado),
 `test-resoluciones.js` (900, 1180, 1600 y 2560px: que no desborde, que el
-contenedor aproveche el ancho y que la lista y el documento vayan lado a lado),
+contenedor aproveche el ancho, que los resultados vayan en varias columnas, y el
+detalle: ventana modal centrada a ±0,5px, ancho ≤743px, el renglón sin hueco, las
+filas del resumen centradas y la ✕ a la vista),
 `test-pwa.js` (app instalable: manifest, iconos, service worker, sin conexión y
 aviso de versión nueva), `test-iconos.js` (los favicons cargan y miden lo que
 deben), `test-solape.js` (regresión del z-index del desplegable) y
