@@ -1160,29 +1160,32 @@ body:has(.aviso-version:not([hidden])) .btn-subir { bottom: 5rem; }
     flex-direction: column;
     padding: 0.5rem 1rem 3rem;
   }
-  /* El hero y la lista son las dos asas del bloque: con el margen automático, el
-     hueco sobrante se reparte a partes iguales por arriba y por abajo. Los
-     márgenes automáticos valen 0 en cuanto el contenido no cabe (una lista
-     larga), así que con resultados no hay nada que centrar: la página se ve
-     como siempre y nada queda fuera de la vista (con justify-content: center el
-     principio del contenido se iría por encima del borde y no se podría leer). */
-  .app > .hero { margin-top: auto; }
+  /* El hueco de arriba estaba topado por el margen automático (se repartía a
+     partes iguales con el de abajo) y, aun equilibrado, 200px y pico de blanco
+     antes de llegar al buscador seguía pareciendo mucho (medido con Chrome a
+     390x844: 213px arriba, 235px abajo). Ahora, en el estado de partida (sin
+     lista y sin aviso), el margen de arriba es un valor fijo y pequeño —ya no
+     crece con el alto de la pantalla— y solo el de abajo sigue siendo
+     automático: se lleva TODO el hueco sobrante, no la mitad (medido: 100px
+     arriba a cualquier alto, frente a 369,7px abajo a 844px). En cuanto hay
+     lista o aviso el margen fijo desaparece (vuelve a 0, el valor por
+     defecto) y el margen automático de abajo vale 0 en cuanto el contenido no
+     cabe, así que con resultados no hay nada que desplazar: la página se ve
+     como siempre y nada queda fuera de la vista (con justify-content: center
+     el principio del contenido se iría por encima del borde y no se podría
+     leer). */
   .app > .results-section { margin-bottom: auto; }
   /* Estado de partida (sin lista y sin aviso): la sección de resultados no
-     enseña nada, así que se queda sin su aire de arriba y el bloque centrado
-     acaba justo bajo el buscador. */
+     enseña nada, así que se queda sin su aire de arriba y el bloque de arriba
+     acaba justo bajo el buscador, sin un hueco de más antes del margen
+     automático. Y el hero, en ese mismo estado, lleva el margen de arriba
+     fijo (ver arriba); con lista o aviso no hay regla que lo toque, así que
+     se queda en su valor por defecto (0) y el bloque vuelve pegado al topbar. */
   .results-section:not(:has(.results-list li)):not(:has(.results-status:not([hidden]))) {
     padding-top: 0;
   }
-  /* Y en ese mismo estado el aire del final de la página no hace falta: se le
-     quita al #app (su relleno de arriba, 0.5rem, más el aire que el hero ya
-     tiene encima, 1.75rem) para que el reparto del hueco sea simétrico y el
-     bloque salga centrado a 0px (medido; con los 3rem se quedaba 12px por
-     encima del centro). Con lista o aviso a la vista, el #app recupera sus
-     3rem. OJO: el :has() no se puede anidar dentro de otro :has() —la regla se
-     descarta sin avisar—, de ahí que el filtro de los resultados vaya suelto. */
-  .app:has(.results-section):not(:has(.results-list li)):not(:has(.results-status:not([hidden]))) {
-    padding-bottom: calc(0.5rem + 1.75rem);
+  .app:not(:has(.results-list li)):not(:has(.results-status:not([hidden]))) > .hero {
+    margin-top: 4rem;
   }
   /* El halo de marca (body::before) va fijo al viewport: en el escritorio
      queda bien porque el hero está pegado arriba, pero aquí el bloque de

@@ -12,10 +12,12 @@
  *    teclado.
  *
  * Y, además, la colocación del bloque de arriba (hero + buscador + chips), que en
- * el móvil es lo único que se ve: que quede centrado en la pantalla, que el
- * buscador no sea un rectángulo demasiado alto, que la tinta del badge deje el
- * mismo aire a los lados y que, en cuanto hay resultados, todo vuelva al flujo de
- * siempre (el bloque arriba, el hueco automático a 0 y nada fuera de la vista).
+ * el móvil es lo único que se ve: que el hueco de encima quede topado (fijo,
+ * no crece con el alto de la pantalla) y que el resto del hueco sobrante se lo
+ * lleve entero el de abajo, que el buscador no sea un rectángulo demasiado
+ * alto, que la tinta del badge deje el mismo aire a los lados y que, en cuanto
+ * hay resultados, todo vuelva al flujo de siempre (el bloque arriba, el hueco
+ * automático a 0 y nada fuera de la vista).
  *
  * El ancho de móvil se consigue con un iframe de 390px: Chrome en Linux no baja
  * de ~500px de ancho de ventana, y así las media queries se evalúan al ancho de
@@ -34,8 +36,10 @@ if (!navegador()) {
 
 const FICHEROS = ["index.html", "styles.css", "api.js", "app.js", "tema.js", "arriba.js", "pwa.js", "favicon.svg"];
 
-// Página con el iframe estrecho y el diagnóstico del contenido
-const PAGINA_MOVIL = `<!DOCTYPE html>
+// Página con el iframe estrecho y el diagnóstico del contenido. Parametrizada
+// por el alto del iframe: sirve tanto para el móvil de referencia (844px)
+// como para comprobar, a otro alto, que el hueco de arriba no se mueve.
+const paginaMovil = (altoIframe) => `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -43,7 +47,7 @@ const PAGINA_MOVIL = `<!DOCTYPE html>
 </head>
 <body style="margin:0">
   <pre id="diag" style="display:none"></pre>
-  <iframe id="marco" src="index.html" width="390" height="844" style="border:0"></iframe>
+  <iframe id="marco" src="index.html" width="390" height="${altoIframe}" style="border:0"></iframe>
   <script>
     const log = (m) => { document.getElementById("diag").textContent += m + "\\n"; };
     const marco = document.getElementById("marco");
@@ -67,7 +71,7 @@ const PAGINA_MOVIL = `<!DOCTYPE html>
       log("ancho_documento=" + doc.documentElement.scrollWidth);
       log("desborda=" + (doc.documentElement.scrollWidth > ventana.innerWidth + 1));
 
-      // --- El bloque de arriba (hero + buscador + chips), centrado ---
+      // --- El bloque de arriba (hero + buscador + chips): hueco de encima topado ---
       // La animación de entrada desplaza el hero y el buscador 6px mientras corre,
       // y con el reloj virtual de Chrome no se sabe cuándo ha terminado: se quita
       // para medir dónde quedan colocados de verdad (mismo apaño que en
@@ -75,9 +79,10 @@ const PAGINA_MOVIL = `<!DOCTYPE html>
       const sinAnimacion = doc.createElement("style");
       sinAnimacion.textContent = ".hero, .search-section { animation: none !important; }";
       doc.head.appendChild(sinAnimacion);
-      // Se mide desde el borde de abajo del topbar hasta el bloque y desde el
-      // bloque hasta el borde de abajo de la pantalla: si los dos huecos son
-      // iguales, el bloque está centrado.
+      // Se mide desde el borde de abajo del topbar hasta el bloque (hueco_arriba,
+      // fijo: no debe moverse aunque cambie el alto del iframe) y desde el bloque
+      // hasta el borde de abajo de la pantalla (hueco_abajo, el que se lleva todo
+      // lo que sobra).
       const hero = doc.querySelector(".hero");
       const busca = doc.getElementById("search-section");
       const topbar = doc.querySelector(".topbar").getBoundingClientRect();
@@ -87,8 +92,8 @@ const PAGINA_MOVIL = `<!DOCTYPE html>
       log("hueco_arriba=" + arriba.toFixed(1));
       log("hueco_abajo=" + abajo.toFixed(1));
 
-      // Lo mismo con el centrado deshecho: así se ve que la medición de arriba
-      // lo detecta (sin él, el bloque se queda pegado al topbar).
+      // Lo mismo con el ajuste deshecho: así se ve que la medición de arriba lo
+      // detecta (sin él, el bloque se queda pegado al topbar).
       const parche = doc.createElement("style");
       parche.textContent = "body{display:block!important} .app{display:block!important;padding-bottom:3rem!important}" +
         " .hero{margin-top:0!important} .results-section{margin-bottom:0!important;padding-top:1.75rem!important}";
@@ -132,13 +137,18 @@ const PAGINA_MOVIL = `<!DOCTYPE html>
 (async () => {
   const sitio = carpetaTemporal("movil");
   copiar(sitio, FICHEROS);
-  fs.writeFileSync(path.join(sitio, "movil.html"), PAGINA_MOVIL);
+  // Dos versiones de la página de prueba: el móvil de referencia (844px de
+  // alto) y uno más bajo (667px, como un iPhone SE), solo para comprobar que
+  // el hueco de arriba no cambia con el alto de la pantalla.
+  fs.writeFileSync(path.join(sitio, "movil.html"), paginaMovil(844));
+  fs.writeFileSync(path.join(sitio, "movil-bajo.html"), paginaMovil(667));
 
   const { url, cerrar } = await servirHttp(sitio);
 
-  let datos;
+  let datos, datosBajo;
   try {
     datos = campos(leerDiag(await domConChrome(`${url}/movil.html`, { ancho: 1100, alto: 900, presupuesto: 5000 })));
+    datosBajo = campos(leerDiag(await domConChrome(`${url}/movil-bajo.html`, { ancho: 1100, alto: 900, presupuesto: 5000 })));
   } finally {
     cerrar();
   }
@@ -155,14 +165,38 @@ const PAGINA_MOVIL = `<!DOCTYPE html>
   comprobar("no hay desbordes horizontales", datos.desborda === "false", `documento=${datos.ancho_documento}px ventana=${datos.ancho_viewport}px`);
   comprobar("el compositor cabe en el ancho del móvil", Number(datos.ancho_composer) <= Number(datos.ancho_viewport), datos.ancho_composer);
 
-  // --- El bloque de arriba (hero + buscador + chips), centrado ---
+  // --- El bloque de arriba (hero + buscador + chips): hueco de encima topado ---
+  // El margen de arriba del hero es fijo (4rem): el hueco hasta el topbar sale
+  // en 100px (0.5rem de #app + 4rem del margen + 1.75rem del propio relleno
+  // del hero) y ya no depende del alto de la pantalla; el de abajo se lleva
+  // todo lo que sobra, así que es varias veces mayor.
   comprobar(
-    "el bloque de arriba queda centrado en la pantalla (±1px)",
-    Math.abs(Number(datos.hueco_arriba) - Number(datos.hueco_abajo)) <= 1,
-    `hueco arriba=${datos.hueco_arriba}px abajo=${datos.hueco_abajo}px`
+    "el hueco de arriba queda topado en 100px",
+    Math.abs(Number(datos.hueco_arriba) - 100) <= 1,
+    `hueco arriba=${datos.hueco_arriba}px`
   );
   comprobar(
-    "sin el centrado la medición lo nota (el bloque se queda arriba)",
+    "el hueco de abajo se lleva el resto (bastante mayor que el de arriba)",
+    Number(datos.hueco_abajo) > Number(datos.hueco_arriba) * 3,
+    `hueco arriba=${datos.hueco_arriba}px abajo=${datos.hueco_abajo}px`
+  );
+  // Con el móvil más bajo (667px, 177px menos que el de referencia) el hueco de
+  // arriba tiene que medir exactamente lo mismo (no depende del alto) y toda la
+  // diferencia de altura tiene que notarse abajo: si el tope se hubiera hecho
+  // con un porcentaje del alto (p. ej. 8vh) en vez de un valor fijo, esta
+  // comprobación lo detectaría (el hueco de arriba cambiaría con el iframe).
+  comprobar(
+    "el tope de arriba no depende del alto del móvil (mismos 100px a 667px)",
+    Math.abs(Number(datosBajo.hueco_arriba) - Number(datos.hueco_arriba)) <= 1,
+    `844px de alto=${datos.hueco_arriba}px · 667px de alto=${datosBajo.hueco_arriba}px`
+  );
+  comprobar(
+    "toda la diferencia de alto (177px) la absorbe el hueco de abajo",
+    Math.abs((Number(datos.hueco_abajo) - Number(datosBajo.hueco_abajo)) - 177) <= 1,
+    `abajo a 844px=${datos.hueco_abajo}px · abajo a 667px=${datosBajo.hueco_abajo}px`
+  );
+  comprobar(
+    "sin el ajuste la medición lo nota (el bloque se queda arriba)",
     Math.abs(Number(datos.sin_arreglo_arriba) - Number(datos.sin_arreglo_abajo)) > 100,
     `sin arreglo: arriba=${datos.sin_arreglo_arriba}px abajo=${datos.sin_arreglo_abajo}px`
   );

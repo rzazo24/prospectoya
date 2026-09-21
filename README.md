@@ -148,10 +148,11 @@ sale de `clamp()`, de `auto-fit` y de los tokens).
 - **Móvil (≤640px)**: una sola columna, el buscador a lo ancho (y más bajo que en
   el escritorio: 56px), las pestañas del documento repartidas
   (`@media (max-width: 640px)`) y el detalle a pantalla completa. Mientras no hay
-  resultados, el bloque de arriba (hero + buscador + chips) queda **centrado en la
-  pantalla**: el `body` es una columna de `100dvh` y el hueco sobrante se reparte
-  con los márgenes automáticos del hero y de la lista de resultados (a partes
-  iguales, y valen 0 en cuanto hay lista, así que la página se ve como siempre).
+  resultados, el `body` es una columna de `100dvh`: el bloque de arriba (hero +
+  buscador + chips) lleva un **hueco de arriba fijo y pequeño** (4rem) que no
+  crece con el alto de la pantalla, y el hueco sobrante entero (no la mitad) lo
+  absorbe el **margen automático** de la lista de resultados por debajo —vale 0
+  en cuanto hay lista, así que la página se ve como siempre—.
 - **Escritorio normal (641–1179px)**: la columna de siempre (`--medida` = 780px).
 - **Pantallas grandes (≥1180px)**: `--medida` crece (1060px; 1260px a partir de
   1500px; 1400px a partir de 1900px) y los resultados pasan a una rejilla de varias
@@ -396,7 +397,7 @@ Chrome/Chromium (Node las demás no necesitan nada instalado):
 ```bash
 cd tests
 npm install          # jsdom (única dependencia, sólo de desarrollo)
-npm test             # 332 comprobaciones: estructura, buscador, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
+npm test             # 335 comprobaciones: estructura, buscador, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
 npm run test:api-real   # contra la API real de CIMA (necesita red)
 ```
 

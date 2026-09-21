@@ -37,6 +37,22 @@ y `Eliminado` (solo los que apliquen).
 
 ### Cambiado
 
+- **En el móvil, el hueco de arriba del bloque superior queda topado en
+  100px** (antes se repartía a partes iguales con el de abajo: medido a
+  390×844, 213px arriba y 235px abajo — equilibrado, pero seguía pareciendo
+  mucho blanco antes de llegar al buscador). Ahora, en el estado de partida
+  (sin lista de resultados ni aviso), el `.hero` lleva un margen de arriba
+  **fijo** (`4rem`) en vez de automático, y el margen automático del
+  `.results-section` se lleva **todo** el hueco sobrante, no la mitad (medido:
+  100px arriba —fijo, comprobado también a 667px de alto para probar que no
+  depende de la pantalla— frente a 369,7px abajo a 844px). Con lista o aviso
+  no cambia nada: el margen del `.hero` vuelve a su valor por defecto (0) y el
+  bloque sigue volviendo pegado al topbar, como siempre. `test-movil.js`
+  cambia su comprobación de "centrado ±1px" por cuatro nuevas: el hueco de
+  arriba en 100px, que el de abajo es varias veces mayor, que el tope no
+  cambia con el alto del móvil (comparado a 667px) y que toda la diferencia
+  de alto (177px) la absorbe el hueco de abajo. Toca `styles.css` (cáscara),
+  así que `VERSION` sube en `sw.js` (`v12` → `v13`).
 - **El chip del código nacional lleva ahora el prefijo «CN» delante del
   número** (`CN 662025` en vez de `662025` a secas): visto junto a los demás
   chips (nombres de medicamento), un número suelto se leía como un resto de
