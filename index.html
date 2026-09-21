@@ -58,9 +58,14 @@
   <header class="topbar">
     <a class="brand" href="./">
       <span class="brand-mark" aria-hidden="true">
+        <!-- La capsula va dibujada en un lienzo de 24x24 centrada en (12,12): se
+             traslado +1,5 en los dos ejes respecto al icono original, que quedaba
+             1,25px arriba y a la izquierda del cuadrado de la marca (medido con
+             getBBox; lo cubre test-paginas.js). No "cuadrar" los numeros con el
+             icono de origen sin volver a medirlo. -->
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M10.5 3.5 3.5 10.5a4.95 4.95 0 0 0 7 7l7-7a4.95 4.95 0 0 0-7-7Z"/>
-          <path d="m7 7 7 7"/>
+          <path d="M12 5 5 12a4.95 4.95 0 0 0 7 7l7-7a4.95 4.95 0 0 0-7-7Z"/>
+          <path d="m8.5 8.5 7 7"/>
         </svg>
       </span>
       <span class="brand-name">ProspectoYa</span>

@@ -43,6 +43,26 @@ const FICHEROS = [
 
 // Las páginas de prueba vuelcan su diagnóstico como "clave=valor" en un <pre>,
 // que es lo que se lee del DOM final de Chrome.
+
+// Común a las dos páginas: la cápsula del logo tiene que quedar centrada en su
+// cuadrado. Se compara el centro del dibujo (getBBox, en unidades del viewBox)
+// con el centro de la caja de .brand-mark, en píxeles. Si alguien retoca los
+// path y los deja descentrados, esto lo canta.
+const MEDIR_LOGO = `
+    const medirLogo = () => {
+      const marca = document.querySelector(".brand-mark");
+      const svg = marca.querySelector("svg");
+      const cajaMarca = marca.getBoundingClientRect();
+      const cajaSvg = svg.getBoundingClientRect();
+      const dibujo = svg.getBBox();
+      const escala = cajaSvg.width / svg.viewBox.baseVal.width;
+      const dx = cajaSvg.x + (dibujo.x + dibujo.width / 2) * escala - (cajaMarca.x + cajaMarca.width / 2);
+      const dy = cajaSvg.y + (dibujo.y + dibujo.height / 2) * escala - (cajaMarca.y + cajaMarca.height / 2);
+      return Math.abs(dx).toFixed(1) + "," + Math.abs(dy).toFixed(1);
+    };
+    log("logo_desfase=" + medirLogo());
+`;
+
 const DIAG_INDEX = `
   <pre id="diag" style="display:none"></pre>
   <script>
@@ -69,6 +89,7 @@ const DIAG_INDEX = `
     document.getElementById("theme-toggle").click();
     log("tema=" + document.documentElement.dataset.tema);
     log("localstorage=" + localStorage.getItem("prospectoya-tema"));
+    ${MEDIR_LOGO}
     log("errores_js=" + errores);
   </script>
 `;
@@ -99,6 +120,7 @@ const DIAG_AYUDA = `
     log("secciones=" + document.querySelectorAll(".ayuda h2").length);
     log("atajos=" + document.querySelectorAll(".ayuda-tabla tbody tr").length);
     log("cita_aemps=" + (document.body.textContent.includes("AEMPS") ? "si" : "no"));
+    ${MEDIR_LOGO}
     log("errores_js=" + errores);
   </script>
 `;
@@ -121,10 +143,12 @@ const DIAG_AYUDA = `
     // Mismo perfil de Chrome en las dos visitas: así se comprueba que el tema
     // se conserva al pasar de una página a otra.
     const perfil = path.join(sitio, "perfil-chrome");
+    const centrado = (valor) => (valor || "").split(",").every((n) => Number(n) <= 0.5);
 
     console.log("--- index.html ---");
     const index = campos(leerDiag(await domConChrome(`${url}/index.html`, { perfil, presupuesto: 6000 })));
     comprobar("sin errores de JS", index.errores_js === "0", index.errores_js);
+    comprobar("la cápsula del logo queda centrada en su cuadrado (±0,5 px)", centrado(index.logo_desfase), index.logo_desfase);
     comprobar("og:title presente", Boolean(index["og:title"]), index["og:title"]);
     comprobar("og:image es una URL absoluta", (index["og:image"] || "").startsWith("https://"), index["og:image"]);
     comprobar("og:image existe en el sitio (HTTP 200)", index["og:image_http"] === "200", index["og:image_http"]);
@@ -147,6 +171,7 @@ const DIAG_AYUDA = `
     comprobar("9 secciones", ayuda.secciones === "9", ayuda.secciones);
     comprobar("tabla de atajos con 4 filas", ayuda.atajos === "4", ayuda.atajos);
     comprobar("cita la fuente de datos (AEMPS)", ayuda.cita_aemps === "si", ayuda.cita_aemps);
+    comprobar("y el logo también está centrado aquí", centrado(ayuda.logo_desfase), ayuda.logo_desfase);
   } finally {
     cerrar();
   }

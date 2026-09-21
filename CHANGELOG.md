@@ -22,9 +22,19 @@ y `Eliminado` (solo los que apliquen).
   amoxicilina y CN 662025). Comprobado contra la API real: los cinco devuelven
   resultados (metformina 181, paracetamol 195, trajenta 1, crestor 18 y CN 662025
   un envase).
-- **La cáscara de la PWA sube a `v3`** en `sw.js` (cambian `index.html` y
-  `styles.css`): quien tenga la web abierta verá el aviso de "versión nueva" y el
-  caché anterior se borra al activarse.
+- **La cáscara de la PWA sube a `v4`** en `sw.js` (por los cambios de las
+  páginas y de los estilos): quien tenga la web abierta verá el aviso de "versión
+  nueva" y el caché anterior se borra al activarse.
+
+### Corregido
+
+- **La cápsula del logotipo no estaba centrada** en el cuadrado de la barra de
+  arriba (ni en el buscador ni en la ayuda): el dibujo estaba centrado en
+  (10,5, 10,5) de un lienzo de 24×24, así que se iba **1,25 px** hacia arriba y a
+  la izquierda. Se han trasladado las coordenadas +1,5 unidades en los dos ejes
+  (solo se mueve, de tamaño queda igual) y `test-paginas.js` ahora lo mide con
+  `getBBox` en las dos páginas. El `favicon.svg` ya estaba bien (se dibuja con un
+  rectángulo centrado y se gira sobre su propio centro).
 
 ### Eliminado
 

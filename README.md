@@ -290,6 +290,16 @@ Dos avisos si editas el SVG: el color va literal (no puede usar las variables de
 comentario XML **no** puede aparecer un doble guion seguido, o el navegador
 pintará una página de error en lugar del icono.
 
+Ojo con el **icono de la barra de arriba**, que es otro dibujo: la misma cápsula,
+pero en línea en las dos páginas y con un trazo (no relleno). Va en un lienzo de
+24×24 y el dibujo tiene que quedar **centrado en (12,12)**, que es el centro del
+lienzo, porque el CSS sólo centra la caja del SVG, no lo que hay dibujado dentro.
+El original estaba centrado en (10,5, 10,5) y la cápsula se iba **1,25 px** hacia
+arriba y a la izquierda dentro de su cuadrado (32×32 con 6 px de relleno); se
+corrigió trasladando las coordenadas **+1,5** unidades en los dos ejes. Si alguien
+vuelve a retocarlas, `tests/test-paginas.js` mide con `getBBox` si sigue centrada
+—en las dos páginas— y avisa si deja de estarlo.
+
 ### Social preview
 
 `social-preview.png` (1280×640) es la imagen que aparece al compartir el
@@ -329,7 +339,7 @@ Chrome/Chromium (Node las demás no necesitan nada instalado):
 ```bash
 cd tests
 npm install          # jsdom (única dependencia, sólo de desarrollo)
-npm test             # 235 comprobaciones: estructura, buscador, móvil, botón de subir, páginas, PWA, iconos y z-index
+npm test             # 237 comprobaciones: estructura, buscador, móvil, botón de subir, páginas, PWA, iconos y z-index
 npm run test:api-real   # contra la API real de CIMA (necesita red)
 ```
 
@@ -337,7 +347,8 @@ Resumen: `test-html.js` (estructura de las dos páginas, metaetiquetas y avisos)
 `test-busqueda.js` (buscador completo en jsdom con `fetch` simulado),
 `test-movil.js` (el buscador en un viewport de móvil, sin zoom al escribir),
 `test-arriba.js` (el botón de "volver arriba" en las dos páginas),
-`test-paginas.js` (las dos páginas en Chrome real, servidas por HTTP),
+`test-paginas.js` (las dos páginas en Chrome real, servidas por HTTP, y que la
+cápsula del logo quede centrada en su cuadrado),
 `test-pwa.js` (app instalable: manifest, iconos, service worker, sin conexión y
 aviso de versión nueva), `test-iconos.js` (los favicons cargan y miden lo que
 deben), `test-solape.js` (regresión del z-index del desplegable) y
