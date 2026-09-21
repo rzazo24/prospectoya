@@ -7,7 +7,7 @@
 const fs = require("fs");
 const path = require("path");
 const { JSDOM } = require("jsdom");
-const { RAIZ, leer, comprobar, resumen } = require("./util");
+const { RAIZ, leer, comprobar, resumen, tamanoPng } = require("./util");
 
 for (const fichero of ["index.html", "ayuda.html"]) {
   const html = leer(fichero);
@@ -129,6 +129,40 @@ console.log("--- index.html (metaetiquetas al compartir) ---");
   comprobar("og:image (ruta del fichero del repo)", meta('meta[property="og:image"]') === "https://prospectoya.vercel.app/social-preview.png", meta('meta[property="og:image"]'));
   comprobar("og:image:width x height = 1280x640", meta('meta[property="og:image:width"]') === "1280" && meta('meta[property="og:image:height"]') === "640");
   comprobar("twitter:card=summary_large_image", meta('meta[name="twitter:card"]') === "summary_large_image");
+}
+
+// --- social preview: la tarjeta y sus textos --------------------
+// La tarjeta se dibuja a mano en tests/maqueta-social-preview.html, así que se
+// puede quedar desfasada sin que nadie se entere (ya pasó: seguía con el titular
+// viejo, el texto de dentro del buscador que se quitó y los chips antiguos).
+// Aquí se compara con la página: si el titular, la entradilla o los chips
+// cambian en index.html, esto lo canta.
+console.log("--- social preview (tarjeta 1280x640) ---");
+{
+  const pagina = new JSDOM(leer("index.html")).window.document;
+  const maqueta = new JSDOM(leer("tests/maqueta-social-preview.html")).window.document;
+  const png = tamanoPng(path.join(RAIZ, "social-preview.png"));
+  const texto = (doc, selector) => ((doc.querySelector(selector) || {}).textContent || "").replace(/\s+/g, " ").trim();
+  const chipsPagina = [...pagina.querySelectorAll("#search-examples .js-ejemplo")].map((b) => b.dataset.ejemplo).join(",");
+  const chipsMaqueta = [...maqueta.querySelectorAll(".chips li")].map((li) => li.textContent.trim()).join(",");
+
+  comprobar(
+    "social-preview.png mide de verdad 1280x640",
+    Boolean(png) && png.ancho === 1280 && png.alto === 640,
+    png ? `${png.ancho}x${png.alto}` : "(no es un PNG legible)"
+  );
+  comprobar("la maqueta de la tarjeta existe y tiene titular", Boolean(maqueta.querySelector("h1")));
+  comprobar(
+    "la tarjeta lleva el mismo titular que la página",
+    texto(maqueta, "h1") === texto(pagina, "h1"),
+    texto(maqueta, "h1")
+  );
+  comprobar(
+    "y la misma entradilla",
+    texto(maqueta, ".entradilla") === texto(pagina, ".hero-text"),
+    texto(maqueta, ".entradilla")
+  );
+  comprobar("y los mismos chips de ejemplo", chipsMaqueta === chipsPagina, chipsMaqueta);
 }
 
 // --- contenido de la ayuda --------------------------------------

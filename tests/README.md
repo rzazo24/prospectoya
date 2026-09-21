@@ -58,6 +58,26 @@ También se pueden lanzar directamente, que es útil al depurar:
 - El servidor HTTP de las pruebas lo levanta Node (`util.js`, sin dependencias),
   en un puerto libre, y sirve las copias temporales del sitio.
 - `test-api-real.js` se **omite** (sin fallar) si no hay conexión.
+
+## Social preview (no es una suite)
+
+`maqueta-social-preview.html` es la maqueta que dibuja `social-preview.png`, la
+tarjeta que se ve al compartir el repo y la `og:image` de la web. Está aquí
+porque **no forma parte del sitio** (nada de la web la carga, igual que las
+suites). Para rehacer la imagen, desde esta carpeta:
+
+```bash
+google-chrome --headless --window-size=1280,640 --hide-scrollbars \
+  --screenshot=../social-preview.png maqueta-social-preview.html
+```
+
+- El resultado tiene que medir **1280×640** (lo que declara `index.html` en
+  `og:image:width/height`; `test-html.js` lo comprueba leyendo el PNG).
+- `inter-latin.woff2` es el subconjunto *latin* de **Inter** (fuente variable,
+  licencia SIL OFL): va en el repo para que la tarjeta no dependa de las fuentes
+  instaladas ni de que haya red al generar.
+- `test-html.js` compara la maqueta con la página: si cambian el titular, la
+  entradilla o los chips en `index.html` y la tarjeta no se rehace, avisa.
 - `test-arriba.js` **no mide dónde acaba la página**: una animación de subida no
   es cosa de un test. El driver espía `window.scrollTo` y comprueba qué se le
   pide a la ventana (`top` y `behavior`), que es lo que decide el código.

@@ -28,7 +28,15 @@ y `Eliminado` (solo los que apliquen).
   y la ayuda aclara que es un CN. Comprobado contra la API real: los cinco
   devuelven resultados (metformina 181, paracetamol 195, trajenta 1, crestor 18 y
   662025, un envase).
-- **La cáscara de la PWA sube a `v7`** en `sw.js` (por los cambios de las páginas,
+- **La tarjeta del social preview** (`social-preview.png`, 1280×640) se ha
+  rehecho: seguía con el titular viejo, con el texto de dentro del buscador (el
+  placeholder que se quitó) y con los chips antiguos (`paracetamol`, `ibuprofeno`
+  y `CN 662025`). Ahora lleva el titular y la entradilla nuevos y los cinco chips
+  actuales, y su maqueta vive en `tests/maqueta-social-preview.html` (con la
+  tipografía Inter en un fichero local), para poder rehacerla cuando cambie la
+  interfaz. `og:title`, `twitter:title` y `og:image:alt` se han puesto a juego
+  con el titular nuevo.
+- **La cáscara de la PWA sube a `v8`** en `sw.js` (por los cambios de las páginas,
   los textos y los estilos): quien tenga la web abierta verá el aviso de "versión
   nueva" y el caché anterior se borra al activarse.
 

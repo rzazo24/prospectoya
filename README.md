@@ -241,7 +241,8 @@ captura-inicio.png → captura del buscador que se muestra al principio del READ
 LICENSE            → licencia MIT
 CHANGELOG.md       → historial de cambios
 README.md          → este documento
-tests/             → suites de test (jsdom y Chrome real); no forman parte del sitio
+tests/             → suites de test (jsdom y Chrome real) y la maqueta del social
+                     preview; no forman parte del sitio
 ```
 
 > Los ficheros del **sitio** están **en la raíz** del proyecto (no hay `css/` ni
@@ -307,15 +308,25 @@ vuelve a retocarlas, `tests/test-paginas.js` mide con `getBBox` si sigue centrad
 ### Social preview
 
 `social-preview.png` (1280×640) es la imagen que aparece al compartir el
-repositorio en X, WhatsApp, Slack, etc. Se genera renderizando una maqueta con la
-identidad de la web (marca, titular, buscador y chips) y la tipografía **Inter**
-incrustada, para que no dependa de las fuentes instaladas:
+repositorio en X, WhatsApp, Slack, etc., y la `og:image` que declara
+`index.html`. Se dibuja desde una maqueta que reproduce la identidad de la web
+(marca, titular, buscador y chips): **`tests/maqueta-social-preview.html`**, en
+`tests/` porque no forma parte del sitio. La maqueta usa los mismos tokens que
+`styles.css` y la tipografía **Inter** de un fichero local
+(`tests/inter-latin.woff2`), para que la tarjeta no dependa de las fuentes
+instaladas ni de la red:
 
 ```bash
-# Maqueta -> PNG 1280x640
+cd tests
 google-chrome --headless --window-size=1280,640 --hide-scrollbars \
-  --screenshot=social-preview.png file:///ruta/a/la/maqueta.html
+  --screenshot=../social-preview.png maqueta-social-preview.html
 ```
+
+La fuente es un fichero local, así que carga al instante y la captura sale
+siempre igual (no depende de la red ni de las fuentes del sistema).
+`test-html.js` comprueba que el PNG mide 1280×640 **de verdad** y que la maqueta
+lleva el mismo titular, la misma entradilla y los mismos chips que la página: si
+se cambian en `index.html` y no se rehace la tarjeta, el test avisa.
 
 GitHub no permite fijarla por API ni con `gh`: hay que subirla a mano en
 *Settings → General → Social preview*. La misma imagen es la `og:image` que

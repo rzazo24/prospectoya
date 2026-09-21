@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>ProspectoYa — maqueta del social preview (1280×640)</title>
+  <!-- Maqueta que genera social-preview.png (la tarjeta del repo y la og:image).
+       Vive en tests/ porque NO forma parte del sitio: nada de la web la carga.
+
+       Se renderiza con Chrome a 1280×640 (ver "Social preview" en el README):
+
+         cd tests
+         google-chrome --headless --window-size=1280,640 --hide-scrollbars \
+           --screenshot=../social-preview.png maqueta-social-preview.html
+
+       La tipografía Inter va en un fichero local (inter-latin.woff2) para que la
+       tarjeta no dependa de las fuentes instaladas ni de la red. Los colores y
+       las medidas están copiados de styles.css: si allí cambian los tokens, aquí
+       hay que repetir el cambio. -->
+  <style>
+    @font-face {
+      font-family: "Inter";
+      src: url("inter-latin.woff2") format("woff2");
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: block;
+    }
+
+    /* Los mismos tokens que :root en styles.css (tema claro) */
+    :root {
+      --bg: #ffffff;
+      --surface: #ffffff;
+      --surface-2: #f1f2f5;
+      --border: #e6e7ec;
+      --border-strong: #d8dae1;
+      --text: #0f1014;
+      --text-soft: #545863;
+      --text-muted: #8a8f9a;
+      --brand: #4d6bfe;
+      --glow: rgba(77, 107, 254, 0.10);
+      --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    /* El lienzo es exactamente lo que se captura: 1280×640 */
+    html, body { margin: 0; width: 1280px; height: 640px; overflow: hidden; }
+    body {
+      font-family: var(--font);
+      color: var(--text);
+      background: radial-gradient(760px 340px at 50% -60px, var(--glow), rgba(255, 255, 255, 0) 70%), var(--bg);
+    }
+
+    .lienzo {
+      width: 1280px;
+      height: 640px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 90px;
+    }
+
+    /* --- Marca (igual que .brand de styles.css) --- */
+    .marca { display: flex; align-items: center; gap: 14px; }
+    .marca-cuadrado {
+      display: grid;
+      place-items: center;
+      width: 58px;
+      height: 58px;
+      color: #ffffff;
+      background: var(--brand);
+      border-radius: 17px;
+      box-shadow: 0 10px 24px rgba(77, 107, 254, 0.32);
+    }
+    .marca-cuadrado svg { width: 34px; height: 34px; }
+    .marca-nombre { font-size: 38px; font-weight: 700; letter-spacing: -0.02em; }
+
+    /* --- Titular y entradilla (como .hero h1 y .hero-text) --- */
+    h1 {
+      margin: 28px 0 0;
+      font-size: 70px;
+      line-height: 1.1;
+      font-weight: 750;
+      letter-spacing: -0.035em;
+      text-align: center;
+    }
+    .entradilla {
+      max-width: 900px;
+      margin: 20px 0 0;
+      font-size: 27px;
+      line-height: 1.45;
+      color: var(--text-soft);
+      text-align: center;
+    }
+    /* --- Buscador (.composer). La flecha va en azul (estado "con texto"): en la
+           app está apagada mientras el campo está vacío, pero en una tarjeta
+           que invita a pulsar queda mejor encendida. --- */
+    .buscador {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      width: 900px;
+      height: 86px;
+      margin-top: 40px;
+      padding: 0 13px 0 28px;
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      border-radius: 26px;
+      box-shadow: 0 20px 48px rgba(15, 16, 20, 0.14), 0 1px 2px rgba(15, 16, 20, 0.04);
+    }
+    .buscador .lupa { flex: none; width: 26px; height: 26px; color: var(--text-muted); }
+    .buscador .hueco { flex: 1 1 auto; }
+    .buscador .flecha {
+      display: grid;
+      place-items: center;
+      width: 60px;
+      height: 60px;
+      color: #ffffff;
+      background: var(--brand);
+      border-radius: 999px;
+    }
+    .buscador .flecha svg { width: 27px; height: 27px; }
+
+    /* --- Chips de ejemplo (.chip): los cinco que ofrece la app --- */
+    .chips {
+      display: flex;
+      gap: 12px;
+      margin: 24px 0 0;
+      padding: 0;
+      list-style: none;
+      font-size: 22px;
+      color: var(--text-soft);
+    }
+    .chips li {
+      padding: 9px 21px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+    }
+
+    /* --- Línea de cierre (el pie que la web no lleva: aquí sí interesa) --- */
+    .cierre {
+      margin-top: 34px;
+      font-size: 21px;
+      color: var(--text-muted);
+    }
+    .cierre strong { color: var(--text-soft); font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <div class="lienzo">
+
+    <div class="marca">
+      <span class="marca-cuadrado">
+        <!-- La misma cápsula que la barra de las páginas (lienzo 24×24, dibujo
+             centrado en (12,12)) -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5 5 12a4.95 4.95 0 0 0 7 7l7-7a4.95 4.95 0 0 0-7-7Z"/>
+          <path d="m8.5 8.5 7 7"/>
+        </svg>
+      </span>
+      <span class="marca-nombre">ProspectoYa</span>
+    </div>
+
+    <h1>El prospecto, pero legible.</h1>
+
+    <p class="entradilla">Busca por nombre o principio activo y encuentra lo importante en segundos.</p>
+
+    <div class="buscador">
+      <svg class="lupa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"/>
+        <path d="m20 20-3.6-3.6"/>
+      </svg>
+      <!-- Sin texto dentro, igual que la app (no hay placeholder a propósito) -->
+      <span class="hueco"></span>
+      <span class="flecha">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 19V5"/>
+          <path d="m5 12 7-7 7 7"/>
+        </svg>
+      </span>
+    </div>
+
+    <ul class="chips">
+      <li>metformina</li>
+      <li>paracetamol</li>
+      <li>trajenta</li>
+      <li>crestor</li>
+      <li>662025</li>
+    </ul>
+
+    <p class="cierre">prospectoya.vercel.app · <strong>Datos oficiales de la AEMPS (CIMA)</strong> · Sin registro</p>
+
+  </div>
+
+</body>
+</html>
