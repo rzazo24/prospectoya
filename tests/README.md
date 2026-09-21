@@ -7,10 +7,10 @@ navegador sólo carga los ficheros de la raíz (`api.js`, `app.js`, `tema.js`,
 ## Requisitos
 
 - **Node** (probado con v24; sin `npm install` no hay nada instalado).
-- **Chrome o Chromium** para las seis suites que usan navegador real
-  (`test-movil.js`, `test-arriba.js`, `test-paginas.js`, `test-pwa.js`,
-  `test-iconos.js` y `test-solape.js`). Si no está en el `PATH`, se le puede
-  indicar la ruta: `CHROME=/ruta/a/chrome npm test`.
+- **Chrome o Chromium** para las siete suites que usan navegador real
+  (`test-movil.js`, `test-arriba.js`, `test-paginas.js`, `test-resoluciones.js`,
+  `test-pwa.js`, `test-iconos.js` y `test-solape.js`). Si no está en el `PATH`, se
+  le puede indicar la ruta: `CHROME=/ruta/a/chrome npm test`.
 - **Red** para `test-api-real.js` (consulta la API de CIMA de verdad).
 
 ## Instalación
@@ -41,6 +41,7 @@ También se pueden lanzar directamente, que es útil al depurar:
 | `test-pwa.js` | Que la web se pueda **instalar como app** y funcione **sin conexión**: el manifest (JSON válido, `standalone`, colores que coinciden con `styles.css` y los iconos de 192 y 512 px), los iconos de verdad (los `maskable` opacos y con la marca dentro del 80% central que recortan los lanzadores), `sw.js` (cáscara completa, nada de la API de CIMA), el aviso de **versión nueva** con el `pwa.js` real en jsdom (avisa si la versión cambia, y **no** avisa si sólo cambia el control), y en Chrome real: registro, `clients.claim`, precache de la cáscara y una pasada **con el servidor apagado** en la que la página se sigue abriendo. | Node + jsdom + Chrome/Chromium |
 | `test-arriba.js` | El **botón de "volver arriba"** en las dos páginas: arranca oculto, aparece al bajar, al pulsarlo se le pide a la ventana subir al principio (`window.scrollTo` con `top: 0`, con y sin `prefers-reduced-motion`), el foco no se pierde, la URL no cambia y no se solapa con el aviso de versión. | Chrome/Chromium |
 | `test-movil.js` | El buscador en un viewport de móvil (390×844): el campo mide 16px o más —por debajo, los móviles amplían la página al enfocarlo y molesta al escribir—, el viewport no prohíbe el zoom, el compositor no amplía al doble toque y la página no desborda a lo ancho. | Chrome/Chromium |
+| `test-resoluciones.js` | La adaptación a las resoluciones de escritorio (900, 1180, 1600 y 2560px): que no desborde, que el contenedor aproveche el ancho en pantallas grandes y vaya centrado, que los resultados se repartan en varias columnas, que con un medicamento abierto la lista y el documento vayan **lado a lado** (maestro-detalle) sin estirar el renglón del prospecto, y que nada tape el desplegable del buscador. Inyecta resultados y detalle falsos: mide el CSS, no la API. | Chrome/Chromium |
 | `test-iconos.js` | Los iconos declarados en `index.html` se cargan de verdad y los PNG tienen su tamaño exacto (`favicon-32.png` 32×32, `apple-touch-icon.png` 180×180). | Chrome/Chromium |
 | `test-solape.js` | Regresión del `z-index` del autocompletado: con `styles.css` ningún punto del desplegable queda tapado por los resultados y la barra superior sigue ganando al hacer scroll; y con el mismo CSS **sin el arreglo** debe detectarse el solape (si no lo detecta, el test avisa de que ya no sirve). | Chrome/Chromium |
 | `test-api-real.js` | `api.js` contra la API real de CIMA: `?cn=` exacto, CN inexistente, nº de registro largo (tipo EMA), varios envases por `nregistro` y que `/medicamentos` sigue sin devolver `cn`. | Red |

@@ -137,6 +137,35 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
   exige **URL absoluta**, así que apunta a `https://prospectoya.vercel.app/…`: si
   el dominio cambia, hay que actualizarlo ahí.
 
+### Resoluciones de pantalla (`styles.css`)
+
+La web se ve igual de bien en un móvil de 320px que en un monitor de 2560: no hay
+scroll horizontal a ningún ancho y sólo hay **dos grupos de reglas** (lo demás
+sale de `clamp()`, de `auto-fit` y de los tokens).
+
+- **Móvil (≤640px)**: una sola columna, el buscador a lo ancho y las pestañas del
+  documento repartidas (`@media (max-width: 640px)`).
+- **Escritorio normal (641–1179px)**: la columna de siempre (`--medida` = 780px).
+- **Pantallas grandes (≥1180px)**: `--medida` crece (1060px; 1260px a partir de
+  1500px; 1400px a partir de 1900px), los resultados pasan a una rejilla de varias
+  columnas y, **en cuanto hay un medicamento abierto, la lista se queda a la
+  izquierda y el documento a la derecha** (maestro-detalle). Eso último se hace
+  sólo con CSS, con `:has()` sobre `#detail-section:not([hidden])`, así que el
+  `app.js` no sabe nada del ancho de la pantalla. El renglón del prospecto se
+  queda en `--medida-texto` (44rem, los mismos que ya se leían en la columna de
+  780px): ensanchar el párrafo no ayuda a leer, así que lo que crece son las
+  columnas, no el texto.
+
+Medido en Chrome (lo comprueba `test-resoluciones.js`, que también sirve de
+resumen de lo que se espera de cada ancho):
+
+| Ancho de ventana | Contenedor | Resultados | Con el detalle abierto |
+|---|---|---|---|
+| 900px | 780px | una columna | apilados (la lista arriba) |
+| 1180px | 1060px | 3 columnas | lista 380px + documento 608px |
+| 1600px | 1260px | 3 columnas | lista 460px + documento 728px |
+| 2560px | 1400px | 4 columnas | lista 520px + documento 808px |
+
 ### Botón de "volver arriba" (`arriba.js`)
 
 Abajo a la derecha de las dos páginas hay un botón redondo que devuelve al
@@ -354,7 +383,7 @@ Chrome/Chromium (Node las demás no necesitan nada instalado):
 ```bash
 cd tests
 npm install          # jsdom (única dependencia, sólo de desarrollo)
-npm test             # 237 comprobaciones: estructura, buscador, móvil, botón de subir, páginas, PWA, iconos y z-index
+npm test             # 281 comprobaciones: estructura, buscador, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
 npm run test:api-real   # contra la API real de CIMA (necesita red)
 ```
 
@@ -364,6 +393,8 @@ Resumen: `test-html.js` (estructura de las dos páginas, metaetiquetas y avisos)
 `test-arriba.js` (el botón de "volver arriba" en las dos páginas),
 `test-paginas.js` (las dos páginas en Chrome real, servidas por HTTP, y que la
 cápsula del logo quede centrada en su cuadrado),
+`test-resoluciones.js` (900, 1180, 1600 y 2560px: que no desborde, que el
+contenedor aproveche el ancho y que la lista y el documento vayan lado a lado),
 `test-pwa.js` (app instalable: manifest, iconos, service worker, sin conexión y
 aviso de versión nueva), `test-iconos.js` (los favicons cargan y miden lo que
 deben), `test-solape.js` (regresión del z-index del desplegable) y

@@ -17,6 +17,14 @@ y `Eliminado` (solo los que apliquen).
 
 ### Cambiado
 
+- **La web se adapta a las pantallas grandes**: hasta 1179px se ve como siempre
+  (columna de 780px), y a partir de ahí el contenedor se ensancha (1060px; 1260px
+  desde 1500px; 1400px desde 1900px), los resultados pasan a una rejilla de varias
+  columnas y, **en cuanto hay un medicamento abierto, la lista se queda a la
+  izquierda y el documento a la derecha** (maestro-detalle hecho sólo con CSS, con
+  `:has()`). El renglón del prospecto se queda en 44rem —los mismos que ya se
+  leían—: lo que crece son las columnas, no el texto. Lo mide la suite nueva
+  `test-resoluciones.js` a 900, 1180, 1600 y 2560px.
 - **Titular y subtítulo del buscador**: ahora son *«El prospecto, pero legible.»*
   y *«Busca por nombre o principio activo y encuentra lo importante en segundos.»*
   (antes «Lee lo importante de cualquier medicamento sin pelearte con el prospecto.»
@@ -39,8 +47,10 @@ y `Eliminado` (solo los que apliquen).
   `* { box-sizing: border-box }` de `styles.css` y 21px de aire de más arriba) y
   `test-paginas.js` lo mide con Chrome en las dos direcciones: el lienzo a
   1280×640, los seis bloques a ±0,5 px del centro de la imagen y el aire de
-  arriba y abajo equilibrado.
-- **La cáscara de la PWA sube a `v8`** en `sw.js` (por los cambios de las páginas,
+  arriba y abajo equilibrado. El buscador de la tarjeta lleva el mismo aire a los
+  dos lados (20px): con el de la web (28px a la izquierda y 13 a la derecha) la
+  tinta de la tarjeta quedaba 8,5px a la derecha aunque la caja fuera centrada.
+- **La cáscara de la PWA sube a `v9`** en `sw.js` (por los cambios de las páginas,
   los textos y los estilos): quien tenga la web abierta verá el aviso de "versión
   nueva" y el caché anterior se borra al activarse.
 

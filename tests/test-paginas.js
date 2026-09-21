@@ -152,6 +152,13 @@ const DIAG_TARJETA = `
       }
       log("aire_arriba=" + caja(".marca").y.toFixed(1));
       log("aire_abajo=" + (lienzo.y + lienzo.height - (caja(".cierre").y + caja(".cierre").height)).toFixed(1));
+      // El buscador tiene que llevar el mismo aire a los dos lados (la tarjeta va
+      // vacía: con el padding de la web, la tinta se iba 8,5px a la derecha)
+      const buscador = caja(".buscador");
+      const lupa = caja(".buscador .lupa");
+      const boton = caja(".buscador .flecha");
+      log("aire_lupa=" + (lupa.x - buscador.x).toFixed(1));
+      log("aire_boton=" + (buscador.x + buscador.width - (boton.x + boton.width)).toFixed(1));
       log("listo=si");
     });
   </script>
@@ -227,6 +234,11 @@ const DIAG_TARJETA = `
       "el aire de arriba y el de abajo están equilibrados (±2 px)",
       Math.abs(Number(tarjeta.aire_arriba) - Number(tarjeta.aire_abajo)) <= 2,
       `${tarjeta.aire_arriba} / ${tarjeta.aire_abajo}`
+    );
+    comprobar(
+      "el buscador de la tarjeta lleva el mismo aire a los dos lados (±0,5 px)",
+      Math.abs(Number(tarjeta.aire_lupa) - Number(tarjeta.aire_boton)) <= 0.5,
+      `lupa:${tarjeta.aire_lupa} botón:${tarjeta.aire_boton}`
     );
   } finally {
     cerrar();

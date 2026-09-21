@@ -1036,6 +1036,62 @@ body:has(.aviso-version:not([hidden])) .btn-subir { bottom: 5rem; }
   border-radius: var(--radius-pill);
 }
 
+/* --- Pantallas grandes: se aprovecha el ancho ----------------------------- */
+/* Hasta 1179px la columna de --medida (780px) va sobrada. A partir de ahí se
+   ensancha y, en cuanto hay un medicamento abierto, la lista de resultados pasa
+   a ser una columna lateral y el documento ocupa el resto: se lee el prospecto
+   sin perder de vista los resultados, y la pantalla ancha se usa de verdad.
+   El texto largo del prospecto se queda en su medida cómoda (--medida-texto,
+   los mismos 44rem que ya se leían a 780px): ensanchar el párrafo no ayuda a
+   leer, así que lo que crece son las columnas, no el renglón. */
+@media (min-width: 1180px) {
+  :root {
+    --medida: 1060px;
+    --medida-texto: 44rem;
+  }
+
+  /* Los resultados, en varias columnas mientras ocupan todo el ancho */
+  .results-list { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+
+  /* Maestro-detalle (sólo cuando el detalle está a la vista) */
+  .app:has(#detail-section:not([hidden])) {
+    display: grid;
+    grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+    column-gap: 2rem;
+    align-items: start;
+  }
+  .app:has(#detail-section:not([hidden])) > .hero,
+  .app:has(#detail-section:not([hidden])) > #search-section,
+  .app:has(#detail-section:not([hidden])) > #filters-section {
+    grid-column: 1 / -1;
+  }
+  .app:has(#detail-section:not([hidden])) #results-section { grid-column: 1; }
+  .app:has(#detail-section:not([hidden])) #detail-section {
+    grid-column: 2;
+    /* Alineado con la lista de la otra columna */
+    padding-top: 1.75rem;
+  }
+  /* En la columna lateral la lista va a una sola columna */
+  .app:has(#detail-section:not([hidden])) .results-list { grid-template-columns: 1fr; }
+
+  /* El renglón del prospecto no se estira con la pantalla */
+  .accordion-body p,
+  .accordion-body li { max-width: var(--medida-texto); }
+}
+
+/* Y si la pantalla es enorme, más ancho (la lista lateral también crece, para
+   que el documento no se lleve toda la diferencia) */
+@media (min-width: 1500px) {
+  :root { --medida: 1260px; }
+  .app:has(#detail-section:not([hidden])) { grid-template-columns: minmax(320px, 460px) minmax(0, 1fr); }
+  .ayuda { max-width: 52rem; }
+}
+
+@media (min-width: 1900px) {
+  :root { --medida: 1400px; }
+  .app:has(#detail-section:not([hidden])) { grid-template-columns: minmax(340px, 520px) minmax(0, 1fr); }
+}
+
 /* --- Móvil --- */
 @media (max-width: 640px) {
   .app { padding: 0.5rem 1rem 3rem; }

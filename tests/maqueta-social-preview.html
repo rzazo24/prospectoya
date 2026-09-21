@@ -102,7 +102,11 @@
     }
     /* --- Buscador (.composer). La flecha va en azul (estado "con texto"): en la
            app está apagada mientras el campo está vacío, pero en una tarjeta
-           que invita a pulsar queda mejor encendida. --- */
+           que invita a pulsar queda mejor encendida.
+           El aire es el MISMO a los dos lados (20px): en la web la lupa lleva
+           más hueco a la izquierda porque el campo puede llevar texto, pero aquí
+           el campo va vacío y, con 28 y 13, la tinta del buscador quedaba 8,5px a
+           la derecha del centro de la imagen. --- */
     .buscador {
       display: flex;
       align-items: center;
@@ -110,7 +114,7 @@
       width: 900px;
       height: 86px;
       margin-top: 40px;
-      padding: 0 13px 0 28px;
+      padding: 0 20px;
       background: var(--surface);
       border: 1px solid var(--border-strong);
       border-radius: 26px;
