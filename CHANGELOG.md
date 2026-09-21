@@ -23,6 +23,17 @@ y `Eliminado` (solo los que apliquen).
   `aria-expanded="true"` seguía puesto en el input aunque ya no tuviera el
   foco. Ahora un `focusout` en `#search-input` lo cierra salvo que el foco
   vaya a parar al propio input. Lo cubre `test-busqueda.js`.
+- **El halo de marca ya no queda huérfano en el móvil**: `body::before` pinta
+  un degradado radial fijo al viewport (`at 50% -8%`), pensado como un foco
+  detrás del badge y el titular — en el escritorio funciona porque el hero
+  está pegado arriba, pero desde que el bloque de arriba se centra en el móvil
+  (`v0.5.0`) el halo se quedaba flotando solo en el hueco vacío de encima, sin
+  tocar ni el badge ni el título (visible comparando capturas con Chrome
+  headless a 390×844). Ahora, solo en el corte de móvil, el halo fijo se apaga
+  y el hero lleva el suyo propio (`.hero::before`, con bleed hacia arriba): al
+  ser parte de la caja del hero, viaja con él se centre donde se centre, sin
+  tener que adivinar cuánto hueco sobra según el alto del teléfono o si los
+  chips ocupan una o dos filas.
 
 ### Cambiado
 

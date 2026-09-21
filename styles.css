@@ -1184,8 +1184,32 @@ body:has(.aviso-version:not([hidden])) .btn-subir { bottom: 5rem; }
   .app:has(.results-section):not(:has(.results-list li)):not(:has(.results-status:not([hidden]))) {
     padding-bottom: calc(0.5rem + 1.75rem);
   }
+  /* El halo de marca (body::before) va fijo al viewport: en el escritorio
+     queda bien porque el hero está pegado arriba, pero aquí el bloque de
+     arriba se centra con margin-top:auto y el halo se queda huérfano en el
+     hueco vacío de encima, sin tocar ni el badge ni el titular (se ve al
+     comparar una captura con y sin este cambio). Se apaga el halo fijo y se
+     pone uno propio en el hero: al ser parte de su caja, viaja con él se
+     centre donde se centre, sin tener que adivinar cuánto hueco sobra (eso
+     depende del alto del móvil y de si los chips ocupan una fila o dos). Se
+     deja bleed hacia arriba para suavizar también el aire que queda encima
+     del badge, aunque el hueco grande de abajo se quede vacío: llenarlo del
+     todo significaría tocar el reparto por partes iguales de los márgenes
+     automáticos, que es la geometría ya fijada del centrado. */
+  body::before { content: none; }
+  .hero::before {
+    content: "";
+    position: absolute;
+    top: -3rem;
+    left: 0;
+    right: 0;
+    height: 14rem;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(220px 150px at 50% 35%, var(--glow), transparent 72%);
+  }
   .topbar { padding: 0.7rem 1rem; }
-  .hero { padding: 1.75rem 0 1.25rem; }
+  .hero { position: relative; padding: 1.75rem 0 1.25rem; }
   .hero h1 { font-size: 1.65rem; }
   /* El buscador, más bajo: el relleno del campo y el del propio compositor
      bajan, así que el alto lo marca el botón (38px) y el rectángulo se queda
