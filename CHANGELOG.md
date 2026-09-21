@@ -13,7 +13,20 @@ parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
 Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
 y `Eliminado` (solo los que apliquen).
 
-## Sin publicar
+## [0.6.0] - 2026-09-22
+
+Sexta entrega: se corrigen varios detalles de accesibilidad y de ajuste fino
+en el móvil (el desplegable de sugerencias que no cerraba con `Tab`, el halo
+de marca que quedaba huérfano encima del buscador, el hueco de arriba
+desproporcionado, la ✕ del detalle que se encendía sola al abrirse), se
+revisa el resumen rápido (fuera la tarjeta de Alcohol, la menos fiable de las
+cinco) y se aprovechan por fin varios campos que la API de CIMA ya traía
+gratis en cada búsqueda: dos badges nuevos (problema de suministro,
+seguimiento adicional) y un enlace al documento oficial, sin ninguna petición
+extra. De paso se corrigen dos asunciones equivocadas sobre la API
+(`/psuministro` y `/vmpp` no filtran como parecía) y se confirma que `pagina`
+sí pagina de verdad. Todo sigue sin backend, sin build, sin frameworks y sin
+dependencias en el sitio.
 
 ### Añadido
 
@@ -156,6 +169,16 @@ y `Eliminado` (solo los que apliquen).
   entre las alertas clave. Ningún test dependía del campo, así que no hace
   falta tocar ninguna suite. Sube `VERSION` en `sw.js` (`v14` → `v15`) por
   tocar `app.js`, `styles.css` y `ayuda.html` (cáscara).
+
+**Commits de esta versión:**
+[`0dcaba0`](https://github.com/rzazo24/prospectoya/commit/0dcaba0) ·
+[`dd53902`](https://github.com/rzazo24/prospectoya/commit/dd53902) ·
+[`de6a2e1`](https://github.com/rzazo24/prospectoya/commit/de6a2e1) ·
+[`fe712c5`](https://github.com/rzazo24/prospectoya/commit/fe712c5) ·
+[`7cbfccc`](https://github.com/rzazo24/prospectoya/commit/7cbfccc) ·
+[`0c2472a`](https://github.com/rzazo24/prospectoya/commit/0c2472a) ·
+[`2baed5f`](https://github.com/rzazo24/prospectoya/commit/2baed5f) ·
+[`e140f5b`](https://github.com/rzazo24/prospectoya/commit/e140f5b)
 
 ## [0.5.0] - 2026-09-21
 
@@ -487,6 +510,7 @@ vanilla contra la API pública de CIMA (AEMPS).
 [`3396182`](https://github.com/rzazo24/prospectoya/commit/3396182) ·
 [`7495276`](https://github.com/rzazo24/prospectoya/commit/7495276)
 
+[0.6.0]: https://github.com/rzazo24/prospectoya/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/rzazo24/prospectoya/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/rzazo24/prospectoya/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/rzazo24/prospectoya/compare/v0.2.0...v0.3.0
