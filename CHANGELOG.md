@@ -13,7 +13,18 @@ parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
 Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
 y `Eliminado` (solo los que apliquen).
 
-## Sin publicar
+## [0.7.0] - 2026-09-22
+
+Séptima entrega: se corrige un fallo real en el resumen rápido (no un simple
+pulido) encontrado con un barrido de calidad contra la API real sobre 50
+medicamentos variados — el mismo método que ya había sacado la tarjeta de
+Alcohol en la versión anterior. Cuando el prospecto anida un subtítulo
+general y uno más concreto justo después (por ejemplo "Embarazo y lactancia"
+→ "Embarazo:"), la extracción se quedaba con una frase de relleno y perdía
+el contenido de verdad. De paso se arregla que 9 de esos 50 medicamentos
+mostraban contraindicaciones en minúscula. La extracción del resumen rápido
+estrena, además, su primera suite de tests dedicada. Todo sigue sin backend,
+sin build, sin frameworks y sin dependencias en el sitio.
 
 ### Corregido
 
@@ -43,6 +54,9 @@ y `Eliminado` (solo los que apliquen).
   (verificado a mano). Hasta ahora la extracción del resumen rápido no tenía
   ningún test dedicado. `npm test` pasa a 10 suites y 347 comprobaciones.
   Toca `app.js` (cáscara), así que `VERSION` sube en `sw.js` (`v16` → `v17`).
+
+**Commits de esta versión:**
+[`8b87372`](https://github.com/rzazo24/prospectoya/commit/8b87372)
 
 ## [0.6.0] - 2026-09-22
 
@@ -541,6 +555,7 @@ vanilla contra la API pública de CIMA (AEMPS).
 [`3396182`](https://github.com/rzazo24/prospectoya/commit/3396182) ·
 [`7495276`](https://github.com/rzazo24/prospectoya/commit/7495276)
 
+[0.7.0]: https://github.com/rzazo24/prospectoya/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/rzazo24/prospectoya/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/rzazo24/prospectoya/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/rzazo24/prospectoya/compare/v0.3.0...v0.4.0
