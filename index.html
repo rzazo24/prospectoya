@@ -167,11 +167,14 @@
         <button type="button" class="chip js-ejemplo" data-ejemplo="trajenta">trajenta</button>
         <button type="button" class="chip js-ejemplo" data-ejemplo="crestor">crestor</button>
         <!-- Ejemplo de búsqueda por código nacional (6 dígitos): el chip lleva el
-             número a secas (la ayuda explica que es un CN).
+             prefijo «CN» delante del número para no confundirse con los demás
+             chips (data-ejemplo se queda solo con los dígitos: es lo que se
+             busca, y un «CN 662025» ahí no encajaría con el código nacional
+             de 6 dígitos que espera consultarSegunTermino()).
              VERIFICADO CONTRA LA API REAL (20/09/2026): los cinco ejemplos
              devuelven resultados (metformina 181, paracetamol 195, trajenta 1,
              crestor 18 y el CN 662025, 1 envase). -->
-        <button type="button" class="chip js-ejemplo" data-ejemplo="662025">662025</button>
+        <button type="button" class="chip js-ejemplo" data-ejemplo="662025">CN 662025</button>
       </div>
     </section>
 

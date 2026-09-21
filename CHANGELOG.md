@@ -37,6 +37,18 @@ y `Eliminado` (solo los que apliquen).
 
 ### Cambiado
 
+- **El chip del código nacional lleva ahora el prefijo «CN» delante del
+  número** (`CN 662025` en vez de `662025` a secas): visto junto a los demás
+  chips (nombres de medicamento), un número suelto se leía como un resto de
+  placeholder más que como un ejemplo de búsqueda. `data-ejemplo` se queda
+  igual (solo los dígitos: es lo que de verdad se busca), así que el
+  comportamiento no cambia, solo la etiqueta. Revisa la decisión de `v0.5.0`
+  ("el chip... enseña sólo el número"). Se ha rehecho `social-preview.png`
+  (usa el mismo chip) y `captura-inicio.png`. `test-html.js` se ajusta: compara
+  el texto visible de los chips (no `data-ejemplo`, que ahora difiere a
+  propósito para este chip) contra la maqueta del social preview. Junto con el
+  arreglo del halo de arriba, `index.html` y `styles.css` (los dos, cáscara)
+  cambian en esta tanda, así que `VERSION` sube en `sw.js` (`v11` → `v12`).
 - **Corrección sobre la paginación real de CIMA** (README): se daba por hecho
   que `/medicamentos` y `/presentaciones` ignoraban `pagina` y `tamanioPagina`.
   Verificado hoy contra la API real: **`pagina` sí pagina de verdad**

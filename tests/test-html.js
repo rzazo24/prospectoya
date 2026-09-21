@@ -102,9 +102,14 @@ console.log("--- index.html (campo de búsqueda y ejemplos) ---");
     valores.join(",")
   );
   comprobar(
-    "el ejemplo del código nacional es el número a secas (sin «CN»)",
-    (ejemplos[4] ? ejemplos[4].textContent.trim() : "") === "662025",
+    "el ejemplo del código nacional lleva el prefijo «CN» delante del número",
+    (ejemplos[4] ? ejemplos[4].textContent.trim() : "") === "CN 662025",
     ejemplos[4] ? ejemplos[4].textContent.trim() : "(no está)"
+  );
+  comprobar(
+    "pero data-ejemplo se queda solo con los dígitos (lo que de verdad se busca)",
+    ejemplos[4] && ejemplos[4].dataset.ejemplo === "662025",
+    ejemplos[4] ? ejemplos[4].dataset.ejemplo : "(no está)"
   );
   comprobar("la ayuda sigue accesible desde el buscador (barra de arriba)", Boolean(doc.querySelector('.topbar a[href="ayuda.html"]')));
   // El buscador va sin pie a propósito (interfaz limpia): el aviso sanitario está
@@ -143,7 +148,10 @@ console.log("--- social preview (tarjeta 1280x640) ---");
   const maqueta = new JSDOM(leer("tests/maqueta-social-preview.html")).window.document;
   const png = tamanoPng(path.join(RAIZ, "social-preview.png"));
   const texto = (doc, selector) => ((doc.querySelector(selector) || {}).textContent || "").replace(/\s+/g, " ").trim();
-  const chipsPagina = [...pagina.querySelectorAll("#search-examples .js-ejemplo")].map((b) => b.dataset.ejemplo).join(",");
+  // El texto que se VE (no data-ejemplo, que es el valor que se busca: para el
+  // chip del código nacional ya no coinciden a propósito, ver «lleva el
+  // prefijo "CN"» más arriba).
+  const chipsPagina = [...pagina.querySelectorAll("#search-examples .js-ejemplo")].map((b) => b.textContent.trim()).join(",");
   const chipsMaqueta = [...maqueta.querySelectorAll(".chips li")].map((li) => li.textContent.trim()).join(",");
 
   comprobar(
