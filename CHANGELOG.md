@@ -13,7 +13,12 @@ parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
 Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
 y `Eliminado` (solo los que apliquen).
 
-## Sin publicar
+## [0.9.0] - 2026-09-22
+
+Undécima entrega: la web estrena analítica (Vercel Web Analytics), la única
+excepción a una regla "no negociable" del proyecto hasta ahora, y solo a
+petición expresa del usuario. Todo sigue sin backend, sin build, sin
+frameworks y sin dependencias en el sitio.
 
 ### Añadido
 
@@ -35,6 +40,9 @@ y `Eliminado` (solo los que apliquen).
   `test-pwa.js`, que `sw.js` no lo intercepta. Toca `index.html`,
   `ayuda.html` y `sw.js` (cáscara), así que `VERSION` sube en `sw.js`
   (`v22` → `v23`).
+
+**Commits de esta versión:**
+[`3f14fc4`](https://github.com/rzazo24/prospectoya/commit/3f14fc4)
 
 ## [0.8.2] - 2026-09-22
 
@@ -753,6 +761,7 @@ vanilla contra la API pública de CIMA (AEMPS).
 [`3396182`](https://github.com/rzazo24/prospectoya/commit/3396182) ·
 [`7495276`](https://github.com/rzazo24/prospectoya/commit/7495276)
 
+[0.9.0]: https://github.com/rzazo24/prospectoya/compare/v0.8.2...v0.9.0
 [0.8.2]: https://github.com/rzazo24/prospectoya/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/rzazo24/prospectoya/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/rzazo24/prospectoya/compare/v0.7.0...v0.8.0
