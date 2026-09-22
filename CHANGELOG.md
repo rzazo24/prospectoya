@@ -13,7 +13,14 @@ parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
 Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
 y `Eliminado` (solo los que apliquen).
 
-## Sin publicar
+## [0.8.1] - 2026-09-22
+
+Novena entrega, de un solo arreglo pero real: un clic de ratón en el
+desplegable de autocompletado no seleccionaba nada, reportado por un
+usuario. El caso quedaba fuera del alcance de jsdom (no reproduce el `blur`
+automático de un navegador real al hacer clic en un elemento no enfocable),
+así que se reprodujo con un clic de verdad vía CDP. Todo sigue sin backend,
+sin build, sin frameworks y sin dependencias en el sitio.
 
 ### Corregido
 
@@ -40,6 +47,9 @@ y `Eliminado` (solo los que apliquen).
   cancelada (el mecanismo del arreglo, ya que el efecto completo no se
   puede probar en jsdom). Toca `app.js` (cáscara), así que `VERSION` sube
   en `sw.js` (`v20` → `v21`).
+
+**Commits de esta versión:**
+[`c0eb89e`](https://github.com/rzazo24/prospectoya/commit/c0eb89e)
 
 ## [0.8.0] - 2026-09-22
 
@@ -680,6 +690,7 @@ vanilla contra la API pública de CIMA (AEMPS).
 [`3396182`](https://github.com/rzazo24/prospectoya/commit/3396182) ·
 [`7495276`](https://github.com/rzazo24/prospectoya/commit/7495276)
 
+[0.8.1]: https://github.com/rzazo24/prospectoya/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/rzazo24/prospectoya/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/rzazo24/prospectoya/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/rzazo24/prospectoya/compare/v0.5.0...v0.6.0
