@@ -54,7 +54,23 @@ const PRESENTACIONES = [
   { nregistro: "77758", cn: "662026", nombre: "PARACETAMOL CINFA 1 g COMPRIMIDOS EFG , 40 comprimidos", labtitular: "CINFA", receta: false, generico: true, comerc: true },
   { nregistro: "70001", cn: "700123", nombre: "PARACETAMOL KERN PHARMA 500 mg , 20 comprimidos", labtitular: "KERN PHARMA", receta: false, generico: true, comerc: true, dcp: { id: "V-PARA-500" } },
   { nregistro: "123456", cn: "999888", nombre: "MEDICAMENTO ANTIGUO 100 mg , 30 comprimidos", labtitular: "LAB", comerc: true },
+  { nregistro: "BE900001IP", cn: "768768", nombre: "CRESTOR IMPORTACION 10 mg , 28 comprimidos", labtitular: "GRUNENTHAL", comerc: true },
 ];
+
+// Medicamento de importación paralela (documentación reducida): comprobado
+// contra la API real con CN 768768 (Crestor 10 mg, nregistro BE250187IP).
+// docs[] solo trae el PDF sin segmentar (sin urlHtml, sin ficha técnica), y
+// /docSegmentado/secciones no devuelve [] para él, sino {error: "..."} (ver
+// el mock de más abajo y listarSecciones() en api.js).
+const IMPORTACION_PARALELA = {
+  nregistro: "BE900001IP",
+  nombre: "CRESTOR IMPORTACION 10 mg",
+  labtitular: "GRUNENTHAL",
+  comerc: true,
+  docs: [
+    { tipo: 2, url: "https://cima.aemps.es/cima/pdfs/p/BE900001IP/P_BE900001IP.pdf", secc: false },
+  ],
+};
 
 // Equivalentes simulados de /medicamentos?vmp=V-PARA-500: el propio 70001
 // (hay que filtrarlo) más otros dos con el mismo principio activo, dosis y forma.
@@ -137,7 +153,12 @@ const dom = new JSDOM(html, {
         if (comerc !== null) filas = filas.filter((m) => Boolean(m.comerc) === (comerc === "1"));
         data = { totalFilas: filas.length, pagina: 1, tamanioPagina: 200, resultados: filas };
       } else if (u.includes("/docSegmentado/secciones/")) {
-        data = [];
+        // La API real no devuelve [] para un documento sin segmentar, sino
+        // un objeto {error: "..."} con HTTP 200 (ver listarSecciones() en
+        // api.js): se simula igual para BE900001IP, la importación paralela.
+        data = params.get("nregistro") === "BE900001IP"
+          ? { error: "No existen secciones para el medicamento indicado" }
+          : [];
       } else if (u.includes("/docSegmentado/contenido/")) {
         data = [{ seccion: "1", titulo: "Sección", contenido: "<p>Texto</p>", orden: 1 }];
       }
@@ -334,7 +355,32 @@ const escribir = (valor) => {
   detalle.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
   comprobar("un clic en el fondo oscurecido la cierra", detalle.open === false);
 
+  // --- 4d. Documentación reducida (importación paralela): sin secciones,
+  // pero con enlace al PDF ------------------------------------------------
+  // listarSecciones() (api.js) tiene que normalizar el {error:...} a un
+  // array vacío: sin eso, renderAccordion() se queda igual (tiene su propio
+  // Array.isArray de sobra), pero cargarDocumentoParaResumen() sí rompería
+  // (llama a .filter() directamente sobre lo que devuelva la API).
+  const seccionesSinSegmentar = await window.listarSecciones(2, "BE900001IP");
+  comprobar(
+    "listarSecciones normaliza el {error:...} de la API a un array vacío",
+    Array.isArray(seccionesSinSegmentar) && seccionesSinSegmentar.length === 0,
+    JSON.stringify(seccionesSinSegmentar)
+  );
 
+  await window.selectMedicamento(IMPORTACION_PARALELA);
+  await esperar(100);
+  comprobar(
+    "sin secciones (la API responde con {error:...}) el acordeón no rompe y avisa",
+    document.getElementById("sections-accordion").textContent.includes("No hay secciones disponibles"),
+    document.getElementById("sections-accordion").textContent
+  );
+  comprobar(
+    "sin urlHtml, el enlace al documento oficial usa el PDF (url) en su lugar",
+    enlaceOficial.hidden === false && enlaceOficial.href === IMPORTACION_PARALELA.docs[0].url,
+    enlaceOficial.href
+  );
+  detalle.close();
 
   // --- 5. Escape y clic fuera -------------------------------------------
   escribir("ibupro");

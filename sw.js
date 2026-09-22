@@ -22,7 +22,7 @@
  * anteriores.
  */
 
-const VERSION = "v21";
+const VERSION = "v22";
 const CACHE = `prospectoya-${VERSION}`;
 
 /** La cáscara: todo lo que hace falta para abrir la web sin conexión. */

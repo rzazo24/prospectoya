@@ -243,6 +243,28 @@ const comprobar = (desc, cond, extra = "") => {
     `totalFilas=${combinado.totalFilas}`
   );
 
+  // Documentación reducida (importaciones paralelas, registros antiguos…):
+  // /docSegmentado/secciones no devuelve un array vacío para un documento sin
+  // segmentar, sino {error: "..."} con HTTP 200 igualmente. Comprobado con un
+  // Crestor 10 mg de importación paralela (CN 768768, nregistro BE250187IP,
+  // reportado por un usuario: al abrirlo no aparecía nada del prospecto).
+  // listarSecciones() lo normaliza a [] (ver api.js).
+  const seccionesSinSegmentar = await ctx.listarSecciones(2, "BE250187IP");
+  comprobar(
+    "listarSecciones normaliza a [] un documento sin segmentar (importación paralela)",
+    Array.isArray(seccionesSinSegmentar) && seccionesSinSegmentar.length === 0,
+    JSON.stringify(seccionesSinSegmentar)
+  );
+  const parallelImport = await ctx.buscarMedicamentos({ nregistro: "BE250187IP" });
+  comprobar(
+    "esos medicamentos traen el PDF en docs[] pero sin urlHtml ni ficha técnica",
+    parallelImport.resultados[0].docs.length === 1 &&
+      parallelImport.resultados[0].docs[0].tipo === 2 &&
+      parallelImport.resultados[0].docs[0].secc === false &&
+      !parallelImport.resultados[0].docs[0].urlHtml,
+    JSON.stringify(parallelImport.resultados[0].docs)
+  );
+
   console.log(fallos === 0 ? "\nAPI REAL OK" : `\n${fallos} fallo(s) contra la API real`);
   process.exitCode = fallos === 0 ? 0 : 1;
 })().catch((err) => {

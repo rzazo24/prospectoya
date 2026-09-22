@@ -179,6 +179,11 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
   del propio medicamento) del documento de la pestaña activa —Prospecto o
   Ficha técnica— y `actualizarEnlaceDocumentoOficial()` lo actualiza al
   cambiar de pestaña. Si esa pestaña no tiene documento, el enlace se oculta.
+  **Si no hay `urlHtml` pero sí `url`** (el PDF, sin versión HTML segmentada:
+  pasa con medicamentos de documentación reducida —importaciones paralelas,
+  registros antiguos…—, comprobado con un Crestor 10 mg, CN 768768) se enlaza
+  al PDF en su lugar, para no dejar al usuario sin ningún enlace al documento
+  oficial cuando sí existe uno.
 - Los tres se rellenan en `selectMedicamento()`, sin peticiones extra: los tres
   campos ya vienen en el objeto que se pasa (sugerencia o resultado).
   **`GET /psuministro`** existía como función (`comprobarProblemaSuministro()`)
@@ -346,7 +351,7 @@ sugiere el PDF de documentación** en varios puntos:
 | Punto | Realidad comprobada |
 |---|---|
 | CORS | `Access-Control-Allow-Origin: *` presente en todas las llamadas (sin proxy). |
-| `GET /docSegmentado/secciones/{tipoDoc}` | Array de `{ seccion, titulo, orden }`. La clave del id es **`seccion`** (string, p.ej. `"4.2"`) y el título viene en **`titulo`**. |
+| `GET /docSegmentado/secciones/{tipoDoc}` | Array de `{ seccion, titulo, orden }`. La clave del id es **`seccion`** (string, p.ej. `"4.2"`) y el título viene en **`titulo`**. **Si el documento no está segmentado no devuelve `[]`**, sino `{ error: "No existen secciones..." }` con HTTP 200 igualmente (comprobado con un Crestor 10 mg de importación paralela, CN 768768, nregistro `BE250187IP`): `listarSecciones()` lo normaliza a `[]`. |
 | `GET /docSegmentado/contenido/{tipoDoc}` | **No devuelve HTML plano**: devuelve un array JSON `[{ seccion, titulo, contenido, orden }]` con el HTML dentro de `contenido`. `api.js` ya lo parsea y une los fragmentos. |
 | Orden de las secciones | El array ya llega en el orden del documento. **No ordenar por `orden`**: en la ficha técnica ese campo no es monótono (las secciones 4, 4.1, 4.2… comparten valores bajos). |
 | `GET /medicamentos?nombre=X` | **`pagina` sí pagina de verdad** (`pagina=2` trae filas distintas de `pagina=1`); lo único que se ignora es `tamanioPagina` (siempre 200 filas por página, pidas lo que pidas). Y `totalFilas` **es el total real del catálogo, no un recorte a 200**: para "comprimidos" devuelve `totalFilas: 13995` con solo 200 `resultados`. El recorte de la lista visible (`MAX_RESULTADOS`) es cosa del cliente, no de la API. **No devuelve `cn`.** |
@@ -494,7 +499,7 @@ Chrome/Chromium (Node las demás no necesitan nada instalado):
 ```bash
 cd tests
 npm install          # jsdom (única dependencia, sólo de desarrollo)
-npm test             # 366 comprobaciones: estructura, buscador, resumen, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
+npm test             # 369 comprobaciones: estructura, buscador, resumen, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
 npm run test:api-real   # contra la API real de CIMA (necesita red)
 npm run test:barrido    # barrido de calidad del resumen sobre 155 medicamentos reales (necesita red, ~20s)
 ```

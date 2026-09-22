@@ -824,14 +824,22 @@ docTabs.forEach((tab) => {
  * Enlaza #detail-doc-oficial al PDF/HTML oficial (campo `docs[]`) del
  * documento de la pestaña activa (tipo 1 = ficha técnica, 2 = prospecto). Se
  * oculta si ese documento en concreto no está en `currentDocs`.
+ *
+ * Si no hay `urlHtml` (documentación reducida: importaciones paralelas,
+ * registros antiguos… — comprobado con Crestor 10 mg/CN 768768, nregistro
+ * BE250187IP: `docs` solo trae el PDF, sin `urlHtml` ni ficha técnica) se
+ * enlaza al PDF (`url`) en su lugar: sin este respaldo, esos medicamentos se
+ * quedaban sin ningún enlace al documento oficial, encima de un acordeón
+ * vacío (ver `listarSecciones()` en api.js).
  */
 function actualizarEnlaceDocumentoOficial() {
   const doc = currentDocs.find((d) => d.tipo === currentTipoDoc);
-  if (!doc || !doc.urlHtml) {
+  const enlace = doc && (doc.urlHtml || doc.url);
+  if (!enlace) {
     detailDocOficial.hidden = true;
     return;
   }
-  detailDocOficial.href = doc.urlHtml;
+  detailDocOficial.href = enlace;
   detailDocOficial.hidden = false;
 }
 

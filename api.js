@@ -77,13 +77,22 @@ async function listarPresentaciones(params) {
  *   lista de secciones (VERIFICADO contra la API real: la clave del id es
  *   `seccion` y el título viene en `titulo`; el array ya llega en el orden
  *   del documento, que NO coincide con `orden` en la ficha técnica)
+ *
+ * VERIFICADO CONTRA LA API REAL (24/09/2026, nregistro BE250187IP, un Crestor
+ * de importación paralela): cuando el documento no está segmentado, la API
+ * no devuelve un array vacío, sino `{ error: "No existen secciones..." }`
+ * con HTTP 200 igualmente. Pasa con medicamentos de documentación reducida
+ * (importaciones paralelas, registros antiguos…), que solo traen un PDF sin
+ * segmentar en `docs[]` (`secc: false`, sin `urlHtml`). Se normaliza a `[]`
+ * para que el resto del código no tenga que distinguir las dos formas.
  */
 async function listarSecciones(tipoDoc, nregistro) {
   const res = await fetch(
     `${CIMA_BASE_URL}/docSegmentado/secciones/${tipoDoc}?nregistro=${encodeURIComponent(nregistro)}`
   );
   if (!res.ok) throw new Error(`Error listando secciones: ${res.status}`);
-  return res.json();
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
 }
 
 /**

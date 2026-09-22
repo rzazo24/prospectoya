@@ -15,6 +15,28 @@ y `Eliminado` (solo los que apliquen).
 
 ## Sin publicar
 
+### Corregido
+
+- **Medicamentos con documentación reducida (importaciones paralelas,
+  registros antiguos…) se quedaban sin nada**: reportado por un usuario con
+  el CN 768768 (Crestor 10 mg de importación paralela, nregistro
+  `BE250187IP`; el mismo principio activo, dosis y forma tienen otra versión,
+  nregistro `70243`, con el prospecto completo). La causa: `docs[]` solo
+  trae el PDF sin segmentar (`secc: false`, sin `urlHtml`, sin ficha
+  técnica), y `/docSegmentado/secciones` no devuelve un array vacío para un
+  documento así, sino `{ error: "No existen secciones..." }` con HTTP 200 —
+  `listarSecciones()` ahora lo normaliza a `[]`. Además, sin `urlHtml` el
+  enlace "Ver en cima.aemps.es" se quedaba oculto aunque **sí** hubiera un
+  PDF real: `actualizarEnlaceDocumentoOficial()` ahora usa el PDF (`url`)
+  como respaldo, así que el usuario siempre tiene un enlace al documento
+  oficial cuando existe. El acordeón sigue avisando de que no hay secciones
+  (no se puede segmentar lo que la API no segmenta), pero ya no se queda sin
+  ningún enlace al documento real. `test-busqueda.js` fija las dos partes
+  (normalización y respaldo al PDF, comprobando que fallan sin el arreglo);
+  `test-api-real.js` fija la forma real de la respuesta con el CN 768768.
+  Toca `api.js` y `app.js` (cáscara), así que `VERSION` sube en `sw.js`
+  (`v21` → `v22`).
+
 ### Cambiado
 
 - **`captura-inicio.png` actualizada**: la captura del README se había
