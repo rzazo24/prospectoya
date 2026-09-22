@@ -218,9 +218,12 @@
         <li>El botón con forma de media luna de la barra superior cambia entre
           <strong>tema claro y oscuro</strong> y lo recuerda en tu navegador. Si no eliges
           nada, se usa el tema de tu sistema.</li>
-        <li><strong>Sin cuentas, sin cookies de seguimiento y sin analítica.</strong> Tu
-          búsqueda va del navegador a la API de la AEMPS; no pasa por ningún servidor
-          nuestro.</li>
+        <li><strong>Sin cuentas ni cookies de seguimiento.</strong> Tu búsqueda va del
+          navegador a la API de la AEMPS; no pasa por ningún servidor nuestro. La web usa
+          <strong>Vercel Web Analytics</strong> para saber cuántas visitas recibe: no usa
+          cookies ni guarda nada que te identifique (ni tu IP, ni un identificador que te
+          siga entre visitas), solo cifras agregadas de página, país aproximado y tipo de
+          dispositivo.</li>
         <li>Se puede usar <strong>solo con el teclado</strong>: aquí tienes los atajos.</li>
       </ul>
 
@@ -364,5 +367,11 @@
   <!-- Mismo pwa.js que en el buscador: aquí sólo hace falta para el aviso de
        "sin conexión" y para el service worker (la ayuda también se abre sola). -->
   <script src="pwa.js"></script>
+
+  <!-- Vercel Web Analytics: mismo script que index.html, ver el comentario de ahí. -->
+  <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

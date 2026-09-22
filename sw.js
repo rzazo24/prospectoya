@@ -22,7 +22,7 @@
  * anteriores.
  */
 
-const VERSION = "v22";
+const VERSION = "v23";
 const CACHE = `prospectoya-${VERSION}`;
 
 /** La cáscara: todo lo que hace falta para abrir la web sin conexión. */
@@ -115,8 +115,16 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(peticion.url);
 
   // La API de CIMA —y cualquier otro origen— va directa a la red: no se
-  // intercepta ni se guarda. Tampoco se tocan las suites de tests/.
-  if (url.origin !== self.location.origin || url.pathname.startsWith(`${RAIZ}tests/`)) return;
+  // intercepta ni se guarda. Tampoco se tocan las suites de tests/ ni las
+  // rutas de Vercel Web Analytics (/_vercel/…): aunque son del mismo origen,
+  // no son parte de la cáscara y su script lo sirve Vercel, no este caché.
+  if (
+    url.origin !== self.location.origin ||
+    url.pathname.startsWith(`${RAIZ}tests/`) ||
+    url.pathname.startsWith("/_vercel/")
+  ) {
+    return;
+  }
 
   event.respondWith(peticion.mode === "navigate" ? redPrimero(peticion) : cacheConRevalidacion(peticion));
 });

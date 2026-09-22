@@ -170,6 +170,7 @@ const VERSION_SW = (sw.match(/const VERSION = "([^"]+)";/) || [])[1];
   comprobar("nada de otros orígenes (sólo ficheros propios)", !recursos.some((r) => /^https?:/i.test(r)));
   comprobar("no cachea ni intercepta la API de CIMA (los datos van siempre a la red)", !/cima\.aemps\.es/.test(sw));
   comprobar("no se mete con las suites de tests/", sw.includes("tests/"));
+  comprobar("no intercepta las rutas de Vercel Analytics (van directas a la red)", sw.includes("/_vercel/"));
 }
 
 // --- 4. El aviso de versión nueva, con el pwa.js de verdad --------------

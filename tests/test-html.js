@@ -76,10 +76,21 @@ for (const fichero of ["index.html", "ayuda.html"]) {
   comprobar("tema aplicado antes de pintar (script en el <head>)", html.includes('localStorage.getItem("prospectoya-tema")'));
   comprobar("botón de tema", Boolean(doc.getElementById("theme-toggle")));
   comprobar("la clave del tema coincide con la de tema.js", leer("tema.js").includes('"prospectoya-tema"'));
+  {
+    // Las rutas absolutas (/_vercel/…) las sirve la plataforma, no el repo:
+    // solo se comprueban en el propio sistema de ficheros las relativas.
+    const scripts = [...doc.querySelectorAll("script[src]")].map((s) => s.getAttribute("src"));
+    const propios = scripts.filter((src) => !src.startsWith("/"));
+    comprobar(
+      "todos los <script src> propios existen",
+      propios.every((src) => fs.existsSync(path.join(RAIZ, src))),
+      scripts.join(" ")
+    );
+  }
   comprobar(
-    "todos los <script src> existen",
-    [...doc.querySelectorAll("script[src]")].every((s) => fs.existsSync(path.join(RAIZ, s.getAttribute("src")))),
-    [...doc.querySelectorAll("script[src]")].map((s) => s.getAttribute("src")).join(" ")
+    "carga Vercel Web Analytics (sin cookies, ver ayuda.html sección 6)",
+    Boolean(doc.querySelector('script[defer][src="/_vercel/insights/script.js"]')) &&
+      html.includes("window.va = window.va ||")
   );
 }
 

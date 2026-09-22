@@ -319,5 +319,13 @@
   <!-- El último: registra el service worker y el aviso de "sin conexión".
        La web funciona aunque no esté (ver pwa.js). -->
   <script src="pwa.js"></script>
+
+  <!-- Vercel Web Analytics: sin cookies, sin datos que identifiquen a nadie
+       (ver AGENTS.md y ayuda.html, sección 6). Solo cuenta visitas de forma
+       agregada; no toca nada del resto del sitio. -->
+  <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

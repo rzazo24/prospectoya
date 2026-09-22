@@ -19,6 +19,15 @@ fichas técnicas y prospectos de medicamentos autorizados en España.
 - **Deploy:** Vercel, hosting estático, sin build step.
 - **Sin autenticación ni base de datos.** Todo el estado del usuario
   (búsquedas recientes, "mi botiquín") vive en `localStorage`.
+- **Vercel Web Analytics** (visitas agregadas, sin cookies) vía `<script defer
+  src="/_vercel/insights/script.js">` en `index.html` y `ayuda.html` — la
+  integración sin `npm`/build que ofrece Vercel para sitios estáticos, sin
+  el paquete `@vercel/analytics` (exigiría `package.json` y un build step,
+  ver AGENTS.md). Necesita **Web Analytics activado a mano** en el dashboard
+  de Vercel del proyecto (Project → Analytics → Enable); sin eso el script
+  devuelve 404 pero no rompe nada (no hay `onerror`, y `window.va` es un
+  *stub* que sólo encola llamadas). `sw.js` no intercepta `/_vercel/*`: va
+  directo a la red, igual que la API de CIMA.
 
 ## API de CIMA — referencia rápida
 
@@ -499,7 +508,7 @@ Chrome/Chromium (Node las demás no necesitan nada instalado):
 ```bash
 cd tests
 npm install          # jsdom (única dependencia, sólo de desarrollo)
-npm test             # 369 comprobaciones: estructura, buscador, resumen, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
+npm test             # 372 comprobaciones: estructura, buscador, resumen, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
 npm run test:api-real   # contra la API real de CIMA (necesita red)
 npm run test:barrido    # barrido de calidad del resumen sobre 155 medicamentos reales (necesita red, ~20s)
 ```

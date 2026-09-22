@@ -13,6 +13,29 @@ parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
 Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
 y `Eliminado` (solo los que apliquen).
 
+## Sin publicar
+
+### Añadido
+
+- **Vercel Web Analytics**, a petición expresa del usuario: cambia la regla
+  "sin analítica" de `AGENTS.md` (ver ahí el porqué y el detalle completo).
+  Cuenta visitas de forma agregada, sin cookies y sin datos que identifiquen
+  a nadie (ni IP guardada, ni un identificador que siga a la misma persona
+  entre visitas): solo fecha, URL, referrer, país/región aproximados, SO y
+  navegador. Integrado con la variante `<script>` de Vercel para sitios sin
+  build (`/_vercel/insights/script.js` + el *stub* `window.va`), no con el
+  paquete `@vercel/analytics`, que habría exigido crear `package.json` en la
+  raíz y un paso de build — en contra de otras dos reglas del proyecto.
+  `sw.js` excluye `/_vercel/*` de la caché (va directo a la red, igual que
+  la API de CIMA). Necesita **activar Web Analytics a mano en el dashboard
+  de Vercel** del proyecto; sin eso el script da 404 en producción sin
+  romper nada. La ayuda (`ayuda.html`, sección "Tema, privacidad y
+  accesibilidad") ya no dice "sin analítica": ahora explica qué se recoge y
+  qué no. `test-html.js` fija que las dos páginas cargan el script;
+  `test-pwa.js`, que `sw.js` no lo intercepta. Toca `index.html`,
+  `ayuda.html` y `sw.js` (cáscara), así que `VERSION` sube en `sw.js`
+  (`v22` → `v23`).
+
 ## [0.8.2] - 2026-09-22
 
 Décima entrega: un arreglo real (medicamentos con documentación reducida que
