@@ -232,6 +232,16 @@
         <!-- Se rellena desde app.js (renderQuickSummary) y queda oculto si no hay datos -->
         <div id="quick-summary" class="quick-summary" hidden></div>
 
+        <!-- Medicamentos equivalentes: mismo principio activo, dosis y forma
+             farmacéutica (campo dcp/vmp de /presentaciones y /medicamentos).
+             Se rellena desde app.js (renderEquivalentes) y queda oculto si no
+             hay ninguno (o si el medicamento no trae el dato). -->
+        <div id="equivalentes" class="equivalentes" hidden>
+          <h3 class="equivalentes-title">Medicamentos equivalentes</h3>
+          <p id="equivalentes-nota" class="equivalentes-nota"></p>
+          <ul id="equivalentes-lista" class="equivalentes-lista"></ul>
+        </div>
+
         <!-- Tabs: Prospecto / Ficha técnica, y el enlace al documento oficial
              (campo `docs[]`, ya presente en el medicamento) de la pestaña activa -->
         <div class="doc-tabs-row">

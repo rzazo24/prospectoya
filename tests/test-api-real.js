@@ -137,17 +137,20 @@ const comprobar = (desc, cond, extra = "") => {
     vmppPorNregistro.totalFilas > 1000,
     `totalFilas=${vmppPorNregistro.totalFilas}`
   );
-  const equivalentes = await ctx.obtenerEquivalentes("paracetamol");
+  // No hay wrapper en api.js para esto (no hace falta para "equivalentes":
+  // ver dcp.id/vmp más abajo), pero el hecho queda fijado igual, por fetch
+  // directo: `practiv1` sí filtra `/vmpp` de verdad, aunque `nregistro` no.
+  const vmppPorPractiv1 = await (await ctx.fetch("https://cima.aemps.es/cima/rest/vmpp?practiv1=paracetamol")).json();
   // La mayoría (no el 100%) menciona "paracetamol" en vmpDesc: unas pocas filas
   // son combinados genéricos ("Mezcla de principios activos para resfriado…")
   // que lo llevan sin nombrarlo en la descripción.
-  const conParacetamolEnDesc = equivalentes.resultados.filter((r) => /paracetamol/i.test(r.vmpDesc)).length;
+  const conParacetamolEnDesc = vmppPorPractiv1.resultados.filter((r) => /paracetamol/i.test(r.vmpDesc)).length;
   comprobar(
-    "obtenerEquivalentes() usa practiv1 y sí filtra por paracetamol",
-    equivalentes.totalFilas > 0 &&
-      equivalentes.totalFilas < vmppPorNregistro.totalFilas &&
-      conParacetamolEnDesc >= equivalentes.resultados.length * 0.9,
-    `totalFilas=${equivalentes.totalFilas} conParacetamolEnDesc=${conParacetamolEnDesc}/${equivalentes.resultados.length}`
+    "/vmpp?practiv1= sí filtra por paracetamol (aunque no se use para nada)",
+    vmppPorPractiv1.totalFilas > 0 &&
+      vmppPorPractiv1.totalFilas < vmppPorNregistro.totalFilas &&
+      conParacetamolEnDesc >= vmppPorPractiv1.resultados.length * 0.9,
+    `totalFilas=${vmppPorPractiv1.totalFilas} conParacetamolEnDesc=${conParacetamolEnDesc}/${vmppPorPractiv1.resultados.length}`
   );
 
   // /maestras exige los dos parámetros: solo `maestra` no devuelve nada.
@@ -163,6 +166,44 @@ const comprobar = (desc, cond, extra = "") => {
     "/maestras?maestra=1&nombre= (principios activos) sí funciona",
     principiosActivos.totalFilas > 0 && principiosActivos.resultados.some((r) => /paracetamol/i.test(r.nombre)),
     `totalFilas=${principiosActivos.totalFilas}`
+  );
+
+  // dcp.id (en /presentaciones) y vmp (filtro de /medicamentos) son el mismo
+  // id: PARACETAMOL CINFA 1 g (nregistro 70310) tiene que traer el mismo
+  // valor que usa /medicamentos?vmp= para encontrar sus equivalentes.
+  const presentacionParacetamol = await ctx.listarPresentaciones({ nregistro: "70310" });
+  const dcpId = presentacionParacetamol.resultados[0] && presentacionParacetamol.resultados[0].dcp
+    ? presentacionParacetamol.resultados[0].dcp.id
+    : null;
+  comprobar(
+    "/presentaciones trae dcp.id (el mismo valor que /medicamentos llama vmp)",
+    Boolean(dcpId),
+    `dcp.id=${dcpId}`
+  );
+
+  // OJO: muchas marcas de paracetamol no llevan "paracetamol" en el nombre
+  // comercial (GELOCATIL, ANTIDOL...), así que no vale comprobar el nombre;
+  // se comprueba en su lugar que el propio PARACETAMOL CINFA (de donde salió
+  // el dcp.id) está entre sus resultados, y que hay más de un laboratorio.
+  const equivalentesParacetamol = dcpId ? await ctx.buscarPorVmp(dcpId) : { totalFilas: 0, resultados: [] };
+  comprobar(
+    "/medicamentos?vmp= filtra de verdad: incluye al propio medicamento y a otros laboratorios",
+    equivalentesParacetamol.totalFilas > 10 &&
+      equivalentesParacetamol.resultados.some((m) => m.nregistro === "70310") &&
+      new Set(equivalentesParacetamol.resultados.map((m) => m.labtitular)).size > 1,
+    `totalFilas=${equivalentesParacetamol.totalFilas}`
+  );
+
+  // nosustituible: 0/N/A en el caso normal (paracetamol), un motivo real para
+  // los medicamentos de margen terapéutico estrecho (levotiroxina).
+  const paracetamolMed = await ctx.buscarMedicamentos({ nregistro: "70310" });
+  const levotiroxina = await ctx.buscarMedicamentos({ nregistro: "84484" });
+  comprobar(
+    "nosustituible.id es 0 en el caso normal (paracetamol) y otro en levotiroxina",
+    paracetamolMed.resultados[0].nosustituible.id === 0 &&
+      levotiroxina.resultados[0].nosustituible.id !== 0 &&
+      /margen terap[ée]utico/i.test(levotiroxina.resultados[0].nosustituible.nombre),
+    `paracetamol=${JSON.stringify(paracetamolMed.resultados[0].nosustituible)} levotiroxina=${JSON.stringify(levotiroxina.resultados[0].nosustituible)}`
   );
 
   console.log(fallos === 0 ? "\nAPI REAL OK" : `\n${fallos} fallo(s) contra la API real`);

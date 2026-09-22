@@ -817,6 +817,56 @@ body:has(.aviso-version:not([hidden])) .btn-subir { bottom: 5rem; }
   color: var(--text-muted);
 }
 
+/* --- Medicamentos equivalentes (mismo principio activo, dosis y forma) --- */
+.equivalentes { margin: 0 0 1.75rem; }
+
+.equivalentes-title {
+  margin: 0 0 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Mismo tono de aviso que el badge de seguimiento adicional: informa, no alarma */
+.equivalentes-nota {
+  margin: 0 0 0.6rem;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.82rem;
+  color: var(--brand-strong);
+  background: var(--brand-soft);
+  border-radius: var(--radius-sm);
+}
+
+.equivalentes-lista {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.equivalentes-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.equivalentes-item:hover { border-color: var(--brand); background: var(--brand-soft); }
+
+.equivalentes-item-nombre { font-size: 0.9rem; font-weight: 600; letter-spacing: -0.005em; }
+.equivalentes-item-lab { font-size: 0.8rem; color: var(--text-muted); }
+
 /* --- Pestañas (segmented control) + enlace al documento oficial --- */
 .doc-tabs-row {
   display: flex;

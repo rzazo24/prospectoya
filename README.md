@@ -27,14 +27,22 @@ Base: `https://cima.aemps.es/cima/rest/`
 | Endpoint | Uso |
 |---|---|
 | `GET /medicamentos?nombre=X` | Búsqueda de medicamentos (también admite `practiv1`, `laboratorio`, `atc`, `cn`, `nregistro`, etc.) |
-| `GET /presentaciones?{filtros}` | Presentaciones (envases) **con su `cn`** (Código Nacional); acepta los mismos filtros que `/medicamentos` (`nombre`, `cn`, `nregistro`, `pactivos`…) |
+| `GET /presentaciones?{filtros}` | Presentaciones (envases) **con su `cn`** (Código Nacional); acepta los mismos filtros que `/medicamentos` (`nombre`, `cn`, `nregistro`, `pactivos`…). Cada fila trae además `dcp.id`, el id de "principio activo + dosis + forma farmacéutica" que hace falta para buscar equivalentes (ver más abajo). |
 | `GET /medicamento?nregistro=X` | Ficha completa de un medicamento: además de lo que ya trae `/medicamentos` (`docs[]`, `psum`, `triangulo`, `conduc`…), añade `atcs[]` y `principiosActivos[]` estructurados. Sin usar todavía. |
 | `GET /docSegmentado/secciones/2?nregistro=X` | Lista de secciones disponibles del PROSPECTO (tipoDoc=2) |
 | `GET /docSegmentado/contenido/2?nregistro=X&seccion=X` | Contenido HTML de una sección del prospecto |
 | `GET /docSegmentado/secciones/1?nregistro=X` | Lista de secciones de la FICHA TÉCNICA (tipoDoc=1) |
 | `GET /docSegmentado/contenido/1?nregistro=X&seccion=X` | Contenido HTML de una sección de la ficha técnica |
-| `GET /vmpp?practiv1=X` | Equivalentes clínicos por principio activo (para "medicamentos equivalentes", Fase 2). **`nregistro` no filtra** (verificado); hay que usar `practiv1` con el nombre del principio activo (`pactivos`). |
-| `GET /maestras?maestra=N&nombre=X` | Catálogos (`maestra=1` principios activos, `3` formas farmacéuticas, `4` vías de administración, `6` laboratorios…). **Los dos parámetros son obligatorios**: solo `maestra` devuelve 204 sin cuerpo (verificado). |
+| `GET /medicamentos?vmp=X` | **Medicamentos equivalentes**: mismo principio activo, misma dosis y misma forma farmacéutica, de cualquier laboratorio (`vmp=17511000140104` → 62 medicamentos, todos "paracetamol 1 g comprimidos"). El id es el mismo que `/presentaciones` llama `dcp.id`. Filtra de verdad; **`vmpp` en cambio está roto** como filtro de `/medicamentos` (ignora el valor y devuelve el catálogo entero). |
+| `GET /maestras?maestra=N&nombre=X` | Catálogos (`maestra=1` principios activos, `3` formas farmacéuticas, `4` vías de administración, `6` laboratorios…). **Los dos parámetros son obligatorios**: solo `maestra` devuelve 204 sin cuerpo (verificado). Sin usar todavía. |
+
+`GET /vmpp?practiv1=X` (catálogo VMP/VMPP por principio activo, con todas sus
+dosis y formas) también filtra de verdad, pero **no se usa**: para
+"medicamentos equivalentes" hace falta el `vmp` exacto del medicamento
+abierto (misma dosis y forma), y ese sale directo de `dcp.id` en
+`/presentaciones` sin pasar por aquí. (`?vmpp=X`, con tamaño de envase, no se
+ha probado sobre `/vmpp`; lo único verificado roto es `?vmpp=X` como filtro
+de `/medicamentos`.)
 
 `GET /psuministro` existe en la API pero **no sirve para consultar un
 medicamento suelto**: ni `cn` ni `nregistro` filtran de verdad (siempre
@@ -57,6 +65,9 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
    seguimiento adicional" y enlace al documento oficial: los tres, con campos
    (`psum`, `triangulo`, `docs[]`) que ya trae el propio medicamento, sin
    peticiones aparte. ✅
+5. Medicamentos equivalentes: mismo principio activo, dosis y forma
+   farmacéutica (`GET /medicamentos?vmp=X`), con aviso si el medicamento no
+   conviene sustituirlo sin consultar (`nosustituible`). ✅
 
 ### Cómo funciona el buscador (`app.js`)
 
@@ -85,9 +96,11 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
   las búsquedas por nombre se pide en diferido, medicamento a medicamento,
   cuando el resultado entra en pantalla (`IntersectionObserver`, con
   `MAX_CNS_SIN_OBSERVADOR` como respaldo si el navegador no lo soporta) y queda
-  en caché (`cacheCN`, `nregistro → CN[]`). La ficha del medicamento lista todos
-  los CN de sus envases (`#detail-cn`) reutilizando esa misma caché, así que
-  abrir un resultado ya visto no gasta peticiones.
+  en caché (`cachePresentaciones`, `nregistro → filas de /presentaciones`). La
+  ficha del medicamento lista todos los CN de sus envases (`#detail-cn`)
+  reutilizando esa misma caché, así que abrir un resultado ya visto no gasta
+  peticiones — y tampoco las gasta buscar sus equivalentes (ver más abajo),
+  que sale del mismo dato.
 - Teclado: ↑ / ↓ recorren las sugerencias (realce `.is-active`, equivalente al
   hover, que además actualiza `aria-activedescendant`), Enter abre la sugerencia
   marcada o lanza la búsqueda completa si no hay ninguna, y Escape cierra el
@@ -137,6 +150,27 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
   ni por `nregistro` (siempre el listado nacional completo, ~862 filas), así
   que el campo `psum` ya embebido es la única vía razonable para un
   medicamento suelto.
+
+### Medicamentos equivalentes (`app.js`)
+
+- **`#equivalentes`** lista otros medicamentos con el mismo principio activo,
+  la misma dosis y la misma forma farmacéutica (mismo `vmp`), de cualquier
+  laboratorio. El id sale de `dcp.id` en `/presentaciones` —la misma petición
+  que ya se hace para el CN, cacheada en `cachePresentaciones` (antes
+  `cacheCN`, ahora guarda la fila entera para no repetir la llamada si hace
+  falta más de un dato)— y con él se pide `GET /medicamentos?vmp=X`. El propio
+  medicamento se filtra de los resultados; si no queda ninguno, o si no hay
+  `dcp.id`, la sección se queda oculta.
+- Tocar un equivalente llama a **`selectMedicamento()`** con el objeto que ya
+  trajo `/medicamentos?vmp=`: abre su ficha en la misma ventana, sin petición
+  extra para los datos básicos (nombre, laboratorio…), igual que si se
+  hubiera elegido desde una sugerencia o un resultado.
+- Si el medicamento tiene **`nosustituible.id` distinto de 0** (por ejemplo,
+  "Medicamentos con principios activos de estrecho margen terapéutico", como
+  la levotiroxina), se enseña un aviso con el motivo oficial de la AEMPS
+  encima de la lista, en vez de listar los equivalentes sin más: existen,
+  pero cambiar de marca sin consultarlo no es buena idea. Si se supera
+  `MAX_EQUIVALENTES` (12) sin ese aviso, se avisa de cuántos se han recortado.
 
 ### Páginas, tema y ayuda (`ayuda.html`, `tema.js`)
 
@@ -424,7 +458,7 @@ Chrome/Chromium (Node las demás no necesitan nada instalado):
 ```bash
 cd tests
 npm install          # jsdom (única dependencia, sólo de desarrollo)
-npm test             # 347 comprobaciones: estructura, buscador, resumen, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
+npm test             # 355 comprobaciones: estructura, buscador, resumen, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
 npm run test:api-real   # contra la API real de CIMA (necesita red)
 ```
 

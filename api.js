@@ -126,21 +126,25 @@ async function obtenerContenidoSeccion(tipoDoc, nregistro, seccion) {
 }
 
 /**
- * (Fase 2) Obtiene equivalentes clínicos (VMP/VMPP) de un medicamento por su
- * principio activo.
- * Doc: GET /vmpp?practiv1=X
+ * Medicamentos equivalentes: mismo principio activo, misma dosis y misma
+ * forma farmacéutica (aunque sea de otro laboratorio o de otro tamaño de
+ * envase). Doc: GET /medicamentos?vmp=X
  *
- * VERIFICADO CONTRA LA API REAL (22/09/2026): `nregistro` NO filtra (devuelve
- * el catálogo VMPP entero, 7022 filas, sin relación con el registro pedido).
- * `practiv1` sí filtra por nombre de principio activo (ej. "paracetamol" →
- * 101 filas, todas con ese principio activo). Por eso la función pide el
- * nombre del principio activo (el campo `pactivos` del medicamento), no el
- * nregistro.
- * @param {string} principioActivo - p.ej. "paracetamol" (campo `pactivos`)
+ * VERIFICADO CONTRA LA API REAL (22/09/2026): `vmp` identifica de forma
+ * exacta la combinación principio activo + dosis + forma (ej. "Paracetamol
+ * 1.000 mg comprimido"), y SÍ filtra de verdad (`vmp=17511000140104` → 62
+ * medicamentos, todos paracetamol 1 g en comprimidos, de distintos
+ * laboratorios). El id que hace falta no llega en `/medicamentos` ni en
+ * `/medicamento?nregistro=`: hay que sacarlo de `/presentaciones`, donde cada
+ * fila trae `dcp.id` — comprobado que es el MISMO id que aquí se llama `vmp`
+ * (mismo valor exacto para el mismo medicamento). Por contraste, `vmpp` (que
+ * además exige el tamaño de envase) está roto como filtro de
+ * `/medicamentos`: `?vmpp=X` ignora el valor y devuelve el catálogo entero.
+ * @param {string} vmp - el id de `presentacion.dcp.id` (ver `listarPresentaciones()`)
  */
-async function obtenerEquivalentes(principioActivo) {
-  const res = await fetch(`${CIMA_BASE_URL}/vmpp?practiv1=${encodeURIComponent(principioActivo)}`);
-  if (!res.ok) throw new Error(`Error obteniendo equivalentes: ${res.status}`);
+async function buscarPorVmp(vmp) {
+  const res = await fetch(`${CIMA_BASE_URL}/medicamentos?vmp=${encodeURIComponent(vmp)}`);
+  if (!res.ok) throw new Error(`Error buscando equivalentes: ${res.status}`);
   return res.json();
 }
 

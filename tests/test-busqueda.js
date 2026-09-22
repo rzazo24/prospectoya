@@ -34,11 +34,12 @@ const MEDICAMENTOS = [
     receta: false,
     generico: true,
     comerc: true,
-    // psum, triangulo y docs: campos reales de /medicamentos y /presentaciones
-    // que ya trae el propio medicamento (verificado contra la API real,
-    // 22/09/2026); no hace falta pedirlos aparte.
+    // psum, triangulo, docs y nosustituible: campos reales de /medicamentos y
+    // /presentaciones que ya trae el propio medicamento (verificado contra la
+    // API real, 22/09/2026); no hace falta pedirlos aparte.
     psum: true,
     triangulo: true,
+    nosustituible: { id: 2, nombre: "Medicamentos con principios activos de estrecho margen terapéutico" },
     docs: [
       { tipo: 1, url: "https://cima.aemps.es/cima/pdfs/ft/70001/FT_70001.pdf", urlHtml: "https://cima.aemps.es/cima/dochtml/ft/70001/FT_70001.html", secc: true },
       { tipo: 2, url: "https://cima.aemps.es/cima/pdfs/p/70001/P_70001.pdf", urlHtml: "https://cima.aemps.es/cima/dochtml/p/70001/P_70001.html", secc: true },
@@ -47,11 +48,20 @@ const MEDICAMENTOS = [
 ];
 
 // Presentaciones simuladas: /medicamentos NO trae el CN, /presentaciones sí
+// (y, para el 70001, tampoco trae dcp.id: el vmp para buscar equivalentes)
 const PRESENTACIONES = [
   { nregistro: "77758", cn: "662025", nombre: "PARACETAMOL CINFA 1 g COMPRIMIDOS EFG , 20 comprimidos", labtitular: "CINFA", receta: false, generico: true, comerc: true },
   { nregistro: "77758", cn: "662026", nombre: "PARACETAMOL CINFA 1 g COMPRIMIDOS EFG , 40 comprimidos", labtitular: "CINFA", receta: false, generico: true, comerc: true },
-  { nregistro: "70001", cn: "700123", nombre: "PARACETAMOL KERN PHARMA 500 mg , 20 comprimidos", labtitular: "KERN PHARMA", receta: false, generico: true, comerc: true },
+  { nregistro: "70001", cn: "700123", nombre: "PARACETAMOL KERN PHARMA 500 mg , 20 comprimidos", labtitular: "KERN PHARMA", receta: false, generico: true, comerc: true, dcp: { id: "V-PARA-500" } },
   { nregistro: "123456", cn: "999888", nombre: "MEDICAMENTO ANTIGUO 100 mg , 30 comprimidos", labtitular: "LAB", comerc: true },
+];
+
+// Equivalentes simulados de /medicamentos?vmp=V-PARA-500: el propio 70001
+// (hay que filtrarlo) más otros dos con el mismo principio activo, dosis y forma.
+const EQUIVALENTES = [
+  MEDICAMENTOS[1],
+  { nregistro: "70002", nombre: "PARACETAMOL OTROLAB 500 mg", labtitular: "OTROLAB" },
+  { nregistro: "70003", nombre: "PARACETAMOL TERCEROLAB 500 mg", labtitular: "TERCEROLAB" },
 ];
 
 // Medicamento "antiguo" con nº de registro de 6 dígitos: sólo aparece al
@@ -106,6 +116,9 @@ const dom = new JSDOM(html, {
         const filas = cn
           ? PRESENTACIONES.filter((p) => p.cn === cn)
           : PRESENTACIONES.filter((p) => p.nregistro === nregistro);
+        data = { totalFilas: filas.length, pagina: 1, tamanioPagina: 200, resultados: filas };
+      } else if (u.includes("/medicamentos?vmp=")) {
+        const filas = params.get("vmp") === "V-PARA-500" ? EQUIVALENTES : [];
         data = { totalFilas: filas.length, pagina: 1, tamanioPagina: 200, resultados: filas };
       } else if (u.includes("/medicamentos?")) {
         const nregistro = params.get("nregistro");
@@ -237,6 +250,42 @@ const escribir = (valor) => {
   document.querySelector('.doc-tab[data-doc-type="2"]').click();
   await esperar(50);
 
+  // --- 4c. Medicamentos equivalentes (mismo vmp) -------------------------
+  // dcp.id ("V-PARA-500") sale de /presentaciones, la misma petición que ya
+  // se pidió para el CN: no debe repetirse por pedir también el vmp.
+  comprobar(
+    "el vmp se saca de la misma petición que el CN (sin repetirla)",
+    peticiones.filter((u) => u.includes("/presentaciones?nregistro=70001")).length === 1,
+    peticiones.filter((u) => u.includes("nregistro=70001")).join(" | ")
+  );
+  const equivalentesSeccion = document.getElementById("equivalentes");
+  comprobar("la sección de equivalentes sale", equivalentesSeccion.hidden === false);
+  comprobar(
+    "avisa de que es de margen terapéutico estrecho (nosustituible)",
+    document.getElementById("equivalentes-nota").textContent.includes("estrecho margen terapéutico"),
+    document.getElementById("equivalentes-nota").textContent
+  );
+  const itemsEquivalentes = document.querySelectorAll(".equivalentes-item");
+  comprobar(
+    "se listan los otros dos (el propio medicamento se filtra)",
+    itemsEquivalentes.length === 2,
+    itemsEquivalentes.length
+  );
+  comprobar(
+    "no incluye al propio medicamento entre los equivalentes",
+    ![...itemsEquivalentes].some((li) => li.textContent.includes("PARACETAMOL KERN PHARMA"))
+  );
+
+  // Elegir un equivalente reutiliza selectMedicamento(): cambia la ficha abierta
+  itemsEquivalentes[0].click();
+  await esperar(50);
+  comprobar(
+    "elegir un equivalente abre su ficha en la misma ventana",
+    document.getElementById("detail-name").textContent === "PARACETAMOL OTROLAB 500 mg",
+    document.getElementById("detail-name").textContent
+  );
+  comprobar("la ventana sigue abierta (no se cierra al cambiar de medicamento)", detalle.open === true);
+
   // --- 4b. La ventana del detalle se cierra -----------------------------
   const botonCerrar = document.getElementById("detail-close");
   comprobar(
@@ -246,8 +295,10 @@ const escribir = (valor) => {
   botonCerrar.click();
   comprobar("la ✕ cierra la ventana", detalle.open === false);
   comprobar(
+    // El último medicamento abierto es el equivalente elegido más arriba,
+    // no MEDICAMENTOS[1]: cerrar no debe borrar el contenido de la ficha.
     "cerrar no borra lo que había dentro",
-    document.getElementById("detail-name").textContent === MEDICAMENTOS[1].nombre
+    document.getElementById("detail-name").textContent === "PARACETAMOL OTROLAB 500 mg"
   );
 
   detalle.showModal();
@@ -428,6 +479,10 @@ const escribir = (valor) => {
   comprobar("sin psum, el badge de suministro queda oculto", document.getElementById("supply-issue-badge").hidden === true);
   comprobar("sin triangulo, el badge de seguimiento queda oculto", document.getElementById("monitoring-badge").hidden === true);
   comprobar("sin docs, el enlace al documento oficial queda oculto", document.getElementById("detail-doc-oficial").hidden === true);
+  comprobar(
+    "sin dcp.id en sus presentaciones, la sección de equivalentes queda oculta",
+    document.getElementById("equivalentes").hidden === true
+  );
 
   // --- 12. Sin errores de runtime ---------------------------------------
   comprobar("sin errores de jsdom durante la ejecución", erroresJsdom.length === 0, erroresJsdom.join(" | "));

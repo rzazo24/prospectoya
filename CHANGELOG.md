@@ -13,6 +13,47 @@ parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
 Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
 y `Eliminado` (solo los que apliquen).
 
+## Sin publicar
+
+### Añadido
+
+- **Medicamentos equivalentes**: al abrir un medicamento, si existen, sale
+  una lista de otros con el mismo principio activo, la misma dosis y la
+  misma forma farmacéutica (`GET /medicamentos?vmp=X`, que **sí filtra de
+  verdad** — `vmp=17511000140104` → 62 medicamentos, todos "paracetamol 1 g
+  comprimidos", de laboratorios distintos). El id (`vmp`) no llega en
+  `/medicamentos` ni en `/medicamento?nregistro=`: sale de `dcp.id` en
+  `/presentaciones` (comprobado que es el mismo valor exacto), la misma
+  petición que ya se hacía para el CN — no hay petición nueva para eso, solo
+  la de `?vmp=`. Tocar un equivalente abre su ficha en la misma ventana
+  (reutiliza `selectMedicamento()`, la misma puerta de siempre). Si el
+  medicamento tiene `nosustituible.id` distinto de 0 (medicamentos de margen
+  terapéutico estrecho, como la levotiroxina, comprobado con nregistro
+  `84484`), se avisa con el motivo oficial de la AEMPS encima de la lista en
+  vez de sugerirlos sin más. `test-busqueda.js` cubre el caso con y sin
+  equivalentes, el aviso de no sustituible, el clic para cambiar de
+  medicamento y que no se repita la petición de `/presentaciones`;
+  `test-api-real.js` fija `dcp.id`/`vmp` y `nosustituible` contra la API
+  real. Toca `index.html`, `app.js` y `styles.css` (cáscara), así que
+  `VERSION` sube en `sw.js` (`v17` → `v18`).
+
+### Cambiado
+
+- **`obtenerEquivalentes()` sustituida por `buscarPorVmp()`**: la versión
+  anterior (`v0.6.0`) pedía `GET /vmpp?practiv1=X` (el principio activo, sin
+  dosis ni forma) y solo daba descripciones y un contador (`presComerc`), sin
+  los medicamentos de verdad. Para "medicamentos equivalentes" hacía falta
+  algo más preciso (misma dosis y forma, con nombre y nregistro reales), y
+  eso es exactamente lo que da `/medicamentos?vmp=X` a partir de `dcp.id`
+  (ver "Añadido"). `/vmpp?practiv1=` sigue filtrando bien, pero ya no se usa
+  para nada; se deja documentado en README/AGENTS.md por si hiciera falta
+  más adelante (por ejemplo, para listar "otras dosis y formas" del mismo
+  principio activo, no solo la misma).
+- **`cacheCN` pasa a llamarse `cachePresentaciones`**: guarda la fila entera
+  de `/presentaciones`, no solo el CN, para que `cnsDeMedicamento()` (mismo
+  nombre y comportamiento de siempre) y la nueva `vmpDeMedicamento()`
+  compartan una única petición por medicamento en vez de repetirla.
+
 ## [0.7.0] - 2026-09-22
 
 Séptima entrega: se corrige un fallo real en el resumen rápido (no un simple

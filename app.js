@@ -28,6 +28,9 @@ const supplyIssueBadge = document.getElementById("supply-issue-badge");
 const monitoringBadge = document.getElementById("monitoring-badge");
 const detailDocOficial = document.getElementById("detail-doc-oficial");
 const quickSummary = document.getElementById("quick-summary");
+const equivalentesSection = document.getElementById("equivalentes");
+const equivalentesNota = document.getElementById("equivalentes-nota");
+const equivalentesLista = document.getElementById("equivalentes-lista");
 const sectionsAccordion = document.getElementById("sections-accordion");
 const docTabs = document.querySelectorAll(".doc-tab");
 
@@ -36,6 +39,9 @@ const docTabs = document.querySelectorAll(".doc-tab");
 // hasta 200 filas de golpe, así que el recorte se hace aquí.)
 const MAX_SUGERENCIAS = 8;
 const MAX_RESULTADOS = 60;
+// Cuántos equivalentes se listan como mucho (algunos principios activos muy
+// genéricos, como el paracetamol, tienen decenas de laboratorios distintos).
+const MAX_EQUIVALENTES = 12;
 
 // Patrones para distinguir un código nacional (CN, 6 dígitos exactos) o un
 // nº de registro (5-6 dígitos) de una búsqueda por nombre.
@@ -467,14 +473,17 @@ function marcarResultadoActivo(nregistro) {
   });
 }
 
-// --- Código nacional (CN) de los resultados ---
+// --- Presentaciones de un medicamento: CN de sus envases y su vmp ---
 // /medicamentos NO devuelve el CN: sólo /presentaciones lo trae (uno por
-// envase). Como no admite consultas por lotes, se pide un medicamento a la vez,
-// cacheado, y sólo cuando el resultado entra en pantalla.
+// envase), y de paso trae `dcp.id` (el mismo id que /medicamentos?vmp= llama
+// `vmp`, para buscar equivalentes). Como /presentaciones no admite consultas
+// por lotes, se pide un medicamento a la vez, cacheado, y sólo cuando hace
+// falta (CN: cuando el resultado entra en pantalla; vmp: al abrir la ficha).
 
-/** Caché nregistro → promesa con sus CN. Guardar la promesa evita pedir dos
- *  veces lo mismo si el usuario abre la ficha antes de que llegue la respuesta. */
-const cacheCN = new Map();
+/** Caché nregistro → promesa con sus presentaciones (envases). Guardar la
+ *  promesa evita pedir dos veces lo mismo si, por ejemplo, se piden el CN y
+ *  el vmp del mismo medicamento casi a la vez (comparten esta única petición). */
+const cachePresentaciones = new Map();
 
 /** Observa los resultados para pedir su CN cuando se ven; null si no hay soporte. */
 const observadorCN =
@@ -492,29 +501,51 @@ const observadorCN =
     : null;
 
 /**
- * CN (uno por envase) de un medicamento, con caché.
+ * Presentaciones (envases) de un medicamento, con caché.
  * @param {string} nregistro
- * @returns {Promise<string[]>} lista de códigos nacionales (vacía si no hay)
+ * @returns {Promise<Array>} filas de /presentaciones (vacío si no hay)
  */
-function cnsDeMedicamento(nregistro) {
+function presentacionesDeMedicamento(nregistro) {
   const clave = String(nregistro || "");
   // Sin nregistro no se consulta: la API ignora los filtros vacíos y
   // devolvería las presentaciones de todo el catálogo.
   if (!clave) return Promise.resolve([]);
 
-  if (!cacheCN.has(clave)) {
+  if (!cachePresentaciones.has(clave)) {
     const promesa = listarPresentaciones({ nregistro: clave })
-      .then((data) =>
-        (data.resultados || []).map((presentacion) => presentacion.cn).filter(Boolean)
-      )
+      .then((data) => data.resultados || [])
       .catch((err) => {
-        cacheCN.delete(clave); // que un fallo puntual no se quede cacheado
+        cachePresentaciones.delete(clave); // que un fallo puntual no se quede cacheado
         throw err;
       });
-    cacheCN.set(clave, promesa);
+    cachePresentaciones.set(clave, promesa);
   }
 
-  return cacheCN.get(clave);
+  return cachePresentaciones.get(clave);
+}
+
+/**
+ * CN (uno por envase) de un medicamento, con caché.
+ * @param {string} nregistro
+ * @returns {Promise<string[]>} lista de códigos nacionales (vacía si no hay)
+ */
+async function cnsDeMedicamento(nregistro) {
+  const presentaciones = await presentacionesDeMedicamento(nregistro);
+  return presentaciones.map((presentacion) => presentacion.cn).filter(Boolean);
+}
+
+/**
+ * Código `vmp` (principio activo + dosis + forma farmacéutica) de un
+ * medicamento, para buscar equivalentes. Sale de `dcp.id` en la primera
+ * presentación (es el mismo valor en todos sus envases). null si no hay
+ * presentaciones o no traen el dato.
+ * @param {string} nregistro
+ * @returns {Promise<string|null>}
+ */
+async function vmpDeMedicamento(nregistro) {
+  const presentaciones = await presentacionesDeMedicamento(nregistro);
+  const conVmp = presentaciones.find((presentacion) => presentacion.dcp && presentacion.dcp.id);
+  return conVmp ? String(conVmp.dcp.id) : null;
 }
 
 /** Pide (o reutiliza de la caché) el CN de un resultado y lo pinta. */
@@ -599,12 +630,13 @@ async function selectMedicamento(medicamento) {
   currentDocs = medicamento.docs || [];
   actualizarEnlaceDocumentoOficial();
 
-  // El resumen rápido, el acordeón y los CN son consultas independientes:
-  // se lanzan en paralelo para no encadenar esperas.
+  // El resumen rápido, el acordeón, los CN y los equivalentes son consultas
+  // independientes: se lanzan en paralelo para no encadenar esperas.
   await Promise.all([
     cargarSecciones(currentTipoDoc),
     renderQuickSummary(medicamento.nregistro),
     mostrarCNsDeDetalle(medicamento.nregistro),
+    renderEquivalentes(medicamento),
   ]);
 }
 
@@ -625,6 +657,75 @@ async function mostrarCNsDeDetalle(nregistro) {
 
     detailCN.textContent = `${cns.length === 1 ? "Código nacional" : "Códigos nacionales"} (envases): ${cns.join(", ")}`;
     detailCN.hidden = false;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+/**
+ * Pinta en #equivalentes otros medicamentos con el mismo principio activo,
+ * la misma dosis y la misma forma farmacéutica (mismo `vmp`), por si el
+ * usuario busca una alternativa. Queda oculto si el medicamento no trae el
+ * dato, si la API no encuentra ninguno más o si el único resultado es el
+ * propio medicamento.
+ * @param {Object} medicamento - el medicamento abierto (nregistro y nosustituible)
+ */
+async function renderEquivalentes(medicamento) {
+  equivalentesSection.hidden = true;
+  equivalentesLista.innerHTML = "";
+  equivalentesNota.hidden = true;
+
+  try {
+    const vmp = await vmpDeMedicamento(medicamento.nregistro);
+    // Si mientras tanto se ha abierto otro medicamento, no se pisa su ficha
+    if (!vmp || currentNRegistro !== medicamento.nregistro) return;
+
+    const { resultados } = await buscarPorVmp(vmp);
+    if (currentNRegistro !== medicamento.nregistro) return;
+
+    const otros = (resultados || []).filter(
+      (otro) => String(otro.nregistro) !== String(medicamento.nregistro)
+    );
+    if (otros.length === 0) return;
+
+    // Medicamentos de margen terapéutico estrecho (o similar): la AEMPS no
+    // recomienda cambiar de marca sin consultarlo antes. Prioridad sobre el
+    // aviso de "mostrando N de M": es lo más importante que puede decir esta
+    // sección.
+    if (medicamento.nosustituible && medicamento.nosustituible.id !== 0) {
+      equivalentesNota.textContent = `${medicamento.nosustituible.nombre}: consulta a tu médico o farmacéutico antes de cambiar de marca.`;
+      equivalentesNota.hidden = false;
+    } else if (otros.length > MAX_EQUIVALENTES) {
+      equivalentesNota.textContent = `Se muestran los primeros ${MAX_EQUIVALENTES} de ${otros.length}.`;
+      equivalentesNota.hidden = false;
+    }
+
+    otros.slice(0, MAX_EQUIVALENTES).forEach((otro) => {
+      const li = document.createElement("li");
+      const boton = document.createElement("button");
+      boton.type = "button";
+      boton.className = "equivalentes-item";
+
+      const nombre = document.createElement("span");
+      nombre.className = "equivalentes-item-nombre";
+      nombre.textContent = otro.nombre;
+      boton.appendChild(nombre);
+
+      if (otro.labtitular) {
+        const lab = document.createElement("span");
+        lab.className = "equivalentes-item-lab";
+        lab.textContent = otro.labtitular;
+        boton.appendChild(lab);
+      }
+
+      // Reutiliza selectMedicamento(): abre este otro medicamento en la misma
+      // ventana, con las mismas dos puertas de siempre (ver AGENTS.md).
+      boton.addEventListener("click", () => selectMedicamento(otro));
+      li.appendChild(boton);
+      equivalentesLista.appendChild(li);
+    });
+
+    equivalentesSection.hidden = false;
   } catch (err) {
     console.error(err);
   }
