@@ -198,6 +198,22 @@ const escribir = (valor) => {
       opciones[1].id === "sugerencia-1"
   );
 
+  // --- 2b. Un clic de ratón en una sugerencia tiene que poder elegirla ---
+  // Las opciones no son focusables: un mousedown de verdad sobre una de ellas
+  // le quita el foco a #search-input ANTES del click (mousedown → blur/
+  // focusout → mouseup → click), y el focusout de arriba cierra el
+  // desplegable — con la opción ya oculta, el click nunca llega a elegirla.
+  // jsdom no reproduce ese blur automático de un navegador real (por eso
+  // este fallo se coló hasta que se probó con un clic de verdad, vía CDP), así
+  // que aquí se comprueba directamente el mecanismo del arreglo: el mousedown
+  // sobre el desplegable llega con su acción por defecto cancelada.
+  const eventoMousedown = new window.MouseEvent("mousedown", { bubbles: true, cancelable: true });
+  opciones[0].dispatchEvent(eventoMousedown);
+  comprobar(
+    "un mousedown en el desplegable no le quita el foco al input (si no, un clic de verdad no elegiría nada)",
+    eventoMousedown.defaultPrevented === true
+  );
+
   // --- 3. Navegación con ↑ / ↓ ------------------------------------------
   pulsar("ArrowDown");
   comprobar("↓ marca la primera sugerencia", opciones[0].classList.contains("is-active"));

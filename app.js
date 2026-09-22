@@ -318,6 +318,16 @@ searchInput.addEventListener("focusout", (e) => {
   if (e.relatedTarget !== searchInput) ocultarSugerencias();
 });
 
+// OJO: sin esto, un clic de ratón en una sugerencia nunca llegaba a
+// seleccionarla. Las opciones no son focusables, así que pulsar sobre una con
+// el ratón le quita el foco a #search-input (mousedown, antes del click) y
+// eso disparaba el focusout de arriba, que cierra el desplegable —con la
+// opción ya oculta, el click que debía elegirla no llegaba a hacerlo.
+// preventDefault() en mousedown evita ese cambio de foco sin afectar al
+// click que viene justo después (comprobado con un clic real, vía CDP: sin
+// esto, ocultarSugerencias() se disparaba pero selectMedicamento() no).
+suggestionsList.addEventListener("mousedown", (e) => e.preventDefault());
+
 // Chips de ejemplo ("Prueba con…"): buscan directamente al pulsarlos
 if (searchExamples) {
   searchExamples.addEventListener("click", (e) => {

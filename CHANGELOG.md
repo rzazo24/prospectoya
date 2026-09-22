@@ -13,6 +13,34 @@ parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
 Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
 y `Eliminado` (solo los que apliquen).
 
+## Sin publicar
+
+### Corregido
+
+- **Un clic de ratón en una sugerencia del desplegable no elegía nada**:
+  reportado por un usuario. Las opciones del desplegable no son focusables
+  (se marcan con `aria-activedescendant`), así que un clic de verdad sobre
+  una de ellas le quita el foco a `#search-input` **antes** de que llegue el
+  `click` (el orden real de eventos es `mousedown` → `blur`/`focusout` →
+  `mouseup` → `click`); el `focusout` ya cerraba el desplegable (arreglo de
+  la versión que añadió "tabular fuera del campo también lo cierra"), así
+  que la opción quedaba oculta justo antes de que el `click` pudiera
+  elegirla. Ahora `#search-suggestions` cancela el `mousedown` por defecto
+  (`preventDefault()`), así que el foco nunca se mueve y el `click`
+  posterior sí llega. **jsdom no reproduce el `blur` automático de un
+  navegador real al hacer clic en un elemento no enfocable**, así que este
+  fallo llevaba tiempo sin test que lo detectara (`test-busqueda.js` sí
+  cubría "Enter elige la sugerencia marcada", pero nunca un clic de ratón de
+  verdad) y solo se reprodujo de forma fiable con un clic real vía CDP
+  (`Input.dispatchMouseEvent`, en un perfil de Chrome limpio para evitar que
+  el service worker sirviera una copia vieja de `app.js` — comprobado
+  además que, con un `.click()` sintético, jsdom no hace hit-testing y el
+  fallo tampoco se veía). Nueva comprobación en `test-busqueda.js`: el
+  `mousedown` sobre el desplegable llega con su acción por defecto
+  cancelada (el mecanismo del arreglo, ya que el efecto completo no se
+  puede probar en jsdom). Toca `app.js` (cáscara), así que `VERSION` sube
+  en `sw.js` (`v20` → `v21`).
+
 ## [0.8.0] - 2026-09-22
 
 Octava entrega: se aprovechan más filtros reales de la API (medicamentos
