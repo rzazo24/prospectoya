@@ -206,6 +206,43 @@ const comprobar = (desc, cond, extra = "") => {
     `paracetamol=${JSON.stringify(paracetamolMed.resultados[0].nosustituible)} levotiroxina=${JSON.stringify(levotiroxina.resultados[0].nosustituible)}`
   );
 
+  // Filtros combinables: receta y comerc solo admiten "1"/"0" (true/false/si/no
+  // se ignoran, según se comprobó a mano); las dos mitades tienen que sumar el
+  // catálogo entero. laboratorio filtra por coincidencia parcial, sin importar
+  // mayúsculas ni el nombre completo del laboratorio.
+  const conReceta = await ctx.buscarMedicamentos({ receta: "1" });
+  const sinReceta = await ctx.buscarMedicamentos({ receta: "0" });
+  comprobar(
+    "receta=1 y receta=0 se reparten el catálogo entero",
+    conReceta.totalFilas + sinReceta.totalFilas > 25000,
+    `conReceta=${conReceta.totalFilas} sinReceta=${sinReceta.totalFilas}`
+  );
+
+  const comercializados = await ctx.buscarMedicamentos({ comerc: "1" });
+  const noComercializados = await ctx.buscarMedicamentos({ comerc: "0" });
+  comprobar(
+    "comerc=1 y comerc=0 también se reparten el catálogo entero",
+    comercializados.totalFilas + noComercializados.totalFilas > 25000,
+    `comercializados=${comercializados.totalFilas} noComercializados=${noComercializados.totalFilas}`
+  );
+
+  const labAbreviado = await ctx.buscarMedicamentos({ nombre: "paracetamol", laboratorio: "cinfa" });
+  const labCompleto = await ctx.buscarMedicamentos({ nombre: "paracetamol", laboratorio: "Laboratorios Cinfa S.A." });
+  comprobar(
+    "laboratorio filtra por coincidencia parcial, sin distinguir mayúsculas",
+    labAbreviado.totalFilas > 0 && labAbreviado.totalFilas === labCompleto.totalFilas,
+    `abreviado=${labAbreviado.totalFilas} completo=${labCompleto.totalFilas}`
+  );
+
+  // Los tres filtros combinan en AND: paracetamol + Cinfa + sin receta tiene
+  // que dar 0 (todo el paracetamol de Cinfa lleva receta).
+  const combinado = await ctx.buscarMedicamentos({ nombre: "paracetamol", laboratorio: "cinfa", receta: "0" });
+  comprobar(
+    "los filtros combinan en AND (paracetamol+Cinfa+sin receta = 0)",
+    combinado.totalFilas === 0,
+    `totalFilas=${combinado.totalFilas}`
+  );
+
   console.log(fallos === 0 ? "\nAPI REAL OK" : `\n${fallos} fallo(s) contra la API real`);
   process.exitCode = fallos === 0 ? 0 : 1;
 })().catch((err) => {

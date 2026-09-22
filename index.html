@@ -178,9 +178,40 @@
       </div>
     </section>
 
-    <!-- TODO Fase 2: filtros combinables (con/sin receta, laboratorio, forma farmacéutica) -->
-    <section id="filters-section" hidden>
-      <!-- placeholder para filtros -->
+    <!-- Filtros combinables: solo afectan a la búsqueda por nombre (no a una
+         consulta por CN o nº de registro, que ya es de un envase concreto) y
+         no tocan el desplegable de sugerencias, solo a la lista completa de
+         resultados. "Forma farmacéutica" se descartó: no hay ningún
+         parámetro de /medicamentos que la filtre de verdad (comprobado
+         contra la API real, ver AGENTS.md); en su lugar va
+         "Comercialización", que sí filtra. -->
+    <section id="filters-section" class="filters-section">
+      <button type="button" id="filtros-boton" class="filtros-boton" aria-expanded="false" aria-controls="filtros-panel">
+        Filtros
+      </button>
+      <div id="filtros-panel" class="filtros-panel" hidden>
+        <div class="filtros-campo">
+          <label for="filtro-receta">Receta</label>
+          <select id="filtro-receta">
+            <option value="">Cualquiera</option>
+            <option value="1">Con receta</option>
+            <option value="0">Sin receta</option>
+          </select>
+        </div>
+        <div class="filtros-campo">
+          <label for="filtro-comerc">Comercialización</label>
+          <select id="filtro-comerc">
+            <option value="">Cualquiera</option>
+            <option value="1">Comercializado</option>
+            <option value="0">No comercializado</option>
+          </select>
+        </div>
+        <div class="filtros-campo">
+          <label for="filtro-laboratorio">Laboratorio</label>
+          <input type="text" id="filtro-laboratorio" autocomplete="off" placeholder="p. ej. Cinfa">
+        </div>
+        <button type="button" id="filtros-limpiar" class="filtros-limpiar">Limpiar filtros</button>
+      </div>
     </section>
 
     <!-- Resultados de búsqueda -->

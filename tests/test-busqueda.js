@@ -122,9 +122,19 @@ const dom = new JSDOM(html, {
         data = { totalFilas: filas.length, pagina: 1, tamanioPagina: 200, resultados: filas };
       } else if (u.includes("/medicamentos?")) {
         const nregistro = params.get("nregistro");
-        const filas = nregistro
+        let filas = nregistro
           ? MEDICAMENTOS.concat(POR_NREGISTRO).filter((m) => m.nregistro === nregistro)
           : MEDICAMENTOS;
+        // Filtros combinables: se simulan igual que la API real los combina
+        // (AND), sobre lo que ya haya devuelto la búsqueda por nombre/nregistro.
+        const laboratorio = params.get("laboratorio");
+        if (laboratorio) {
+          filas = filas.filter((m) => (m.labtitular || "").toLowerCase().includes(laboratorio.toLowerCase()));
+        }
+        const receta = params.get("receta");
+        if (receta !== null) filas = filas.filter((m) => Boolean(m.receta) === (receta === "1"));
+        const comerc = params.get("comerc");
+        if (comerc !== null) filas = filas.filter((m) => Boolean(m.comerc) === (comerc === "1"));
         data = { totalFilas: filas.length, pagina: 1, tamanioPagina: 200, resultados: filas };
       } else if (u.includes("/docSegmentado/secciones/")) {
         data = [];
@@ -359,6 +369,69 @@ const escribir = (valor) => {
     document.querySelector("#results-list li .result-cn").textContent.includes("CN 662025"),
     document.querySelector("#results-list li .result-cn").textContent
   );
+
+  // --- 7b. Filtros combinables (receta, comercialización, laboratorio) ---
+  const filtrosBoton = document.getElementById("filtros-boton");
+  const filtrosPanel = document.getElementById("filtros-panel");
+  comprobar("el panel de filtros arranca cerrado", filtrosPanel.hidden === true);
+  filtrosBoton.click();
+  comprobar("el botón de filtros lo abre", filtrosPanel.hidden === false && filtrosBoton.getAttribute("aria-expanded") === "true");
+
+  peticiones.length = 0;
+  const filtroLab = document.getElementById("filtro-laboratorio");
+  filtroLab.value = "CINFA";
+  filtroLab.dispatchEvent(new window.Event("input", { bubbles: true }));
+  await esperar(400); // el filtro de laboratorio lleva su propio debounce (300ms)
+  comprobar(
+    "elegir un filtro repite la búsqueda con el término que ya había",
+    peticiones.some((u) => u.includes("/medicamentos?") && u.includes("laboratorio=CINFA") && u.includes("nombre=parac")),
+    peticiones.join(" | ")
+  );
+  comprobar(
+    "el resultado se recorta al laboratorio elegido",
+    document.querySelectorAll("#results-list li").length === 1,
+    document.querySelectorAll("#results-list li").length
+  );
+  comprobar("el botón de filtros se resalta con algún filtro puesto", filtrosBoton.classList.contains("activo"));
+
+  // Con el campo de búsqueda vacío, cambiar un filtro no dispara ninguna petición
+  escribir("");
+  peticiones.length = 0;
+  const filtroReceta = document.getElementById("filtro-receta");
+  filtroReceta.value = "1";
+  filtroReceta.dispatchEvent(new window.Event("change", { bubbles: true }));
+  await esperar(50);
+  comprobar("sin nada escrito, cambiar un filtro no busca nada", peticiones.length === 0, peticiones.join(" | "));
+
+  // "Limpiar filtros" vacía los tres campos y, si hay término, vuelve a buscar sin filtrar
+  escribir("parac");
+  document.getElementById("filtros-limpiar").click();
+  await esperar(400);
+  comprobar(
+    "limpiar filtros deja los tres campos vacíos",
+    filtroLab.value === "" && filtroReceta.value === "" && document.getElementById("filtro-comerc").value === ""
+  );
+  comprobar("limpiar filtros quita el resaltado del botón", filtrosBoton.classList.contains("activo") === false);
+  comprobar(
+    "y la lista vuelve a los dos resultados sin filtrar",
+    document.querySelectorAll("#results-list li").length === 2,
+    document.querySelectorAll("#results-list li").length
+  );
+
+  // Los filtros no afectan al desplegable de sugerencias, solo a la lista completa
+  filtroLab.value = "CINFA";
+  filtroLab.dispatchEvent(new window.Event("input", { bubbles: true }));
+  await esperar(400);
+  peticiones.length = 0;
+  escribir("parac");
+  await esperar(400);
+  comprobar(
+    "las sugerencias en vivo no llevan el filtro de laboratorio",
+    peticiones.some((u) => u.includes("/medicamentos?nombre=parac") && !u.includes("laboratorio")),
+    peticiones.join(" | ")
+  );
+  document.getElementById("filtros-limpiar").click();
+  await esperar(50);
 
   // --- 8. Búsqueda por código nacional (CN) ------------------------------
   peticiones.length = 0;

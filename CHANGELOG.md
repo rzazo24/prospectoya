@@ -17,6 +17,28 @@ y `Eliminado` (solo los que apliquen).
 
 ### Añadido
 
+- **Filtros combinables** (receta, comercialización, laboratorio): un botón
+  "Filtros" junto al buscador abre un panel con los tres campos, que se
+  combinan en AND con el término de búsqueda y entre sí (comprobado contra
+  la API real: `nombre=paracetamol&laboratorio=cinfa&receta=0` → 0, ya que
+  todo el paracetamol de Cinfa lleva receta). Solo afectan a la búsqueda
+  completa por nombre, nunca al desplegable de sugerencias ni a una consulta
+  por CN o nº de registro (ya apuntan a un envase o medicamento concreto).
+  Se probaron y descartaron ~15 nombres de parámetro distintos para filtrar
+  por **forma farmacéutica** (`forma`, `formaFarmaceutica`, `dosis`, `via`…,
+  con el id de `/maestras?maestra=3` y con el simplificado): ninguno filtra
+  de verdad en `/medicamentos`, así que se sustituyó por
+  **"Comercialización"** (`comerc=1`/`comerc=0`), que sí filtra. También se
+  confirmó que `receta`/`comerc` solo entienden `"1"`/`"0"` literales
+  (`true`/`false`/`si`/`no` se ignoran) y que `laboratorio` filtra por
+  coincidencia parcial sin distinguir mayúsculas (`cinfa` y
+  `Laboratorios Cinfa S.A.` dan el mismo resultado). `test-busqueda.js`
+  cubre abrir/cerrar el panel, que un filtro repite la búsqueda con el
+  término ya escrito, que las sugerencias en vivo no llevan filtros, "Limpiar
+  filtros" y el resaltado del botón; `test-api-real.js` fija `receta`,
+  `comerc`, `laboratorio` y su combinación en AND contra la API real. Toca
+  `index.html`, `app.js` y `styles.css` (cáscara), así que `VERSION` sube en
+  `sw.js` (`v18` → `v19`).
 - **Medicamentos equivalentes**: al abrir un medicamento, si existen, sale
   una lista de otros con el mismo principio activo, la misma dosis y la
   misma forma farmacéutica (`GET /medicamentos?vmp=X`, que **sí filtra de

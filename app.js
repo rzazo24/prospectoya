@@ -18,6 +18,12 @@ const composerWrap = document.querySelector(".composer-wrap");
 const searchExamples = document.getElementById("search-examples");
 const resultsList = document.getElementById("results-list");
 const resultsStatus = document.getElementById("results-status");
+const filtrosBoton = document.getElementById("filtros-boton");
+const filtrosPanel = document.getElementById("filtros-panel");
+const filtroReceta = document.getElementById("filtro-receta");
+const filtroComerc = document.getElementById("filtro-comerc");
+const filtroLaboratorio = document.getElementById("filtro-laboratorio");
+const filtrosLimpiar = document.getElementById("filtros-limpiar");
 const detailSection = document.getElementById("detail-section");
 const detailBody = document.getElementById("detail-body");
 const detailClose = document.getElementById("detail-close");
@@ -58,6 +64,7 @@ let currentNRegistro = null;
 let currentTipoDoc = 2; // 2 = prospecto por defecto, 1 = ficha técnica
 let currentDocs = []; // docs[] del medicamento abierto (PDF/HTML oficiales)
 let debounceTimer = null;
+let debounceFiltroLab = null;
 let indiceSugerenciaActiva = -1; // -1 = ninguna sugerencia marcada con el teclado
 
 // --- Búsqueda con autocompletado ---
@@ -93,11 +100,14 @@ function tieneLongitudDeCodigo(term) {
 /**
  * Lanza la consulta adecuada según lo escrito: por código nacional si son 6
  * dígitos, por nº de registro si es un número sin coincidencia como CN, y por
- * nombre en el resto de casos.
+ * nombre en el resto de casos. Los filtros (receta, comerc, laboratorio) solo
+ * se aplican a la búsqueda por nombre: un CN o un nº de registro ya apuntan a
+ * un envase o medicamento concretos, así que filtrarlos no tendría sentido.
  * @param {string} term - texto del buscador
+ * @param {Object} [filtros] - p.ej. { receta: "1", laboratorio: "cinfa" }
  * @returns {Promise<{resultados: Array, totalFilas: number, porCodigoNacional: string|null}>}
  */
-async function consultarSegunTermino(term) {
+async function consultarSegunTermino(term, filtros = {}) {
   if (RE_CODIGO_NACIONAL.test(term)) {
     // /presentaciones devuelve el envase exacto con su `cn` y el `nregistro`
     const porCN = await listarPresentaciones({ cn: term });
@@ -123,7 +133,7 @@ async function consultarSegunTermino(term) {
     };
   }
 
-  const porNombre = await buscarMedicamentos({ nombre: term });
+  const porNombre = await buscarMedicamentos({ nombre: term, ...filtros });
   return {
     resultados: porNombre.resultados || [],
     totalFilas: porNombre.totalFilas,
@@ -321,6 +331,59 @@ if (searchExamples) {
   });
 }
 
+// --- Filtros combinables (receta, comercialización, laboratorio) ---
+// Solo afectan a la lista completa de resultados, no al desplegable de
+// sugerencias (ver consultarSegunTermino()). "Forma farmacéutica" se
+// descartó: comprobado contra la API real que ningún parámetro de
+// /medicamentos la filtra de verdad (ver AGENTS.md); en su lugar va
+// "Comercialización" (`comerc`), que sí filtra.
+
+filtrosBoton.addEventListener("click", () => {
+  const abierto = filtrosPanel.hidden === false;
+  filtrosPanel.hidden = abierto;
+  filtrosBoton.setAttribute("aria-expanded", String(!abierto));
+});
+
+/** Filtros con algún valor elegido, listos para combinar con `nombre`. */
+function obtenerFiltrosActivos() {
+  const filtros = {};
+  if (filtroReceta.value) filtros.receta = filtroReceta.value;
+  if (filtroComerc.value) filtros.comerc = filtroComerc.value;
+  const laboratorio = filtroLaboratorio.value.trim();
+  if (laboratorio) filtros.laboratorio = laboratorio;
+  return filtros;
+}
+
+/** Resalta el botón de filtros en cuanto hay alguno puesto (abierto o no). */
+function actualizarBotonFiltros() {
+  const hayFiltros = Object.keys(obtenerFiltrosActivos()).length > 0;
+  filtrosBoton.classList.toggle("activo", hayFiltros);
+}
+
+/** Si ya hay algo escrito, repite la búsqueda completa con los filtros al día. */
+function repetirBusquedaConFiltros() {
+  actualizarBotonFiltros();
+  const term = searchInput.value.trim();
+  if (term.length > 0) buscarYRenderizarResultados(term);
+}
+
+filtroReceta.addEventListener("change", repetirBusquedaConFiltros);
+filtroComerc.addEventListener("change", repetirBusquedaConFiltros);
+// El laboratorio es texto libre: con debounce, como el buscador principal,
+// para no lanzar una búsqueda en cada tecla.
+filtroLaboratorio.addEventListener("input", () => {
+  clearTimeout(debounceFiltroLab);
+  debounceFiltroLab = setTimeout(repetirBusquedaConFiltros, 300);
+});
+
+filtrosLimpiar.addEventListener("click", () => {
+  filtroReceta.value = "";
+  filtroComerc.value = "";
+  filtroLaboratorio.value = "";
+  clearTimeout(debounceFiltroLab);
+  repetirBusquedaConFiltros();
+});
+
 /**
  * Busca por nombre, código nacional (6 dígitos) o nº de registro y pinta la
  * lista completa de resultados.
@@ -350,7 +413,7 @@ async function buscarYRenderizarResultados(term) {
   mostrarEstadoResultados(`Buscando «${term}»…`);
 
   try {
-    const { resultados, totalFilas, porCodigoNacional } = await consultarSegunTermino(term);
+    const { resultados, totalFilas, porCodigoNacional } = await consultarSegunTermino(term, obtenerFiltrosActivos());
     renderResultados(resultados, term, totalFilas, porCodigoNacional);
   } catch (err) {
     console.error(err);

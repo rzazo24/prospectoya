@@ -35,6 +35,9 @@ Base: `https://cima.aemps.es/cima/rest/`
 | `GET /docSegmentado/contenido/1?nregistro=X&seccion=X` | Contenido HTML de una sección de la ficha técnica |
 | `GET /medicamentos?vmp=X` | **Medicamentos equivalentes**: mismo principio activo, misma dosis y misma forma farmacéutica, de cualquier laboratorio (`vmp=17511000140104` → 62 medicamentos, todos "paracetamol 1 g comprimidos"). El id es el mismo que `/presentaciones` llama `dcp.id`. Filtra de verdad; **`vmpp` en cambio está roto** como filtro de `/medicamentos` (ignora el valor y devuelve el catálogo entero). |
 | `GET /maestras?maestra=N&nombre=X` | Catálogos (`maestra=1` principios activos, `3` formas farmacéuticas, `4` vías de administración, `6` laboratorios…). **Los dos parámetros son obligatorios**: solo `maestra` devuelve 204 sin cuerpo (verificado). Sin usar todavía. |
+| `GET /medicamentos?receta=1\|0` | **Filtro de receta** (con/sin). Filtra de verdad, pero solo con `"1"`/`"0"` literales: `true`/`false`/`si`/`no` se ignoran y devuelven el catálogo entero (verificado: `receta=1` + `receta=0` suman las 25.459 filas). |
+| `GET /medicamentos?comerc=1\|0` | **Filtro de comercialización**. Mismo patrón que `receta`: solo `"1"`/`"0"` filtran de verdad (verificado: también suman el catálogo entero). |
+| `GET /medicamentos?laboratorio=X` | Filtra por coincidencia **parcial** y sin distinguir mayúsculas (`laboratorio=cinfa` y `laboratorio=Laboratorios Cinfa S.A.` dan el mismo resultado). Los tres filtros combinan en AND entre sí y con `nombre`. |
 
 `GET /vmpp?practiv1=X` (catálogo VMP/VMPP por principio activo, con todas sus
 dosis y formas) también filtra de verdad, pero **no se usa**: para
@@ -49,6 +52,13 @@ medicamento suelto**: ni `cn` ni `nregistro` filtran de verdad (siempre
 devuelve el listado nacional completo, unas 862 filas). El problema de
 suministro de un medicamento concreto se lee del campo `psum`, que ya viene
 en `/medicamentos` y `/presentaciones`.
+
+**No hay filtro real por forma farmacéutica en `/medicamentos`**: se probaron
+~15 nombres de parámetro (`forma`, `formaFarmaceutica`, `formafarmac`,
+`dosificacion`, `idForma`, `dosis`…), con el id completo de
+`/maestras?maestra=3` y con el simplificado, y todos devuelven el catálogo
+sin filtrar. Por eso los filtros combinables de la interfaz usan
+"Comercialización" (`comerc`) en su lugar.
 
 Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
 
@@ -68,6 +78,8 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
 5. Medicamentos equivalentes: mismo principio activo, dosis y forma
    farmacéutica (`GET /medicamentos?vmp=X`), con aviso si el medicamento no
    conviene sustituirlo sin consultar (`nosustituible`). ✅
+6. Filtros combinables sobre la búsqueda por nombre: receta, comercialización
+   y laboratorio (`receta`, `comerc`, `laboratorio`). ✅
 
 ### Cómo funciona el buscador (`app.js`)
 
@@ -112,7 +124,27 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
   `index.html` + `tema.js` + `api.js` + `app.js` con `fetch` simulado; vive en
   [`tests/`](tests/README.md) (ver [Tests](#tests)).
 
+### Filtros combinables (`app.js`)
 
+- El botón **`#filtros-boton`** abre y cierra **`#filtros-panel`**, con tres
+  campos: receta (`#filtro-receta`), comercialización (`#filtro-comerc`) y
+  laboratorio (`#filtro-laboratorio`, texto libre). `obtenerFiltrosActivos()`
+  recoge los que tengan valor y `consultarSegunTermino(term, filtros)` los
+  combina con `nombre` en la misma llamada a `GET /medicamentos` — combinan
+  en AND, tanto entre ellos como con el término de búsqueda.
+- **Solo afectan a la búsqueda completa por nombre**: ni al desplegable de
+  sugerencias en vivo (que sigue llamando a `consultarSegunTermino()` sin
+  segundo argumento) ni a una consulta por CN o nº de registro, que ya
+  apuntan a un envase o medicamento concretos.
+- Cambiar receta o comercialización repite la búsqueda al momento (`change`);
+  el laboratorio, al ser texto libre, lleva su propio *debounce* de 300 ms
+  igual que el buscador principal. "Limpiar filtros" vacía los tres campos y,
+  si hay algo escrito, repite la búsqueda sin filtrar. El botón se resalta
+  (`.activo`) en cuanto hay algún filtro puesto, esté o no abierto el panel.
+- **No hay filtro de forma farmacéutica**: se probaron ~15 nombres de
+  parámetro distintos contra la API real y ninguno filtra `/medicamentos` de
+  verdad (ver la referencia de la API, arriba), así que el tercer filtro es
+  "Comercialización" en su lugar.
 
 ### Cómo funciona el resumen rápido (`app.js`)
 
@@ -458,7 +490,7 @@ Chrome/Chromium (Node las demás no necesitan nada instalado):
 ```bash
 cd tests
 npm install          # jsdom (única dependencia, sólo de desarrollo)
-npm test             # 355 comprobaciones: estructura, buscador, resumen, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
+npm test             # 365 comprobaciones: estructura, buscador, resumen, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
 npm run test:api-real   # contra la API real de CIMA (necesita red)
 ```
 
