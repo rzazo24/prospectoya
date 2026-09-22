@@ -13,7 +13,17 @@ parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
 Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
 y `Eliminado` (solo los que apliquen).
 
-## Sin publicar
+## [0.8.0] - 2026-09-22
+
+Octava entrega: se aprovechan más filtros reales de la API (medicamentos
+equivalentes por principio activo/dosis/forma, y filtros combinables de
+receta, comercialización y laboratorio), tras comprobar a fondo contra la API
+real qué filtra de verdad y qué no (`forma farmacéutica` no tiene filtro real
+en `/medicamentos`, pese a probar ~15 nombres de parámetro distintos). De
+paso, el barrido de calidad del resumen rápido que sacó el fallo de la 0.7.0
+deja de ser un script suelto y pasa a ser una suite permanente del repo, con
+una muestra ampliada a 155 medicamentos reales. Todo sigue sin backend, sin
+build, sin frameworks y sin dependencias en el sitio.
 
 ### Añadido
 
@@ -55,7 +65,8 @@ y `Eliminado` (solo los que apliquen).
   filtros" y el resaltado del botón; `test-api-real.js` fija `receta`,
   `comerc`, `laboratorio` y su combinación en AND contra la API real. Toca
   `index.html`, `app.js` y `styles.css` (cáscara), así que `VERSION` sube en
-  `sw.js` (`v18` → `v19`).
+  `sw.js` (`v18` → `v19`). `ayuda.html` explica los tres campos en un commit
+  aparte (`VERSION` `v19` → `v20`).
 - **Medicamentos equivalentes**: al abrir un medicamento, si existen, sale
   una lista de otros con el mismo principio activo, la misma dosis y la
   misma forma farmacéutica (`GET /medicamentos?vmp=X`, que **sí filtra de
@@ -92,6 +103,12 @@ y `Eliminado` (solo los que apliquen).
   de `/presentaciones`, no solo el CN, para que `cnsDeMedicamento()` (mismo
   nombre y comportamiento de siempre) y la nueva `vmpDeMedicamento()`
   compartan una única petición por medicamento en vez de repetirla.
+
+**Commits de esta versión:**
+[`782cd02`](https://github.com/rzazo24/prospectoya/commit/782cd02) ·
+[`13999c3`](https://github.com/rzazo24/prospectoya/commit/13999c3) ·
+[`6a20db4`](https://github.com/rzazo24/prospectoya/commit/6a20db4) ·
+[`6725b07`](https://github.com/rzazo24/prospectoya/commit/6725b07)
 
 ## [0.7.0] - 2026-09-22
 
@@ -635,6 +652,7 @@ vanilla contra la API pública de CIMA (AEMPS).
 [`3396182`](https://github.com/rzazo24/prospectoya/commit/3396182) ·
 [`7495276`](https://github.com/rzazo24/prospectoya/commit/7495276)
 
+[0.8.0]: https://github.com/rzazo24/prospectoya/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/rzazo24/prospectoya/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/rzazo24/prospectoya/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/rzazo24/prospectoya/compare/v0.4.0...v0.5.0
