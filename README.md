@@ -163,6 +163,10 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
   subtítulo cualquier párrafo cuyo contenido vaya entero en negrita/subrayado
   (cubre las dos variantes de CIMA). El texto de las tarjetas se pinta siempre
   con `textContent`, nunca con `innerHTML`.
+- `test-barrido.js` comprueba la extracción contra 155 medicamentos reales
+  (cobertura mínima del 90% por campo); `test-resumen.js` cubre con casos
+  sintéticos los patrones concretos que ya han dado problemas de verdad
+  (subtítulos anidados, listas que empiezan en minúscula).
 
 ### Badges y documento oficial en el detalle (`app.js`)
 
@@ -492,6 +496,7 @@ cd tests
 npm install          # jsdom (única dependencia, sólo de desarrollo)
 npm test             # 365 comprobaciones: estructura, buscador, resumen, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
 npm run test:api-real   # contra la API real de CIMA (necesita red)
+npm run test:barrido    # barrido de calidad del resumen sobre 155 medicamentos reales (necesita red, ~20s)
 ```
 
 Resumen: `test-html.js` (estructura de las dos páginas, metaetiquetas y avisos),
@@ -508,8 +513,11 @@ detalle: ventana modal centrada a ±0,5px, ancho ≤743px, el renglón sin hueco
 filas del resumen centradas y la ✕ a la vista),
 `test-pwa.js` (app instalable: manifest, iconos, service worker, sin conexión y
 aviso de versión nueva), `test-iconos.js` (los favicons cargan y miden lo que
-deben), `test-solape.js` (regresión del z-index del desplegable) y
-`test-api-real.js` (la API de verdad).
+deben), `test-solape.js` (regresión del z-index del desplegable),
+`test-api-real.js` (la API de verdad) y `test-barrido.js` (barrido de calidad
+del resumen rápido sobre 155 medicamentos reales de ~35 principios activos
+distintos: cobertura mínima del 90% por campo y un techo amplio de
+"sospechas" heurísticas, como diagnóstico para revisar a mano).
 En [`tests/README.md`](tests/README.md) está el detalle de cada una.
 
 ## Notas para quien continúe el desarrollo

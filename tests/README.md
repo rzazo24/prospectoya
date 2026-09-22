@@ -11,7 +11,7 @@ navegador sólo carga los ficheros de la raíz (`api.js`, `app.js`, `tema.js`,
   (`test-movil.js`, `test-arriba.js`, `test-paginas.js`, `test-resoluciones.js`,
   `test-pwa.js`, `test-iconos.js` y `test-solape.js`). Si no está en el `PATH`, se
   le puede indicar la ruta: `CHROME=/ruta/a/chrome npm test`.
-- **Red** para `test-api-real.js` (consulta la API de CIMA de verdad).
+- **Red** para `test-api-real.js` y `test-barrido.js` (consultan la API de CIMA de verdad).
 
 ## Instalación
 
@@ -26,6 +26,7 @@ npm install          # jsdom: la única dependencia, y sólo de desarrollo
 npm test                 # todas las que no necesitan red
 npm run test:busqueda    # una en concreto
 npm run test:api-real    # contra la API real de CIMA
+npm run test:barrido     # barrido de calidad del resumen (155 medicamentos reales, ~20s)
 ```
 
 También se pueden lanzar directamente, que es útil al depurar:
@@ -46,6 +47,7 @@ También se pueden lanzar directamente, que es útil al depurar:
 | `test-iconos.js` | Los iconos declarados en `index.html` se cargan de verdad y los PNG tienen su tamaño exacto (`favicon-32.png` 32×32, `apple-touch-icon.png` 180×180). | Chrome/Chromium |
 | `test-solape.js` | Regresión del `z-index` del autocompletado: con `styles.css` ningún punto del desplegable queda tapado por los resultados y la barra superior sigue ganando al hacer scroll; y con el mismo CSS **sin el arreglo** debe detectarse el solape (si no lo detecta, el test avisa de que ya no sirve). | Chrome/Chromium |
 | `test-api-real.js` | `api.js` contra la API real de CIMA: `?cn=` exacto, CN inexistente, nº de registro largo (tipo EMA), varios envases por `nregistro`, que `/medicamentos` sigue sin devolver `cn`, paginación, mayúsculas/acentos, `dcp.id`/`vmp`, `nosustituible` y los filtros `receta`/`comerc`/`laboratorio` (incluida su combinación en AND). | Red |
+| `test-barrido.js` | Barrido de calidad del resumen rápido contra la API real, sobre 155 medicamentos reales de ~35 principios activos distintos (varios laboratorios de cada uno): cobertura de los 4 campos (mínimo 90%), un techo amplio de "sospechas" heurísticas (palabras clave que el texto debería mencionar) y que no fallen por red más del 10% de las peticiones. Es la versión permanente y más amplia de un script que antes vivía fuera del repo; con él se encontró de verdad el fallo del subtítulo anidado que cubre `test-resumen.js`. No sustituye a `test-resumen.js` (las heurísticas tienen falsos positivos conocidos y no son un test estricto caso a caso). | Red |
 
 ## Detalles
 

@@ -15,7 +15,8 @@
     "test:pwa": "node test-pwa.js",
     "test:iconos": "node test-iconos.js",
     "test:solape": "node test-solape.js",
-    "test:api-real": "node test-api-real.js"
+    "test:api-real": "node test-api-real.js",
+    "test:barrido": "node test-barrido.js"
   },
   "devDependencies": {
     "jsdom": "^30.1.0"

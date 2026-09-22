@@ -17,6 +17,23 @@ y `Eliminado` (solo los que apliquen).
 
 ### Añadido
 
+- **`test-barrido.js`**: versión permanente y más amplia del script de barrido
+  de calidad del resumen rápido que antes vivía fuera del repo. Comprueba
+  `extraerResumenRapido()` contra la API real sobre **155 medicamentos
+  reales** (unos 35 principios activos de categorías terapéuticas distintas,
+  con varios laboratorios de cada uno, frente a los 50 del script original),
+  con cobertura mínima del 90% por campo y un techo amplio de "sospechas"
+  heurísticas (palabras clave que el texto debería mencionar), pensado para
+  avisar de un desplome general de calidad, no como comprobación estricta
+  caso a caso (tiene falsos positivos conocidos: comprobado a mano que los 15
+  casos que marca en la muestra actual son legítimos, solo que están escritos
+  sin la palabra clave exacta que busca la heurística). Con este barrido se
+  encontró de verdad, en su día, el fallo del subtítulo anidado que cubre
+  `test-resumen.js` — comprobado además que revertir ese fallo lo detecta
+  `test-resumen.js` (caso sintético y determinista) pero no el umbral amplio
+  de `test-barrido.js` (19/155 sospechas, por debajo del 25% del techo): es a
+  propósito, uno no sustituye al otro (ver AGENTS.md). Necesita red y tarda
+  ~20s: no forma parte de `npm test`, tiene su propio `npm run test:barrido`.
 - **Filtros combinables** (receta, comercialización, laboratorio): un botón
   "Filtros" junto al buscador abre un panel con los tres campos, que se
   combinan en AND con el término de búsqueda y entre sí (comprobado contra
