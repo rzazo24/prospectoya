@@ -44,7 +44,7 @@ for (const [fichero, codigo] of [["tema.js", tema], ["arriba.js", arriba], ["api
   html = html.replace(`<script src="${fichero}"></script>`, `<script>${codigo}</script>`);
 }
 
-// 155 nregistros reales (24/09/2026), de 35 principios activos con varios
+// 155 nregistros reales (22/09/2026), de 35 principios activos con varios
 // laboratorios cada uno. Es una lista fija, no una consulta en vivo, para que
 // la suite dé el mismo resultado en cualquier máquina; si algún medicamento
 // deja de existir en CIMA, ese nregistro simplemente cuenta como error de red

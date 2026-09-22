@@ -13,7 +13,11 @@ parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
 Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
 y `Eliminado` (solo los que apliquen).
 
-## Sin publicar
+## [0.8.2] - 2026-09-22
+
+Décima entrega: un arreglo real (medicamentos con documentación reducida que
+se quedaban sin nada) y la captura del README puesta al día. Todo sigue sin
+backend, sin build, sin frameworks y sin dependencias en el sitio.
 
 ### Corregido
 
@@ -44,6 +48,10 @@ y `Eliminado` (solo los que apliquen).
   (versión 0.8.0). Recapturada a 1200×798 con Chrome headless sobre el sitio
   servido en local, misma composición de siempre (tema claro, sin nada
   escrito en el buscador).
+
+**Commits de esta versión:**
+[`7ec967d`](https://github.com/rzazo24/prospectoya/commit/7ec967d) ·
+[`8cd6b37`](https://github.com/rzazo24/prospectoya/commit/8cd6b37)
 
 ## [0.8.1] - 2026-09-22
 
@@ -722,6 +730,7 @@ vanilla contra la API pública de CIMA (AEMPS).
 [`3396182`](https://github.com/rzazo24/prospectoya/commit/3396182) ·
 [`7495276`](https://github.com/rzazo24/prospectoya/commit/7495276)
 
+[0.8.2]: https://github.com/rzazo24/prospectoya/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/rzazo24/prospectoya/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/rzazo24/prospectoya/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/rzazo24/prospectoya/compare/v0.6.0...v0.7.0

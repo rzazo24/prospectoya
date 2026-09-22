@@ -78,7 +78,7 @@ async function listarPresentaciones(params) {
  *   `seccion` y el título viene en `titulo`; el array ya llega en el orden
  *   del documento, que NO coincide con `orden` en la ficha técnica)
  *
- * VERIFICADO CONTRA LA API REAL (24/09/2026, nregistro BE250187IP, un Crestor
+ * VERIFICADO CONTRA LA API REAL (22/09/2026, nregistro BE250187IP, un Crestor
  * de importación paralela): cuando el documento no está segmentado, la API
  * no devuelve un array vacío, sino `{ error: "No existen secciones..." }`
  * con HTTP 200 igualmente. Pasa con medicamentos de documentación reducida
