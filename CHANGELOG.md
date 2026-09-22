@@ -13,6 +13,16 @@ parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
 Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
 y `Eliminado` (solo los que apliquen).
 
+## Sin publicar
+
+### Cambiado
+
+- **`captura-inicio.png` actualizada**: la captura del README se había
+  quedado desactualizada tras añadir el botón "Filtros" junto al buscador
+  (versión 0.8.0). Recapturada a 1200×798 con Chrome headless sobre el sitio
+  servido en local, misma composición de siempre (tema claro, sin nada
+  escrito en el buscador).
+
 ## [0.8.1] - 2026-09-22
 
 Novena entrega, de un solo arreglo pero real: un clic de ratón en el
