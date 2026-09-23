@@ -176,6 +176,14 @@
              crestor 18 y el CN 662025, 1 envase). -->
         <button type="button" class="chip js-ejemplo" data-ejemplo="662025">CN 662025</button>
       </div>
+
+      <!-- Mi botiquín: medicamentos guardados en localStorage (ver app.js).
+           Oculto si está vacío; se rellena al cargar la página y cada vez que
+           cambia (renderBotiquin()). -->
+      <div class="botiquin-section" id="botiquin-section" hidden>
+        <span class="botiquin-label">Tu botiquín</span>
+        <ul class="botiquin-lista" id="botiquin-lista"></ul>
+      </div>
     </section>
 
     <!-- Filtros combinables: solo afectan a la búsqueda por nombre (no a una
@@ -245,7 +253,17 @@
 
         <div id="detail-header" class="detail-header">
           <span class="detail-eyebrow">Medicamento</span>
-          <h2 id="detail-name"></h2>
+          <div class="detail-titulo-row">
+            <h2 id="detail-name"></h2>
+            <!-- Guarda/quita el medicamento abierto de "mi botiquín" (ver app.js:
+                 actualizarBotonBotiquin() pone aria-pressed/aria-label/title
+                 según si ya está guardado). -->
+            <button type="button" id="botiquin-toggle" class="botiquin-toggle" aria-pressed="false" aria-label="Añadir a mi botiquín" title="Añadir a mi botiquín">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </button>
+          </div>
           <p id="detail-lab"></p>
           <p id="detail-cn" class="detail-cn" hidden></p>
           <!-- Los dos badges siguientes los enseña/oculta selectMedicamento() según

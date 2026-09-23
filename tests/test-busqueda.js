@@ -55,6 +55,7 @@ const PRESENTACIONES = [
   { nregistro: "70001", cn: "700123", nombre: "PARACETAMOL KERN PHARMA 500 mg , 20 comprimidos", labtitular: "KERN PHARMA", receta: false, generico: true, comerc: true, dcp: { id: "V-PARA-500" } },
   { nregistro: "123456", cn: "999888", nombre: "MEDICAMENTO ANTIGUO 100 mg , 30 comprimidos", labtitular: "LAB", comerc: true },
   { nregistro: "BE900001IP", cn: "768768", nombre: "CRESTOR IMPORTACION 10 mg , 28 comprimidos", labtitular: "GRUNENTHAL", comerc: true },
+  { nregistro: "99001", cn: "990011", nombre: "IBUPROFENO PRUEBA 400 mg , 20 comprimidos", labtitular: "LABORATORIO PRUEBA", comerc: true },
 ];
 
 // Medicamento de importación paralela (documentación reducida): comprobado
@@ -83,6 +84,13 @@ const EQUIVALENTES = [
 // Medicamento "antiguo" con nº de registro de 6 dígitos: sólo aparece al
 // consultar por código (no está en la lista de resultados por nombre)
 const POR_NREGISTRO = { nregistro: "123456", nombre: "MEDICAMENTO ANTIGUO 100 mg", labtitular: "LAB", comerc: true };
+
+// Nº de registro propio para las pruebas de "mi botiquín": cachePresentaciones
+// guarda el CN por nregistro, así que si estas pruebas reutilizaran el 77758 o
+// el 70001, precalentarían su caché antes de tiempo y falsearían las pruebas
+// de la sección 7 (que comprueban que el CN se pide la primera vez que un
+// resultado entra en pantalla).
+const PARA_BOTIQUIN = { nregistro: "99001", nombre: "IBUPROFENO PRUEBA 400 mg", labtitular: "LABORATORIO PRUEBA", comerc: true };
 
 // URLs de las peticiones simuladas, para comprobar qué se consulta y cuándo
 const peticiones = [];
@@ -139,7 +147,7 @@ const dom = new JSDOM(html, {
       } else if (u.includes("/medicamentos?")) {
         const nregistro = params.get("nregistro");
         let filas = nregistro
-          ? MEDICAMENTOS.concat(POR_NREGISTRO).filter((m) => m.nregistro === nregistro)
+          ? MEDICAMENTOS.concat(POR_NREGISTRO, PARA_BOTIQUIN).filter((m) => m.nregistro === nregistro)
           : MEDICAMENTOS;
         // Filtros combinables: se simulan igual que la API real los combina
         // (AND), sobre lo que ya haya devuelto la búsqueda por nombre/nregistro.
@@ -380,6 +388,95 @@ const escribir = (valor) => {
     enlaceOficial.hidden === false && enlaceOficial.href === IMPORTACION_PARALELA.docs[0].url,
     enlaceOficial.href
   );
+  detalle.close();
+
+  // --- 4e. Mi botiquín (guardar/quitar medicamentos en localStorage) -----
+  // Usa nregistros propios (PARA_BOTIQUIN, IMPORTACION_PARALELA), no el 77758
+  // ni el 70001: cachePresentaciones guarda el CN por nregistro, así que abrir
+  // aquí un medicamento que la sección 7 comprueba más abajo precalentaría su
+  // caché antes de tiempo y falsearía esa prueba (le pasó a esta misma suite:
+  // "se pide el CN de cada resultado visible" fallaba si estas pruebas
+  // reutilizaban el 77758).
+  window.localStorage.removeItem("prospectoya-botiquin"); // estado limpio, por si acaso
+  await window.selectMedicamento(PARA_BOTIQUIN);
+  await esperar(100);
+
+  const botiquinBoton = document.getElementById("botiquin-toggle");
+  const botiquinSeccion = document.getElementById("botiquin-section");
+  comprobar("el botón del botiquín arranca sin marcar (medicamento no guardado)", botiquinBoton.getAttribute("aria-pressed") === "false");
+  comprobar("la sección de botiquín arranca oculta (nada guardado)", botiquinSeccion.hidden === true);
+
+  botiquinBoton.click();
+  comprobar("al pulsar la estrella, aria-pressed pasa a true", botiquinBoton.getAttribute("aria-pressed") === "true");
+  comprobar(
+    "se guarda en localStorage (nregistro, nombre y laboratorio, nada más)",
+    JSON.parse(window.localStorage.getItem("prospectoya-botiquin")).length === 1,
+    window.localStorage.getItem("prospectoya-botiquin")
+  );
+  comprobar("la sección de botiquín ya no está oculta", botiquinSeccion.hidden === false);
+  const chipsBotiquin = document.querySelectorAll(".botiquin-item");
+  comprobar(
+    "sale un chip con el nombre del medicamento",
+    chipsBotiquin.length === 1 && chipsBotiquin[0].textContent.includes(PARA_BOTIQUIN.nombre),
+    chipsBotiquin.length
+  );
+
+  // Abrir otro medicamento: el botón no debe arrastrar el estado del anterior
+  await window.selectMedicamento(IMPORTACION_PARALELA);
+  await esperar(100);
+  comprobar("con otro medicamento abierto, el botón vuelve a estar sin marcar", botiquinBoton.getAttribute("aria-pressed") === "false");
+
+  // Reabrir el guardado: el botón lo refleja
+  await window.selectMedicamento(PARA_BOTIQUIN);
+  await esperar(100);
+  comprobar("al reabrir el medicamento guardado, el botón vuelve a marcarse", botiquinBoton.getAttribute("aria-pressed") === "true");
+
+  // Clic en el chip del botiquín: pide datos frescos (nunca usa lo guardado
+  // tal cual, que solo lleva nombre y laboratorio, ver AGENTS.md/api.js)
+  peticiones.length = 0;
+  document.querySelector(".botiquin-item-abrir").click();
+  await esperar(100);
+  comprobar(
+    "el chip del botiquín vuelve a pedir el medicamento a la API (datos frescos)",
+    peticiones.some((u) => u.includes(`/medicamentos?nregistro=${PARA_BOTIQUIN.nregistro}`)),
+    peticiones.join(" | ")
+  );
+  comprobar(
+    "y abre su ficha",
+    document.getElementById("detail-name").textContent === PARA_BOTIQUIN.nombre,
+    document.getElementById("detail-name").textContent
+  );
+
+  // Quitar desde el propio chip (sin pasar por la estrella)
+  document.querySelector(".botiquin-item-quitar").click();
+  comprobar("quitar desde el chip vacía la sección", botiquinSeccion.hidden === true);
+  comprobar(
+    "y localStorage queda vacío",
+    JSON.parse(window.localStorage.getItem("prospectoya-botiquin")).length === 0,
+    window.localStorage.getItem("prospectoya-botiquin")
+  );
+  comprobar(
+    "el botón del medicamento que sigue abierto también se actualiza",
+    botiquinBoton.getAttribute("aria-pressed") === "false"
+  );
+
+  // Un valor corrupto en localStorage (modo privado, cuota, u otra app tocando
+  // la clave) no debe romper la lectura: se trata como botiquín vacío.
+  window.localStorage.setItem("prospectoya-botiquin", "esto no es JSON válido");
+  let botiquinCorrupto;
+  let leerBotiquinLanzoError = false;
+  try {
+    botiquinCorrupto = window.leerBotiquin();
+  } catch (err) {
+    leerBotiquinLanzoError = true;
+  }
+  comprobar(
+    "un valor corrupto en localStorage no rompe leerBotiquin() (se trata como vacío)",
+    !leerBotiquinLanzoError && Array.isArray(botiquinCorrupto) && botiquinCorrupto.length === 0,
+    leerBotiquinLanzoError ? "lanzó una excepción" : JSON.stringify(botiquinCorrupto)
+  );
+  window.localStorage.removeItem("prospectoya-botiquin");
+
   detalle.close();
 
   // --- 5. Escape y clic fuera -------------------------------------------

@@ -13,6 +13,32 @@ parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
 Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
 y `Eliminado` (solo los que apliquen).
 
+## Sin publicar
+
+### Añadido
+
+- **"Mi botiquín"**: primer punto de la Fase 2 que se implementa. Una
+  estrella (`#botiquin-toggle`) junto al nombre del medicamento, en la
+  ficha, lo guarda o lo quita de `localStorage`
+  (`CLAVE_BOTIQUIN = "prospectoya-botiquin"`); lo guardado sale como chips
+  sobre el buscador (`#botiquin-section`, junto a "Prueba con"), oculto si
+  no hay nada. Solo se guardan `nregistro`, `nombre` y `labtitular`: nunca
+  campos que puedan quedarse desfasados (`psum`, `triangulo`, `docs`…, ver
+  la regla de "datos frescos" de la API). Por eso tocar un chip **vuelve a
+  pedir el medicamento a la API** (`GET /medicamentos?nregistro=X`) en vez
+  de abrir lo guardado tal cual; cada chip lleva además un botón `×` para
+  quitarlo sin necesidad de abrirlo primero. Si `localStorage` no está
+  disponible (modo privado, cuota llena…), `leerBotiquin()`/
+  `guardarBotiquin()` lo capturan con `try/catch` (mismo patrón que
+  `tema.js`): la estrella deja de recordar nada, pero el resto de la página
+  sigue funcionando igual. `test-busqueda.js` cubre guardar, quitar (desde
+  la estrella y desde el chip), que el botón refleje el medicamento
+  correcto al cambiar de ficha, que abrir un chip pida datos frescos y que
+  un valor corrupto en `localStorage` no rompa nada (comprobado que las
+  pruebas fallan sin el arreglo). La ayuda explica la función nueva. Toca
+  `index.html`, `app.js` y `styles.css` (cáscara), así que `VERSION` sube
+  en `sw.js` (`v23` → `v24`).
+
 ## [0.9.0] - 2026-09-22
 
 Undécima entrega: la web estrena analítica (Vercel Web Analytics), la única

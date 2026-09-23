@@ -39,6 +39,9 @@ const equivalentesNota = document.getElementById("equivalentes-nota");
 const equivalentesLista = document.getElementById("equivalentes-lista");
 const sectionsAccordion = document.getElementById("sections-accordion");
 const docTabs = document.querySelectorAll(".doc-tab");
+const botiquinToggle = document.getElementById("botiquin-toggle");
+const botiquinSection = document.getElementById("botiquin-section");
+const botiquinLista = document.getElementById("botiquin-lista");
 
 // Máximo de sugerencias en el desplegable y de resultados pintados de una vez.
 // (La API de CIMA ignora `pagina`/`tamanioPagina` en /medicamentos y devuelve
@@ -60,7 +63,14 @@ const MAX_CNS_SIN_OBSERVADOR = 12;
 // Cuántos CN se muestran en un resultado antes de resumir el resto con "+N".
 const MAX_CNS_VISIBLES = 2;
 
+// Clave de localStorage para "mi botiquín" (medicamentos guardados por el
+// usuario; ver más abajo). Sólo el nombre y el laboratorio: nunca campos que
+// puedan quedarse desfasados (psum, triangulo…), ver la regla de la API en
+// AGENTS.md.
+const CLAVE_BOTIQUIN = "prospectoya-botiquin";
+
 let currentNRegistro = null;
+let currentMedicamento = null; // el objeto completo del medicamento abierto (para el botiquín)
 let currentTipoDoc = 2; // 2 = prospecto por defecto, 1 = ficha técnica
 let currentDocs = []; // docs[] del medicamento abierto (PDF/HTML oficiales)
 let debounceTimer = null;
@@ -688,9 +698,11 @@ detailSection.addEventListener("click", (e) => {
 
 async function selectMedicamento(medicamento) {
   currentNRegistro = medicamento.nregistro;
+  currentMedicamento = medicamento;
   detailName.textContent = medicamento.nombre;
   detailLab.textContent = medicamento.labtitular || "";
   abrirDetalle();
+  actualizarBotonBotiquin();
 
   // psum, triangulo y docs ya vienen en el propio medicamento (lo trae
   // /medicamentos o /presentaciones, según de dónde salió la elección): no
@@ -803,6 +815,131 @@ async function renderEquivalentes(medicamento) {
     console.error(err);
   }
 }
+
+// --- Mi botiquín (medicamentos guardados en localStorage) ---
+
+/**
+ * Lo que hay guardado ahora mismo: array de {nregistro, nombre, labtitular}.
+ * Nunca campos que puedan desfasarse (psum, triangulo, docs…): al abrir un
+ * guardado se vuelve a pedir a la API, igual que con cualquier otro (ver
+ * abrirDesdeElBotiquin()).
+ */
+function leerBotiquin() {
+  try {
+    const guardado = JSON.parse(localStorage.getItem(CLAVE_BOTIQUIN));
+    return Array.isArray(guardado) ? guardado : [];
+  } catch (err) {
+    return [];
+  }
+}
+
+function guardarBotiquin(lista) {
+  try {
+    localStorage.setItem(CLAVE_BOTIQUIN, JSON.stringify(lista));
+  } catch (err) {
+    // localStorage bloqueado (modo privado, cuota llena…): el botiquín no se
+    // guarda, pero el resto de la página sigue funcionando igual.
+  }
+}
+
+function estaEnBotiquin(nregistro) {
+  return leerBotiquin().some((m) => m.nregistro === nregistro);
+}
+
+/** Añade o quita el medicamento abierto del botiquín, según toque. */
+function alternarBotiquin() {
+  if (!currentMedicamento) return;
+
+  const lista = leerBotiquin();
+  const indice = lista.findIndex((m) => m.nregistro === currentMedicamento.nregistro);
+
+  if (indice === -1) {
+    lista.push({
+      nregistro: currentMedicamento.nregistro,
+      nombre: currentMedicamento.nombre,
+      labtitular: currentMedicamento.labtitular || "",
+    });
+  } else {
+    lista.splice(indice, 1);
+  }
+
+  guardarBotiquin(lista);
+  actualizarBotonBotiquin();
+  renderBotiquin();
+}
+
+/** El botón ⭐ de la ficha refleja si el medicamento abierto está guardado. */
+function actualizarBotonBotiquin() {
+  const guardado = Boolean(currentMedicamento) && estaEnBotiquin(currentMedicamento.nregistro);
+  const etiqueta = guardado ? "Quitar de mi botiquín" : "Añadir a mi botiquín";
+  botiquinToggle.setAttribute("aria-pressed", String(guardado));
+  botiquinToggle.setAttribute("aria-label", etiqueta);
+  botiquinToggle.title = etiqueta;
+}
+
+/** Pinta los medicamentos guardados como chips sobre el buscador. */
+function renderBotiquin() {
+  const lista = leerBotiquin();
+  botiquinLista.innerHTML = "";
+
+  if (lista.length === 0) {
+    botiquinSection.hidden = true;
+    return;
+  }
+
+  lista.forEach((guardado) => {
+    const li = document.createElement("li");
+    li.className = "botiquin-item";
+
+    const abrir = document.createElement("button");
+    abrir.type = "button";
+    abrir.className = "botiquin-item-abrir";
+    abrir.textContent = guardado.nombre;
+    abrir.addEventListener("click", () => abrirDesdeElBotiquin(guardado));
+    li.appendChild(abrir);
+
+    const quitar = document.createElement("button");
+    quitar.type = "button";
+    quitar.className = "botiquin-item-quitar";
+    quitar.setAttribute("aria-label", `Quitar ${guardado.nombre} de mi botiquín`);
+    quitar.title = "Quitar de mi botiquín";
+    quitar.textContent = "×";
+    quitar.addEventListener("click", () => {
+      guardarBotiquin(leerBotiquin().filter((m) => m.nregistro !== guardado.nregistro));
+      actualizarBotonBotiquin();
+      renderBotiquin();
+    });
+    li.appendChild(quitar);
+
+    botiquinLista.appendChild(li);
+  });
+
+  botiquinSection.hidden = false;
+}
+
+/**
+ * Abre un medicamento guardado. Se vuelve a pedir a la API en vez de usar lo
+ * guardado tal cual: el botiquín solo guarda nombre y laboratorio, nunca
+ * datos que puedan quedarse desfasados (psum, triangulo, docs…).
+ */
+async function abrirDesdeElBotiquin(guardado) {
+  try {
+    const { resultados } = await buscarMedicamentos({ nregistro: guardado.nregistro });
+    if (resultados && resultados[0]) {
+      selectMedicamento(resultados[0]);
+    } else {
+      mostrarEstadoResultados("Ese medicamento ya no está disponible en CIMA.", true);
+    }
+  } catch (err) {
+    console.error(err);
+    mostrarEstadoResultados("No se ha podido abrir el medicamento guardado.", true);
+  }
+}
+
+botiquinToggle.addEventListener("click", alternarBotiquin);
+
+// Estado inicial: por si ya había medicamentos guardados de antes
+renderBotiquin();
 
 // --- Tabs Prospecto / Ficha técnica ---
 
@@ -1459,5 +1596,4 @@ function recortar(texto, maximo) {
 // --- TODO Fase 2 ---
 // - Botón "copiar para IA": recopilar el texto de las secciones abiertas
 //   (o de todas) y copiarlo al portapapeles en formato limpio (markdown).
-// - "Mi botiquín": guardar/leer medicamentos favoritos en localStorage.
 // - Historial de búsquedas recientes en localStorage.

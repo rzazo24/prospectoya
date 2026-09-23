@@ -222,6 +222,27 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
   pero cambiar de marca sin consultarlo no es buena idea. Si se supera
   `MAX_EQUIVALENTES` (12) sin ese aviso, se avisa de cuántos se han recortado.
 
+### Mi botiquín (`app.js`)
+
+- **`#botiquin-toggle`** (una estrella junto al nombre, en la ficha) guarda o
+  quita el medicamento abierto de "mi botiquín", en `localStorage`
+  (`CLAVE_BOTIQUIN = "prospectoya-botiquin"`). Solo se guardan `nregistro`,
+  `nombre` y `labtitular`: **nunca** campos que puedan quedarse desfasados
+  (`psum`, `triangulo`, `docs`…, ver la regla de "datos frescos" en
+  AGENTS.md). `actualizarBotonBotiquin()` pone `aria-pressed`/`aria-label`
+  según si el medicamento abierto ya está guardado, y se llama cada vez que
+  se abre una ficha (`selectMedicamento()`).
+- **`#botiquin-section`** pinta lo guardado como chips sobre el buscador
+  (junto a "Prueba con"), oculta si no hay nada. Cada chip tiene dos
+  botones: uno abre el medicamento —**pidiéndolo de nuevo a la API**
+  (`GET /medicamentos?nregistro=X`), nunca con los tres campos guardados sin
+  más, por la misma razón de arriba— y otro (`×`) lo quita sin necesidad de
+  abrirlo primero.
+- Si `localStorage` no está disponible (modo privado, cuota llena…),
+  `leerBotiquin()`/`guardarBotiquin()` lo capturan con `try/catch`: la
+  estrella deja de recordar nada, pero el resto de la página sigue
+  funcionando igual (mismo patrón que `tema.js`).
+
 ### Páginas, tema y ayuda (`ayuda.html`, `tema.js`)
 
 - El sitio tiene **dos páginas**: el buscador (`index.html`) y la **ayuda**
@@ -347,7 +368,8 @@ sitio se sigue sirviendo tal cual desde el repositorio.
 
 ## Fase 2 (después del MVP)
 
-4. "Mi botiquín": guardar medicamentos frecuentes en `localStorage`.
+4. "Mi botiquín": guardar medicamentos frecuentes en `localStorage` (botón
+   ⭐ en la ficha, chips sobre el buscador). ✅
 5. Comparador de dos medicamentos lado a lado.
 6. Botón "copiar para IA": vuelca el texto de una sección o del prospecto
    completo en un formato limpio (markdown plano) al portapapeles.
@@ -508,7 +530,7 @@ Chrome/Chromium (Node las demás no necesitan nada instalado):
 ```bash
 cd tests
 npm install          # jsdom (única dependencia, sólo de desarrollo)
-npm test             # 372 comprobaciones: estructura, buscador, resumen, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
+npm test             # 386 comprobaciones: estructura, buscador, resumen, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
 npm run test:api-real   # contra la API real de CIMA (necesita red)
 npm run test:barrido    # barrido de calidad del resumen sobre 155 medicamentos reales (necesita red, ~20s)
 ```
