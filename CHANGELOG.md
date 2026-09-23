@@ -13,7 +13,11 @@ parte de una versión etiquetada se listan arriba, bajo `## Sin publicar`.
 Los apartados dentro de cada hito son: `Añadido`, `Cambiado`, `Corregido`
 y `Eliminado` (solo los que apliquen).
 
-## Sin publicar
+## [0.10.0] - 2026-09-23
+
+Duodécima entrega: primer punto de la Fase 2 ("mi botiquín"), desplegable
+desde el principio como "Filtros" para no ocupar sitio en pantalla. Todo
+sigue sin backend, sin build, sin frameworks y sin dependencias en el sitio.
 
 ### Añadido
 
@@ -42,6 +46,10 @@ y `Eliminado` (solo los que apliquen).
   fallan sin cada arreglo). La ayuda explica la función nueva. Toca
   `index.html`, `app.js` y `styles.css` (cáscara), así que `VERSION` sube
   en `sw.js` (`v23` → `v25`).
+
+**Commits de esta versión:**
+[`c4f1099`](https://github.com/rzazo24/prospectoya/commit/c4f1099) ·
+[`9514f5b`](https://github.com/rzazo24/prospectoya/commit/9514f5b)
 
 ## [0.9.0] - 2026-09-22
 
@@ -791,6 +799,7 @@ vanilla contra la API pública de CIMA (AEMPS).
 [`3396182`](https://github.com/rzazo24/prospectoya/commit/3396182) ·
 [`7495276`](https://github.com/rzazo24/prospectoya/commit/7495276)
 
+[0.10.0]: https://github.com/rzazo24/prospectoya/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/rzazo24/prospectoya/compare/v0.8.2...v0.9.0
 [0.8.2]: https://github.com/rzazo24/prospectoya/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/rzazo24/prospectoya/compare/v0.8.0...v0.8.1
