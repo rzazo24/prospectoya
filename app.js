@@ -41,6 +41,7 @@ const sectionsAccordion = document.getElementById("sections-accordion");
 const docTabs = document.querySelectorAll(".doc-tab");
 const botiquinToggle = document.getElementById("botiquin-toggle");
 const botiquinSection = document.getElementById("botiquin-section");
+const botiquinBoton = document.getElementById("botiquin-boton");
 const botiquinLista = document.getElementById("botiquin-lista");
 
 // Máximo de sugerencias en el desplegable y de resultados pintados de una vez.
@@ -877,13 +878,21 @@ function actualizarBotonBotiquin() {
   botiquinToggle.title = etiqueta;
 }
 
-/** Pinta los medicamentos guardados como chips sobre el buscador. */
+/**
+ * Pinta los medicamentos guardados como chips bajo el botón "Tu botiquín"
+ * (desplegable, como "Filtros"). Si el panel ya estaba abierto, se queda
+ * abierto; si la sección estaba oculta (no había nada guardado todavía), el
+ * panel arranca cerrado, para no abrirse solo la primera vez que se guarda algo.
+ */
 function renderBotiquin() {
   const lista = leerBotiquin();
+  const yaVisible = botiquinSection.hidden === false;
   botiquinLista.innerHTML = "";
 
   if (lista.length === 0) {
     botiquinSection.hidden = true;
+    botiquinLista.hidden = true;
+    botiquinBoton.setAttribute("aria-expanded", "false");
     return;
   }
 
@@ -914,7 +923,12 @@ function renderBotiquin() {
     botiquinLista.appendChild(li);
   });
 
+  botiquinBoton.textContent = `Tu botiquín (${lista.length})`;
   botiquinSection.hidden = false;
+  if (!yaVisible) {
+    botiquinLista.hidden = true;
+    botiquinBoton.setAttribute("aria-expanded", "false");
+  }
 }
 
 /**
@@ -937,6 +951,12 @@ async function abrirDesdeElBotiquin(guardado) {
 }
 
 botiquinToggle.addEventListener("click", alternarBotiquin);
+
+botiquinBoton.addEventListener("click", () => {
+  const abierto = botiquinLista.hidden === false;
+  botiquinLista.hidden = abierto;
+  botiquinBoton.setAttribute("aria-expanded", String(!abierto));
+});
 
 // Estado inicial: por si ya había medicamentos guardados de antes
 renderBotiquin();

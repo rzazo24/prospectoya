@@ -401,19 +401,28 @@ const escribir = (valor) => {
   await window.selectMedicamento(PARA_BOTIQUIN);
   await esperar(100);
 
-  const botiquinBoton = document.getElementById("botiquin-toggle");
+  const botiquinEstrella = document.getElementById("botiquin-toggle");
   const botiquinSeccion = document.getElementById("botiquin-section");
-  comprobar("el botón del botiquín arranca sin marcar (medicamento no guardado)", botiquinBoton.getAttribute("aria-pressed") === "false");
+  const botiquinBoton = document.getElementById("botiquin-boton");
+  const botiquinListaEl = document.getElementById("botiquin-lista");
+  comprobar("el botón del botiquín arranca sin marcar (medicamento no guardado)", botiquinEstrella.getAttribute("aria-pressed") === "false");
   comprobar("la sección de botiquín arranca oculta (nada guardado)", botiquinSeccion.hidden === true);
 
-  botiquinBoton.click();
-  comprobar("al pulsar la estrella, aria-pressed pasa a true", botiquinBoton.getAttribute("aria-pressed") === "true");
+  botiquinEstrella.click();
+  comprobar("al pulsar la estrella, aria-pressed pasa a true", botiquinEstrella.getAttribute("aria-pressed") === "true");
   comprobar(
     "se guarda en localStorage (nregistro, nombre y laboratorio, nada más)",
     JSON.parse(window.localStorage.getItem("prospectoya-botiquin")).length === 1,
     window.localStorage.getItem("prospectoya-botiquin")
   );
   comprobar("la sección de botiquín ya no está oculta", botiquinSeccion.hidden === false);
+  // Desplegable, como "Filtros": no ocupa sitio hasta que se abre a propósito,
+  // ni siquiera la primera vez que se guarda algo (decidido el 23/09/2026).
+  comprobar("pero la lista arranca plegada (no ocupa sitio sola)", botiquinListaEl.hidden === true);
+  comprobar("el botón lleva el número de guardados", botiquinBoton.textContent.includes("(1)"), botiquinBoton.textContent);
+
+  botiquinBoton.click();
+  comprobar("pulsar el botón despliega la lista", botiquinListaEl.hidden === false && botiquinBoton.getAttribute("aria-expanded") === "true");
   const chipsBotiquin = document.querySelectorAll(".botiquin-item");
   comprobar(
     "sale un chip con el nombre del medicamento",
@@ -421,15 +430,15 @@ const escribir = (valor) => {
     chipsBotiquin.length
   );
 
-  // Abrir otro medicamento: el botón no debe arrastrar el estado del anterior
+  // Abrir otro medicamento: la estrella no debe arrastrar el estado del anterior
   await window.selectMedicamento(IMPORTACION_PARALELA);
   await esperar(100);
-  comprobar("con otro medicamento abierto, el botón vuelve a estar sin marcar", botiquinBoton.getAttribute("aria-pressed") === "false");
+  comprobar("con otro medicamento abierto, la estrella vuelve a estar sin marcar", botiquinEstrella.getAttribute("aria-pressed") === "false");
 
-  // Reabrir el guardado: el botón lo refleja
+  // Reabrir el guardado: la estrella lo refleja
   await window.selectMedicamento(PARA_BOTIQUIN);
   await esperar(100);
-  comprobar("al reabrir el medicamento guardado, el botón vuelve a marcarse", botiquinBoton.getAttribute("aria-pressed") === "true");
+  comprobar("al reabrir el medicamento guardado, la estrella vuelve a marcarse", botiquinEstrella.getAttribute("aria-pressed") === "true");
 
   // Clic en el chip del botiquín: pide datos frescos (nunca usa lo guardado
   // tal cual, que solo lleva nombre y laboratorio, ver AGENTS.md/api.js)
@@ -446,18 +455,20 @@ const escribir = (valor) => {
     document.getElementById("detail-name").textContent === PARA_BOTIQUIN.nombre,
     document.getElementById("detail-name").textContent
   );
+  comprobar("la lista se queda desplegada (no se cierra sola al elegir un chip)", botiquinListaEl.hidden === false);
 
   // Quitar desde el propio chip (sin pasar por la estrella)
   document.querySelector(".botiquin-item-quitar").click();
   comprobar("quitar desde el chip vacía la sección", botiquinSeccion.hidden === true);
+  comprobar("y la pliega (para la próxima vez que se guarde algo)", botiquinListaEl.hidden === true && botiquinBoton.getAttribute("aria-expanded") === "false");
   comprobar(
     "y localStorage queda vacío",
     JSON.parse(window.localStorage.getItem("prospectoya-botiquin")).length === 0,
     window.localStorage.getItem("prospectoya-botiquin")
   );
   comprobar(
-    "el botón del medicamento que sigue abierto también se actualiza",
-    botiquinBoton.getAttribute("aria-pressed") === "false"
+    "la estrella del medicamento que sigue abierto también se actualiza",
+    botiquinEstrella.getAttribute("aria-pressed") === "false"
   );
 
   // Un valor corrupto en localStorage (modo privado, cuota, u otra app tocando

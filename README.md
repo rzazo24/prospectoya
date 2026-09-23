@@ -232,12 +232,18 @@ Documentación oficial completa (PDF): `CIMA-REST-API_1_19.pdf` (AEMPS).
   AGENTS.md). `actualizarBotonBotiquin()` pone `aria-pressed`/`aria-label`
   según si el medicamento abierto ya está guardado, y se llama cada vez que
   se abre una ficha (`selectMedicamento()`).
-- **`#botiquin-section`** pinta lo guardado como chips sobre el buscador
-  (junto a "Prueba con"), oculta si no hay nada. Cada chip tiene dos
-  botones: uno abre el medicamento —**pidiéndolo de nuevo a la API**
-  (`GET /medicamentos?nregistro=X`), nunca con los tres campos guardados sin
-  más, por la misma razón de arriba— y otro (`×`) lo quita sin necesidad de
-  abrirlo primero.
+- **`#botiquin-section`** queda oculta del todo si no hay nada guardado; si
+  hay algo, sale el botón **`#botiquin-boton`** ("Tu botiquín (N)") que
+  despliega/pliega `#botiquin-lista` — mismo patrón que "Filtros"
+  (`filtrosBoton`/`filtrosPanel`), para que la lista no ocupe sitio en
+  pantalla si no hace falta (decidido el 23/09/2026: antes iba siempre
+  visible en línea, y "ocupaba mucho"). `renderBotiquin()` pliega la lista
+  cuando pasa de vacía a tener el primer elemento, pero no la cierra sola si
+  ya estaba abierta (por ejemplo, al añadir uno nuevo desde la ficha con el
+  panel ya desplegado). Cada chip tiene dos botones: uno abre el medicamento
+  —**pidiéndolo de nuevo a la API** (`GET /medicamentos?nregistro=X`), nunca
+  con los tres campos guardados sin más, por la misma razón de arriba— y
+  otro (`×`) lo quita sin necesidad de abrirlo primero.
 - Si `localStorage` no está disponible (modo privado, cuota llena…),
   `leerBotiquin()`/`guardarBotiquin()` lo capturan con `try/catch`: la
   estrella deja de recordar nada, pero el resto de la página sigue
@@ -530,7 +536,7 @@ Chrome/Chromium (Node las demás no necesitan nada instalado):
 ```bash
 cd tests
 npm install          # jsdom (única dependencia, sólo de desarrollo)
-npm test             # 386 comprobaciones: estructura, buscador, resumen, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
+npm test             # 391 comprobaciones: estructura, buscador, resumen, móvil, botón de subir, páginas, resoluciones, PWA, iconos y z-index
 npm run test:api-real   # contra la API real de CIMA (necesita red)
 npm run test:barrido    # barrido de calidad del resumen sobre 155 medicamentos reales (necesita red, ~20s)
 ```

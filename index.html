@@ -178,11 +178,14 @@
       </div>
 
       <!-- Mi botiquín: medicamentos guardados en localStorage (ver app.js).
-           Oculto si está vacío; se rellena al cargar la página y cada vez que
-           cambia (renderBotiquin()). -->
+           Oculto si está vacío; el botón despliega/cierra la lista, igual
+           que "Filtros", para no ocupar sitio si no hace falta. Se rellena
+           al cargar la página y cada vez que cambia (renderBotiquin()). -->
       <div class="botiquin-section" id="botiquin-section" hidden>
-        <span class="botiquin-label">Tu botiquín</span>
-        <ul class="botiquin-lista" id="botiquin-lista"></ul>
+        <button type="button" id="botiquin-boton" class="botiquin-boton" aria-expanded="false" aria-controls="botiquin-lista">
+          Tu botiquín
+        </button>
+        <ul class="botiquin-lista" id="botiquin-lista" hidden></ul>
       </div>
     </section>
 
